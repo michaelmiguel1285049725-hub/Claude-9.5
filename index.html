@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>思考流水线地图</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&family=Noto+Sans+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --ground:#e9ebee; --surface:#f7f8f9; --panel:#ffffff; --panel-2:#f1f2f4;
+  --ink:#1c1f24; --ink-2:#4c525c; --muted:#7a808a; --line:#cfd3d9; --line-2:#e2e5e9;
+  --band-l:#f7f8f9; --band-r:#b9bec7; --halo:rgba(28,31,36,.55);
+  --edge:#8d939c; --edge-hi:#1c1f24;
+  --s-kahneman:#e2684a; --s-thaler:#3c53cd; --s-social:#b56ae7; --s-critique:#3ca694; --s-expertise:#796006; --s-debias:#7d8089; --s-meta:#7d8089;
+  --shadow:0 8px 28px rgba(28,31,36,.14);
+  --serif:"Noto Serif SC","Songti SC","Source Han Serif SC","SimSun",serif;
+  --sans:"Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  --mono:"IBM Plex Mono","SFMono-Regular",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --ground:#12141a; --surface:#1c1f25; --panel:#20242c; --panel-2:#272c35;
+    --ink:#e6e8eb; --ink-2:#b4b9c2; --muted:#8a9099; --line:#3a3f48; --line-2:#2c313a;
+    --band-l:#262a32; --band-r:#0b0c10; --halo:rgba(230,232,235,.5);
+    --edge:#6d737d; --edge-hi:#e6e8eb;
+    --s-kahneman:#e2684a; --s-thaler:#3c53cd; --s-social:#b56ae7; --s-critique:#3ca694; --s-expertise:#71640b; --s-debias:#9a9da6; --s-meta:#9a9da6;
+    --shadow:0 8px 28px rgba(0,0,0,.5);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#12141a; --surface:#1c1f25; --panel:#20242c; --panel-2:#272c35;
+  --ink:#e6e8eb; --ink-2:#b4b9c2; --muted:#8a9099; --line:#3a3f48; --line-2:#2c313a;
+  --band-l:#262a32; --band-r:#0b0c10; --halo:rgba(230,232,235,.5);
+  --edge:#6d737d; --edge-hi:#e6e8eb;
+  --s-kahneman:#e2684a; --s-thaler:#3c53cd; --s-social:#b56ae7; --s-critique:#3ca694; --s-expertise:#71640b; --s-debias:#9a9da6; --s-meta:#9a9da6;
+  --shadow:0 8px 28px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;overflow:hidden}
+button,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--s-kahneman);outline-offset:2px}
+
+/* ---------- chrome ---------- */
+#app{position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr}
+header{display:flex;align-items:center;gap:22px;padding:10px 18px;background:var(--panel);border-bottom:1px solid var(--line);z-index:5;flex-wrap:wrap}
+.brand{display:flex;flex-direction:column;min-width:200px}
+.brand h1{margin:0;font:700 19px/1.2 var(--serif);letter-spacing:.02em;text-wrap:balance}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:12px}
+.brand p b{color:var(--ink-2);font-weight:500}
+.controls{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-left:auto}
+.ctl{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-2)}
+.ctl label{display:flex;align-items:center;gap:6px;cursor:pointer}
+.ctl input[type=checkbox]{accent-color:var(--s-kahneman);width:15px;height:15px;margin:0}
+.ctl select{background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:4px 8px;font-size:13px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.seg button{background:var(--panel-2);border:0;padding:5px 11px;font-size:13px;cursor:pointer;color:var(--ink-2);border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+.eyebrow{font:500 11px/1 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+
+/* ---------- stage ---------- */
+#stage{position:relative;overflow:hidden;cursor:grab;touch-action:none}
+#stage.dragging{cursor:grabbing}
+svg#map{position:absolute;inset:0;width:100%;height:100%;display:block;user-select:none}
+svg text{fill:var(--ink);font-family:var(--sans)}
+
+/* zone frames */
+.zone-frame{fill:none;stroke:var(--line);stroke-dasharray:6 6;stroke-width:1.2}
+.zone-title{font:500 12px var(--sans);fill:var(--ink-2);letter-spacing:.04em}
+.zone-title .code{font-family:var(--mono);fill:var(--muted)}
+.zone-big{font:700 30px var(--serif);fill:var(--ink-2);text-anchor:middle;display:none;letter-spacing:.06em}
+.zone-big-sub{font:400 15px var(--sans);fill:var(--muted);text-anchor:middle;display:none}
+.layer-label{font:500 11px var(--sans);letter-spacing:.14em;fill:var(--muted)}
+
+/* band */
+.band{fill:url(#bandGrad)}
+.band-edge{fill:var(--muted);font:500 11px var(--sans);letter-spacing:.08em}
+.station-num{font:500 26px var(--serif);fill:var(--ink)}
+.station-zh{font:700 22px var(--serif);fill:var(--ink)}
+.station-en{font:400 11px var(--mono);fill:var(--muted);letter-spacing:.06em}
+.station-hit{fill:transparent;cursor:pointer}
+.flow-arrow{stroke:var(--ink-2);stroke-width:2;fill:none;marker-end:url(#arrowFlow)}
+.marker-station .station-zh{fill:var(--ink-2)}
+.marker-station .station-num{fill:var(--muted)}
+.marker-note{font:400 11px var(--sans);fill:var(--muted)}
+
+/* input arrows */
+.input-arrow{stroke:var(--ink-2);stroke-width:2.2;fill:none;marker-end:url(#arrowFlow);opacity:.9}
+.input-arrow.secondary{stroke-dasharray:1 0;opacity:.5;stroke-width:1.6}
+
+/* halo */
+.halo-blob{fill:var(--halo);opacity:.06;filter:url(#blur)}
+.halo-dot{fill:var(--halo);opacity:.3}
+
+/* loop */
+.loop{stroke:var(--ink-2);stroke-width:1.8;fill:none;stroke-dasharray:7 6;marker-end:url(#arrowFlow)}
+.loop-break{stroke:var(--s-kahneman);stroke-width:2;fill:none}
+.loop-label{font:500 11px var(--sans);fill:var(--ink-2);letter-spacing:.04em}
+.loop-label.warn{fill:var(--s-kahneman)}
+
+/* edges */
+.edge{fill:none;stroke:var(--edge);stroke-width:1.3;marker-end:url(#arrow);transition:opacity .2s}
+.edge.solid{stroke-dasharray:none}
+.edge.dashed{stroke-dasharray:6 5}
+.edge.dotted{stroke-dasharray:2 4}
+.edge.hi{stroke:var(--edge-hi);stroke-width:2;marker-end:url(#arrowHi)}
+.edge.dim{opacity:.08}
+.edge.hidden{display:none}
+
+/* nodes */
+.node{cursor:pointer;--c:var(--muted)}
+.node[data-school="kahneman"]{--c:var(--s-kahneman)}
+.node[data-school="thaler"]{--c:var(--s-thaler)}
+.node[data-school="social"]{--c:var(--s-social)}
+.node[data-school="critique"]{--c:var(--s-critique)}
+.node[data-school="expertise"]{--c:var(--s-expertise)}
+.node[data-school="debias"]{--c:var(--s-debias)}
+.node[data-school="meta"]{--c:var(--s-meta)}
+.node rect{fill:color-mix(in oklab,var(--c) 16%,var(--surface));stroke:var(--c);stroke-width:1.6;transition:filter .15s}
+.node.bias rect{rx:14}
+.node.debias rect{rx:3}
+.node.foundation rect{rx:0}
+.node.chip rect{rx:6}
+.node[data-evidence="contested"] rect{stroke-dasharray:5 4;fill:color-mix(in oklab,var(--c) 7%,var(--surface))}
+.node[data-evidence="refuted"]{--c:var(--muted);opacity:.55}
+.node[data-evidence="refuted"] rect{fill:color-mix(in oklab,var(--muted) 22%,var(--surface));stroke-dasharray:none}
+.node[data-evidence="refuted"] .zh{text-decoration:line-through;text-decoration-thickness:1.5px}
+.node:hover rect,.node.active rect{stroke-width:2.6;filter:drop-shadow(0 3px 8px rgba(0,0,0,.18))}
+.node.active rect{stroke:var(--ink)}
+.node.dim{opacity:.13}
+.node[data-evidence="refuted"].dim{opacity:.08}
+.node.faded{opacity:.12}
+.node[data-evidence="refuted"].faded{opacity:.08}
+.node.hidden{display:none}
+.node foreignObject{pointer-events:none;overflow:visible}
+.lbl{width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;padding:4px 11px;color:var(--ink);font-family:var(--sans);line-height:1.25}
+.lbl .zh{font-size:12.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lbl .sub{display:flex;gap:8px;align-items:baseline;min-width:0;margin-top:1px}
+.lbl .en{font-size:9.5px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.lbl .yr{font:400 9.5px var(--mono);color:var(--muted);flex:none;font-variant-numeric:tabular-nums}
+.lbl.sq{padding:9px 10px;justify-content:flex-start;gap:4px}
+.lbl.sq .zh{white-space:normal;overflow:visible;font-size:12px;line-height:1.3}
+.lbl.sq .en{white-space:normal;overflow:hidden;font-size:9px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+.lbl.sq .sub{flex-direction:column;align-items:flex-start;gap:2px;flex:1}
+.lbl.chip{padding:2px 9px}
+.lbl.chip .zh{font-size:11px}
+.lbl.chip .en{font-size:8.5px}
+.lbl.chip .yr{font-size:8.5px}
+.oneliner{display:none}
+.oneliner div{font:400 9.5px/1.2 var(--sans);color:var(--ink-2);padding:3px 4px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* environment labels */
+.env{cursor:pointer}
+.env circle{fill:var(--c)}
+.env[data-school="kahneman"]{--c:var(--s-kahneman)} .env[data-school="expertise"]{--c:var(--s-expertise)}
+.env text{font:400 11px var(--sans);fill:var(--ink)}
+.env .en{fill:var(--muted);font-size:9.5px}
+.env .yr{font-family:var(--mono);fill:var(--muted);font-size:9.5px}
+.env[data-evidence="contested"] .zh{text-decoration:underline dotted}
+.env.dim,.env.faded{opacity:.15}
+.env.hidden{display:none}
+.env.active .zh{font-weight:700}
+.env-group-title{font:500 10px var(--sans);letter-spacing:.1em;fill:var(--muted)}
+
+/* legend panel in svg */
+.lg-panel{fill:var(--panel);stroke:var(--line);stroke-width:1.2}
+.lg-title{font:500 12px var(--sans);fill:var(--ink-2);letter-spacing:.04em}
+.lg-note{font:400 10px var(--sans);fill:var(--muted)}
+
+/* zoom levels */
+svg[data-level="1"] .node,svg[data-level="1"] .edge,svg[data-level="1"] .env,svg[data-level="1"] .zone-title,svg[data-level="1"] .lg-note,svg[data-level="1"] .lg-title,svg[data-level="1"] .halo-dot{display:none}
+svg[data-level="1"] .zone-big,svg[data-level="1"] .zone-big-sub{display:block}
+svg[data-level="3"] .oneliner{display:block}
+
+/* ---------- side card ---------- */
+#card{position:absolute;top:14px;right:14px;width:370px;max-height:calc(100% - 28px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:18px 20px 20px;z-index:6;transform:translateX(16px);opacity:0;pointer-events:none;transition:opacity .18s,transform .18s}
+#card.open{opacity:1;transform:none;pointer-events:auto}
+#card .close{position:absolute;top:10px;right:10px;border:0;background:transparent;font-size:18px;line-height:1;cursor:pointer;color:var(--muted);padding:4px 8px;border-radius:6px}
+#card .close:hover{background:var(--panel-2);color:var(--ink)}
+#card .kicker{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--ink-2);background:var(--panel-2)}
+.tag .dot{width:8px;height:8px;border-radius:50%;background:var(--c,var(--muted))}
+.tag.ev-solid{border-color:var(--ink-2);color:var(--ink)}
+.tag.ev-contested{border-style:dashed}
+.tag.ev-refuted{background:transparent;text-decoration:line-through;color:var(--muted)}
+#card h2{margin:0;font:700 20px/1.25 var(--serif);text-wrap:balance}
+#card .en{margin:2px 0 12px;color:var(--ink-2);font-size:13px}
+#card .en .yr{font-family:var(--mono);color:var(--muted);margin-left:6px}
+#card .liner{font-size:15px;line-height:1.55;padding:10px 14px;border-left:3px solid var(--c,var(--muted));background:var(--panel-2);border-radius:0 8px 8px 0;margin:0 0 14px}
+#card dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0 0 14px;font-size:12.5px}
+#card dt{color:var(--muted)}
+#card dd{margin:0;color:var(--ink-2)}
+#card .conn h3{margin:0 0 6px;font:500 11px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+#card .conn ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+#card .conn li button{width:100%;text-align:left;background:transparent;border:1px solid var(--line-2);border-radius:8px;padding:7px 10px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:12.5px}
+#card .conn li button:hover{background:var(--panel-2);border-color:var(--line)}
+#card .conn .rel{font:400 10.5px var(--mono);color:var(--muted);flex:none;min-width:64px}
+#card .conn .dot{width:8px;height:8px;border-radius:50%;flex:none}
+#card .conn .arr{color:var(--muted);flex:none}
+#card .empty{color:var(--muted);font-size:12.5px}
+
+/* ---------- html legend ---------- */
+#legend{position:absolute;left:14px;bottom:14px;width:300px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);z-index:6;font-size:12px}
+#legend summary{cursor:pointer;padding:9px 14px;font-weight:500;color:var(--ink-2);list-style:none;display:flex;justify-content:space-between;align-items:center}
+#legend summary::-webkit-details-marker{display:none}
+#legend summary::after{content:"▾";color:var(--muted)}
+#legend:not([open]) summary::after{content:"▸"}
+#legend .body{padding:2px 14px 14px;display:grid;gap:12px;max-height:52vh;overflow:auto}
+#legend h4{margin:0 0 5px;font:500 10.5px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+#legend ul{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+#legend li{display:flex;align-items:center;gap:8px;color:var(--ink-2)}
+#legend li .sw{width:22px;height:12px;border-radius:4px;flex:none;border:1.5px solid var(--c);background:color-mix(in oklab,var(--c) 16%,var(--surface))}
+#legend li .sw.sq{border-radius:1px;width:14px;height:14px;margin:0 4px}
+#legend li .sw.bar{border-radius:0;width:26px;height:9px;margin:0 -2px}
+#legend li .sw.dashed{border-style:dashed;background:color-mix(in oklab,var(--c) 7%,var(--surface))}
+#legend li .sw.ref{--c:var(--muted);opacity:.55;background:color-mix(in oklab,var(--muted) 22%,var(--surface))}
+#legend li .ln{width:26px;height:0;border-top:1.5px solid var(--edge);flex:none}
+#legend li .ln.dashed{border-top-style:dashed}
+#legend li .ln.dotted{border-top-style:dotted;border-top-width:2px}
+#legend li .halo{width:22px;height:14px;border-radius:50%;background:radial-gradient(var(--halo),transparent 70%);opacity:.5;flex:none}
+#legend .ex{color:var(--muted);margin-left:auto;font-size:11px}
+#legend .k{color:var(--muted)}
+
+#hint{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 14px;font-size:11.5px;color:var(--muted);z-index:5;white-space:nowrap}
+#hint kbd{font-family:var(--mono);font-size:10.5px;background:var(--panel-2);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+
+@media (max-width:760px){
+  #card{left:8px;right:8px;width:auto;top:auto;bottom:8px;max-height:60%}
+  #legend{display:none}
+  #hint{display:none}
+  .brand{min-width:0}
+}
+@media (prefers-reduced-motion: reduce){
+  *{transition:none !important}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">
+      <h1>思考流水线地图</h1>
+      <p>我此刻在哪一步出错？ · <b id="stat"></b></p>
+    </div>
+    <div class="controls">
+      <div class="ctl"><span class="eyebrow">缩放</span>
+        <div class="seg" role="group" aria-label="缩放层级">
+          <button id="z1" aria-pressed="false">骨架</button>
+          <button id="z2" aria-pressed="true">节点</button>
+          <button id="z3" aria-pressed="false">一句话</button>
+        </div>
+      </div>
+      <div class="ctl"><span class="eyebrow">图层</span>
+        <label><input type="checkbox" id="onlyK"> 只看卡尼曼</label>
+        <select id="schoolSel" aria-label="按学派筛选"><option value="">全部学派</option></select>
+        <label><input type="checkbox" id="hardOnly"> 只看硬证据</label>
+      </div>
+    </div>
+  </header>
+  <div id="stage">
+    <svg id="map" data-level="2" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="bandGrad" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0" stop-color="var(--band-l)"/>
+          <stop offset="1" stop-color="var(--band-r)"/>
+        </linearGradient>
+        <filter id="blur" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="22"/></filter>
+        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0.8 L10 5 L0 9.2 z" style="fill:var(--edge)"/></marker>
+        <marker id="arrowHi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0.8 L10 5 L0 9.2 z" style="fill:var(--edge-hi)"/></marker>
+        <marker id="arrowFlow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0.5 L10 5 L0 9.5 z" style="fill:var(--ink-2)"/></marker>
+      </defs>
+      <g id="world"></g>
+    </svg>
+
+    <aside id="card" aria-live="polite">
+      <button class="close" aria-label="关闭">×</button>
+      <div id="cardBody"></div>
+    </aside>
+
+    <details id="legend" open>
+      <summary>图例</summary>
+      <div class="body">
+        <section><h4>颜色 · 学派 (school)</h4><ul id="lgSchools"></ul></section>
+        <section><h4>样式 · 证据可靠性 (I 区)</h4><ul>
+          <li><span class="sw" style="--c:var(--s-kahneman)"></span>solid 实心：重复验证过<span class="ex">例：锚定</span></li>
+          <li><span class="sw dashed" style="--c:var(--s-kahneman)"></span>contested 虚线：有争议<span class="ex">例：热手</span></li>
+          <li><span class="sw ref"></span>refuted 灰色：已基本推翻<span class="ex">例：斯坦福监狱</span></li>
+        </ul></section>
+        <section><h4>形状</h4><ul>
+          <li><span class="sw" style="--c:var(--ink-2)"></span>圆角矩形：偏差 / 效应</li>
+          <li><span class="sw sq" style="--c:var(--s-debias)"></span>方块：去偏方法 (J 区)</li>
+          <li><span class="sw bar" style="--c:var(--ink-2)"></span>长条：总框架 (A 区)</li>
+          <li><span class="halo"></span>散布晕：噪声，随机误差 (H 区)</li>
+        </ul></section>
+        <section><h4>连线 · 仅数据中的 35 条</h4><ul>
+          <li><span class="ln"></span>实线：explains / derives / component</li>
+          <li><span class="ln dashed"></span>虚线：targets / uses / reduces / limits</li>
+          <li><span class="ln dotted"></span>点线：其他关系（context、produced…）</li>
+        </ul></section>
+      </div>
+    </details>
+    <div id="hint">拖动平移 · 滚轮缩放 · 点节点看卡片 · 悬停站名高亮 · <kbd>Esc</kbd> 取消</div>
+  </div>
+</div>
+
+<script id="data" type="application/json">{"meta":{"version":"2026-09-05","note":"认知偏差知识地图数据。evidence: solid=重复验证过 / contested=有争议 / refuted=已基本推翻。school 用于颜色，zone 用于位置，stage 用于方案1流水线。","schools":{"kahneman":"卡尼曼-特沃斯基（启发式与偏差 / 前景理论 / 噪声）","thaler":"行为经济学（Thaler、Loewenstein 等）","social":"社会心理学（Cialdini、Asch、Festinger、Ross 等）","critique":"反方与上游（Simon、Gigerenzer、进化视角、Stanovich）","expertise":"专家判断与预测（Meehl、Klein、Hogarth、Tetlock）","debias":"去偏研究","meta":"方法论与证据可靠性"},"zones":{"A":"总框架：大脑怎么工作","B":"估计世界：概率与预测","C":"做选择：价值与偏好","D":"看自己：自我认知","E":"看他人与群体：社会影响","F":"记忆与体验：对过去的记录","G":"直觉与环境：什么时候能信人","H":"噪声：随机误差","I":"证据可靠性：领域自检","J":"去偏：怎么减少错误"},"stages":{"foundation":"地基（横贯全图底部）","estimate":"流水线站2：估计概率","choose":"流水线站3：做选择","remember":"流水线站5：事后记忆","self_input":"轴上方输入源：关于自己","social_input":"轴上方输入源：关于他人","environment":"背景层：环境效度","noise":"每站周围的散布晕","meta":"图例/样式层，不占位置","debias":"轴下方，虚线连到作用站"}},"nodes":[{"id":"bounded_rationality","zh":"有限理性 / 满意即可","en":"Bounded rationality / satisficing","zone":"A","stage":"foundation","school":"critique","one_liner":"人不求最优，够用就停","source":"Simon 1955 QJE; 1956 Psychological Review","year":1955,"evidence":"solid"},{"id":"system1_system2","zh":"系统 1 / 系统 2","en":"System 1 / System 2","zone":"A","stage":"foundation","school":"kahneman","one_liner":"自动快思考 vs 费力慢思考（是比喻不是解剖）","source":"Kahneman & Frederick 2002; Kahneman 2003 AER","year":2002,"evidence":"solid"},{"id":"attribute_substitution","zh":"属性替换","en":"Attribute substitution","zone":"A","stage":"foundation","school":"kahneman","one_liner":"难问题被系统 1 偷偷换成易问题；所有启发式的统一解释","source":"Kahneman & Frederick 2002","year":2002,"evidence":"solid"},{"id":"attention_effort","zh":"注意力与努力","en":"Attention and effort","zone":"A","stage":"foundation","school":"kahneman","one_liner":"用瞳孔直径测心智努力；系统 2 的'懒'有生理基础","source":"Kahneman 1973 (专著)","year":1973,"evidence":"solid"},{"id":"ecological_rationality","zh":"生态理性 / 快速节俭启发式","en":"Ecological rationality","zone":"A","stage":"foundation","school":"critique","one_liner":"启发式是对环境的适应，不是缺陷","source":"Gigerenzer & Goldstein 1996 Psychological Review","year":1996,"evidence":"solid"},{"id":"natural_frequencies","zh":"自然频率","en":"Natural frequencies","zone":"A","stage":"foundation","school":"critique","one_liner":"用'100 人中 8 人'代替'8%'，基础率忽视大减","source":"Gigerenzer & Hoffrage 1995 Psychological Review","year":1995,"evidence":"solid"},{"id":"error_management","zh":"错误管理理论","en":"Error management theory","zone":"A","stage":"foundation","school":"critique","one_liner":"代价不对称时，有偏差反而是进化最优","source":"Haselton & Buss 2000 JPSP","year":2000,"evidence":"solid"},{"id":"argumentative_theory","zh":"推理的论辩理论","en":"Argumentative theory of reasoning","zone":"A","stage":"foundation","school":"critique","one_liner":"推理是为了说服别人，所以确认偏误是功能","source":"Mercier & Sperber 2011 BBS","year":2011,"evidence":"solid"},{"id":"individual_differences","zh":"个体差异 / 理性商数","en":"Individual differences in rationality","zone":"A","stage":"foundation","school":"critique","one_liner":"偏差易感性因人而异，与智商相关弱","source":"Stanovich & West 2000 BBS; Stanovich 2016","year":2000,"evidence":"solid"},{"id":"dual_process_critique","zh":"双系统的形式化与批评","en":"Dual-process theory: formalization and critique","zone":"A","stage":"foundation","school":"critique","one_liner":"理论边界在哪；二分法被批过于简化","source":"Evans & Stanovich 2013; Melnikoff & Bargh 2018","year":2013,"evidence":"solid"},{"id":"two_school_debate","zh":"两派正面交锋","en":"Gigerenzer vs Kahneman & Tversky","zone":"A","stage":"foundation","school":"meta","one_liner":"领域内最核心的争论","source":"Gigerenzer 1996; Kahneman & Tversky 1996, Psychological Review","year":1996,"evidence":"solid"},{"id":"availability","zh":"可得性启发式","en":"Availability heuristic","zone":"B","stage":"estimate","school":"kahneman","one_liner":"好想起 = 觉得常见","source":"Tversky & Kahneman 1973 Cognitive Psychology","year":1973,"evidence":"solid"},{"id":"representativeness","zh":"代表性启发式","en":"Representativeness heuristic","zone":"B","stage":"estimate","school":"kahneman","one_liner":"像 = 概率大","source":"Kahneman & Tversky 1972 Cognitive Psychology","year":1972,"evidence":"solid"},{"id":"base_rate_neglect","zh":"基础率忽视","en":"Base rate neglect","zone":"B","stage":"estimate","school":"kahneman","one_liner":"忽略先验概率","source":"Kahneman & Tversky 1973; Bar-Hillel 1980","year":1973,"evidence":"solid"},{"id":"conjunction_fallacy","zh":"合取谬误（琳达问题）","en":"Conjunction fallacy","zone":"B","stage":"estimate","school":"kahneman","one_liner":"两件事同时发生被判得比单件更可能","source":"Tversky & Kahneman 1983 Psychological Review","year":1983,"evidence":"solid"},{"id":"law_small_numbers","zh":"小数定律","en":"Belief in the law of small numbers","zone":"B","stage":"estimate","school":"kahneman","one_liner":"对小样本过度信任","source":"Tversky & Kahneman 1971 Psychological Bulletin","year":1971,"evidence":"solid"},{"id":"anchoring","zh":"锚定","en":"Anchoring","zone":"B","stage":"estimate","school":"kahneman","one_liner":"先出现的数字拖住后面的估计","source":"Tversky & Kahneman 1974 Science","year":1974,"evidence":"solid"},{"id":"regression_illusion_validity","zh":"均值回归 / 效度错觉","en":"Regression to the mean / illusion of validity","zone":"B","stage":"estimate","school":"kahneman","one_liner":"极端后跟平庸，却被归因于奖惩","source":"Kahneman & Tversky 1973 Psychological Review","year":1973,"evidence":"solid"},{"id":"planning_fallacy","zh":"规划谬误 / 内外视角","en":"Planning fallacy / inside vs outside view","zone":"B","stage":"estimate","school":"kahneman","one_liner":"从内部看永远乐观；用参考类更准","source":"Kahneman & Tversky 1979 (Intuitive prediction)","year":1979,"evidence":"solid"},{"id":"confirmation_bias","zh":"确认偏误","en":"Confirmation bias","zone":"B","stage":"estimate","school":"social","one_liner":"只找支持自己的证据","source":"Wason 1960, 1968; Lord, Ross & Lepper 1979; Nickerson 1998","year":1960,"evidence":"solid"},{"id":"belief_perseverance","zh":"信念固着","en":"Belief perseverance","zone":"B","stage":"estimate","school":"social","one_liner":"证据撤销，信念不撤","source":"Ross, Lepper & Hubbard 1975 JPSP","year":1975,"evidence":"solid"},{"id":"motivated_reasoning","zh":"动机性推理","en":"Motivated reasoning","zone":"B","stage":"estimate","school":"social","one_liner":"想要的结论牵着推理走","source":"Kunda 1990 Psychological Bulletin","year":1990,"evidence":"solid"},{"id":"overconfidence","zh":"过度自信（三种）","en":"Overconfidence","zone":"B","stage":"estimate","school":"expertise","one_liner":"高估表现 / 高估排名 / 高估精确度","source":"Moore & Healy 2008 Psychological Review; Lichtenstein, Fischhoff & Phillips 1982","year":2008,"evidence":"solid"},{"id":"hindsight_bias","zh":"后见之明","en":"Hindsight bias","zone":"B","stage":"estimate","school":"expertise","one_liner":"事后觉得早就知道","source":"Fischhoff 1975 JEP:HPP","year":1975,"evidence":"solid"},{"id":"illusion_of_control","zh":"控制错觉","en":"Illusion of control","zone":"B","stage":"estimate","school":"social","one_liner":"对随机事件感到有控制","source":"Langer 1975 JPSP","year":1975,"evidence":"solid"},{"id":"outcome_bias","zh":"结果偏差","en":"Outcome bias","zone":"B","stage":"estimate","school":"thaler","one_liner":"用结果好坏评价决策好坏","source":"Baron & Hershey 1988 JPSP","year":1988,"evidence":"solid"},{"id":"hot_hand","zh":"赌徒谬误 / 热手","en":"Gambler's fallacy / hot hand","zone":"B","stage":"estimate","school":"kahneman","one_liner":"原论文统计方法有误，热手可能是真的","source":"Gilovich, Vallone & Tversky 1985; Miller & Sanjurjo 2018 Econometrica","year":1985,"evidence":"contested"},{"id":"affect_heuristic","zh":"情感启发式","en":"Affect heuristic","zone":"B","stage":"estimate","school":"thaler","one_liner":"喜恶代替风险收益评估","source":"Slovic et al. 2002; Finucane et al. 2000","year":2002,"evidence":"solid"},{"id":"ambiguity_aversion","zh":"模糊厌恶","en":"Ambiguity aversion","zone":"B","stage":"estimate","school":"thaler","one_liner":"宁选已知概率不选未知概率","source":"Ellsberg 1961 QJE","year":1961,"evidence":"solid"},{"id":"prospect_theory","zh":"前景理论","en":"Prospect theory","zone":"C","stage":"choose","school":"kahneman","one_liner":"看相对参照点的变化，不看绝对财富","source":"Kahneman & Tversky 1979 Econometrica; Tversky & Kahneman 1992 JRU","year":1979,"evidence":"solid"},{"id":"loss_aversion","zh":"损失厌恶","en":"Loss aversion","zone":"C","stage":"choose","school":"kahneman","one_liner":"损失比等量收益痛约 2 倍（λ≈2.25）","source":"Kahneman & Tversky 1979; Tversky & Kahneman 1992","year":1979,"evidence":"solid"},{"id":"reference_dependence","zh":"参照点依赖","en":"Reference dependence","zone":"C","stage":"choose","school":"kahneman","one_liner":"得失由参照点定义","source":"Kahneman & Tversky 1979","year":1979,"evidence":"solid"},{"id":"diminishing_sensitivity","zh":"敏感度递减","en":"Diminishing sensitivity","zone":"C","stage":"choose","school":"kahneman","one_liner":"第一个 100 比第十个 100 感受强","source":"Kahneman & Tversky 1979","year":1979,"evidence":"solid"},{"id":"probability_weighting","zh":"概率权重 / 四重模式","en":"Probability weighting / fourfold pattern","zone":"C","stage":"choose","school":"kahneman","one_liner":"高估小概率、低估大概率","source":"Tversky & Kahneman 1992","year":1992,"evidence":"solid"},{"id":"framing","zh":"框架效应","en":"Framing effect","zone":"C","stage":"choose","school":"kahneman","one_liner":"换说法，选择反转（亚洲疾病问题）","source":"Tversky & Kahneman 1981 Science","year":1981,"evidence":"solid"},{"id":"endowment_effect","zh":"禀赋效应","en":"Endowment effect","zone":"C","stage":"choose","school":"kahneman","one_liner":"拥有后估价变高（马克杯实验）","source":"Kahneman, Knetsch & Thaler 1990 JPE; 1991 JEP","year":1990,"evidence":"solid"},{"id":"fairness_constraint","zh":"公平约束","en":"Fairness as a constraint","zone":"C","stage":"choose","school":"kahneman","one_liner":"愿付代价惩罚不公平","source":"Kahneman, Knetsch & Thaler 1986 AER","year":1986,"evidence":"solid"},{"id":"status_quo_bias","zh":"现状偏差","en":"Status quo bias","zone":"C","stage":"choose","school":"thaler","one_liner":"倾向维持现状","source":"Samuelson & Zeckhauser 1988 JRU","year":1988,"evidence":"solid"},{"id":"omission_bias","zh":"不作为偏差","en":"Omission bias","zone":"C","stage":"choose","school":"thaler","one_liner":"'没做'比'做了'责任小；普遍性有争议","source":"Spranca, Minsk & Baron 1991 JESP; Ritov & Baron 1990 JBDM; 质疑 Connolly & Reb 2003","year":1991,"evidence":"contested"},{"id":"sunk_cost","zh":"沉没成本效应","en":"Sunk cost effect","zone":"C","stage":"choose","school":"thaler","one_liner":"已投入拖住当前决定","source":"Thaler 1980 JEBO; Arkes & Blumer 1985 OBHDP","year":1985,"evidence":"solid"},{"id":"mental_accounting","zh":"心理账户","en":"Mental accounting","zone":"C","stage":"choose","school":"thaler","one_liner":"钱贴标签后不再等价","source":"Thaler 1985 Marketing Science; 1999 JBDM","year":1985,"evidence":"solid"},{"id":"present_bias","zh":"现时偏差 / 双曲贴现","en":"Present bias / hyperbolic discounting","zone":"C","stage":"choose","school":"thaler","one_liner":"眼前小奖励压过未来大奖励","source":"Ainslie 1975; Laibson 1997 QJE; O'Donoghue & Rabin 1999 AER","year":1997,"evidence":"solid"},{"id":"decoy_effect","zh":"诱饵效应","en":"Decoy / asymmetric dominance effect","zone":"C","stage":"choose","school":"thaler","one_liner":"加一个没人选的选项改变选择","source":"Huber, Payne & Puto 1982 JCR","year":1982,"evidence":"solid"},{"id":"choice_overload","zh":"选择过载","en":"Choice overload","zone":"C","stage":"choose","school":"social","one_liner":"果酱实验；元分析平均效应接近零","source":"Iyengar & Lepper 2000 JPSP; Scheibehenne et al. 2010 JCR","year":2000,"evidence":"contested"},{"id":"hot_cold_gap","zh":"冷热共情鸿沟","en":"Hot-cold empathy gap","zone":"C","stage":"choose","school":"thaler","one_liner":"冷静时预测不了冲动时的自己","source":"Loewenstein 1996 OBHDP; 2005 Health Psychology","year":2005,"evidence":"solid"},{"id":"loss_aversion_boundary","zh":"损失厌恶的边界","en":"Limits of loss aversion","zone":"C","stage":"choose","school":"critique","one_liner":"小额、常规情境下效应常不出现","source":"Gal & Rucker 2018 Journal of Consumer Psychology","year":2018,"evidence":"contested"},{"id":"better_than_average","zh":"优于平均效应","en":"Better-than-average effect","zone":"D","stage":"self_input","school":"social","one_liner":"多数人自认高于平均（司机研究）","source":"Svenson 1981; Alicke 1985","year":1981,"evidence":"solid"},{"id":"dunning_kruger","zh":"达克效应","en":"Dunning-Kruger effect","zone":"D","stage":"self_input","school":"social","one_liner":"越差越不知道自己差","source":"Kruger & Dunning 1999 JPSP","year":1999,"evidence":"solid"},{"id":"unrealistic_optimism","zh":"不切实际的乐观","en":"Unrealistic optimism","zone":"D","stage":"self_input","school":"social","one_liner":"坏事更可能落在别人头上","source":"Weinstein 1980 JPSP","year":1980,"evidence":"solid"},{"id":"self_serving_bias","zh":"自利归因","en":"Self-serving bias","zone":"D","stage":"self_input","school":"social","one_liner":"成功归自己、失败归环境","source":"Miller & Ross 1975 Psychological Bulletin","year":1975,"evidence":"solid"},{"id":"introspection_illusion","zh":"内省错觉","en":"Introspection illusion","zone":"D","stage":"self_input","school":"social","one_liner":"说不出真实原因，但会自信地编一个","source":"Nisbett & Wilson 1977 Psychological Review","year":1977,"evidence":"solid"},{"id":"naive_realism","zh":"朴素实在论","en":"Naive realism","zone":"D","stage":"self_input","school":"social","one_liner":"我看到的就是客观现实","source":"Ross & Ward 1996","year":1996,"evidence":"solid"},{"id":"bias_blind_spot","zh":"偏见盲点","en":"Bias blind spot","zone":"D","stage":"self_input","school":"social","one_liner":"别人有偏见，我没有；知识多也不缩小","source":"Pronin, Lin & Ross 2002 PSPB","year":2002,"evidence":"solid"},{"id":"choice_blindness","zh":"选择盲视","en":"Choice blindness","zone":"D","stage":"self_input","school":"social","one_liner":"为自己没做过的选择辩护","source":"Johansson et al. 2005 Science","year":2005,"evidence":"solid"},{"id":"affective_forecasting","zh":"情感预测错误 / 影响偏差","en":"Affective forecasting / impact bias","zone":"D","stage":"self_input","school":"social","one_liner":"高估未来事件对情绪的强度和持续时间","source":"Gilbert et al. 1998 JPSP; Wilson & Gilbert 2003","year":1998,"evidence":"solid"},{"id":"curse_of_knowledge","zh":"知识的诅咒","en":"Curse of knowledge","zone":"D","stage":"self_input","school":"thaler","one_liner":"知道后想不出不知道的样子","source":"Camerer, Loewenstein & Weber 1989 JPE","year":1989,"evidence":"solid"},{"id":"confabulation","zh":"虚构","en":"Confabulation (interpreter)","zone":"D","stage":"self_input","school":"social","one_liner":"左脑替右脑的行为编理由（裂脑研究）","source":"Gazzaniga（多篇，无单一代表文献）","year":1970,"evidence":"solid"},{"id":"cialdini_six","zh":"影响力六原则","en":"Six principles of influence","zone":"E","stage":"social_input","school":"social","one_liner":"回馈、承诺一致、社会认同、喜欢、权威、稀缺；芒格 25 条的主要来源","source":"Cialdini 1984 Influence; 2016 Pre-Suasion 加'统一性'","year":1984,"evidence":"solid"},{"id":"asch_conformity","zh":"从众","en":"Conformity","zone":"E","stage":"social_input","school":"social","one_liner":"明知错也跟","source":"Asch 1951, 1956","year":1951,"evidence":"solid"},{"id":"milgram_obedience","zh":"服从权威","en":"Obedience to authority","zone":"E","stage":"social_input","school":"social","one_liner":"权威命令压过良心","source":"Milgram 1963; 1974","year":1963,"evidence":"solid"},{"id":"stanford_prison","zh":"斯坦福监狱实验","en":"Stanford prison experiment","zone":"E","stage":"social_input","school":"social","one_liner":"档案证明实验设计存在严重引导，结论基本不成立","source":"Zimbardo 1971; 推翻 Le Texier 2019 American Psychologist","year":1971,"evidence":"refuted"},{"id":"cognitive_dissonance","zh":"认知失调","en":"Cognitive dissonance","zone":"E","stage":"social_input","school":"social","one_liner":"行为改变信念；入会仪式越苦越忠诚","source":"Festinger 1957; Festinger & Carlsmith 1959; Aronson & Mills 1959","year":1957,"evidence":"solid"},{"id":"fundamental_attribution_error","zh":"基本归因错误 / 行动者-观察者","en":"Fundamental attribution error / actor-observer","zone":"E","stage":"social_input","school":"social","one_liner":"别人的错归性格，自己的错归情境","source":"Ross 1977; Jones & Harris 1967; Jones & Nisbett 1971","year":1977,"evidence":"solid"},{"id":"halo_effect","zh":"光环效应","en":"Halo effect","zone":"E","stage":"social_input","school":"social","one_liner":"一个好特质拖高全部评价","source":"Thorndike 1920; Nisbett & Wilson 1977 JPSP","year":1920,"evidence":"solid"},{"id":"minimal_group","zh":"最小群体 / 内群体偏袒","en":"Minimal group paradigm","zone":"E","stage":"social_input","school":"social","one_liner":"随机分组就足以产生偏袒","source":"Tajfel et al. 1971 EJSP","year":1971,"evidence":"solid"},{"id":"false_consensus","zh":"虚假共识","en":"False consensus effect","zone":"E","stage":"social_input","school":"social","one_liner":"高估他人与自己想法一致的比例","source":"Ross, Greene & House 1977 JESP","year":1977,"evidence":"solid"},{"id":"spotlight_effect","zh":"聚光灯效应","en":"Spotlight effect","zone":"E","stage":"social_input","school":"social","one_liner":"高估他人对自己的注意","source":"Gilovich, Medvec & Savitsky 2000 JPSP","year":2000,"evidence":"solid"},{"id":"groupthink","zh":"群体思维","en":"Groupthink","zone":"E","stage":"social_input","school":"social","one_liner":"团结压过判断","source":"Janis 1972","year":1972,"evidence":"solid"},{"id":"group_polarization","zh":"群体极化","en":"Group polarization","zone":"E","stage":"social_input","school":"social","one_liner":"讨论后立场比讨论前更极端","source":"Moscovici & Zavalloni 1969; Myers & Lamm 1976","year":1969,"evidence":"solid"},{"id":"bystander_effect","zh":"旁观者效应","en":"Bystander effect","zone":"E","stage":"social_input","school":"social","one_liner":"人越多越没人管；危险情境下反转；Genovese 案本身不成立","source":"Darley & Latané 1968 JPSP; Fischer et al. 2011 元分析; Manning et al. 2007","year":1968,"evidence":"solid"},{"id":"experiencing_remembering","zh":"体验自我 vs 记忆自我","en":"Experiencing self vs remembering self","zone":"F","stage":"remember","school":"kahneman","one_liner":"当下感受的你和事后打分的你是两个'人'","source":"Kahneman et al. 1993 Psychological Science","year":1993,"evidence":"solid"},{"id":"peak_end","zh":"峰终定律 / 时长忽视","en":"Peak-end rule / duration neglect","zone":"F","stage":"remember","school":"kahneman","one_liner":"记忆自我只记峰值和结尾（肠镜实验）","source":"Redelmeier & Kahneman 1996 Pain","year":1996,"evidence":"solid"},{"id":"focusing_illusion","zh":"聚焦错觉","en":"Focusing illusion","zone":"F","stage":"remember","school":"kahneman","one_liner":"一想到某事就高估它对幸福的影响","source":"Schkade & Kahneman 1998 Psychological Science; Kahneman et al. 2006 Science","year":1998,"evidence":"solid"},{"id":"income_wellbeing","zh":"收入与幸福","en":"Income and well-being","zone":"F","stage":"remember","school":"kahneman","one_liner":"7.5 万美元说 → 对手合作修正为'多数人继续增长'","source":"Kahneman & Deaton 2010 PNAS; Killingsworth, Kahneman & Mellers 2023 PNAS","year":2010,"evidence":"solid"},{"id":"day_reconstruction","zh":"日重构法","en":"Day Reconstruction Method","zone":"F","stage":"remember","school":"kahneman","one_liner":"测量日常幸福的方法学工具","source":"Kahneman et al. 2004 Science","year":2004,"evidence":"solid"},{"id":"intuitive_expertise","zh":"直觉可信的条件","en":"Conditions for intuitive expertise","zone":"G","stage":"environment","school":"kahneman","one_liner":"高效度环境 + 长期有反馈的练习；主观自信不是指标","source":"Kahneman & Klein 2009 American Psychologist","year":2009,"evidence":"solid"},{"id":"kind_wicked","zh":"友善 / 恶劣学习环境","en":"Kind vs wicked learning environments","zone":"G","stage":"environment","school":"expertise","one_liner":"反馈质量决定直觉质量","source":"Hogarth 2001 Educating Intuition","year":2001,"evidence":"solid"},{"id":"clinical_vs_statistical","zh":"临床 vs 统计预测","en":"Clinical vs statistical prediction","zone":"G","stage":"environment","school":"expertise","one_liner":"简单公式系统性打败专家判断","source":"Meehl 1954; Dawes 1979 American Psychologist; Grove et al. 2000 元分析","year":1954,"evidence":"solid"},{"id":"expert_political_judgment","zh":"专家政治预测","en":"Expert political judgment","zone":"G","stage":"environment","school":"expertise","one_liner":"专家难以跑赢简单外推；狐狸胜刺猬","source":"Tetlock 2005","year":2005,"evidence":"solid"},{"id":"superforecasting","zh":"超级预测 / 良好判断计划","en":"Superforecasting / Good Judgment Project","zone":"G","stage":"environment","school":"expertise","one_liner":"训练与团队的提升效应在重新分析后有争议","source":"Mellers et al. 2014 Psychological Science; Tetlock & Gardner 2015","year":2014,"evidence":"contested"},{"id":"naturalistic_decision_making","zh":"自然主义决策 / 识别启动决策","en":"Naturalistic decision making / RPD","zone":"G","stage":"environment","school":"expertise","one_liner":"专家靠模式识别在压力下决策","source":"Klein 1998 Sources of Power","year":1998,"evidence":"solid"},{"id":"expert_task_characteristics","zh":"专家能力的任务特征","en":"Task characteristics of expert competence","zone":"G","stage":"environment","school":"expertise","one_liner":"哪些任务里专家可靠","source":"Shanteau 1992 OBHDP","year":1992,"evidence":"solid"},{"id":"deliberate_practice","zh":"刻意练习","en":"Deliberate practice","zone":"G","stage":"environment","school":"expertise","one_liner":"只解释表现差异的一小部分","source":"Ericsson et al. 1993 Psychological Review; Macnamara et al. 2014 Psychological Science","year":1993,"evidence":"contested"},{"id":"bias_vs_noise","zh":"偏差 vs 噪声","en":"Bias vs noise","zone":"H","stage":"noise","school":"kahneman","one_liner":"系统性 vs 随机性；总误差 = 偏差² + 噪声²","source":"Kahneman, Sibony & Sunstein 2021 Noise","year":2021,"evidence":"solid"},{"id":"noise_components","zh":"三种噪声","en":"Level / pattern / occasion noise","zone":"H","stage":"noise","school":"kahneman","one_liner":"水平噪声 / 模式噪声 / 场合噪声","source":"Kahneman, Sibony & Sunstein 2021","year":2021,"evidence":"solid"},{"id":"noise_audit","zh":"噪声审计","en":"Noise audit","zone":"H","stage":"noise","school":"kahneman","one_liner":"测量组织内判断的分散程度","source":"Kahneman et al. 2016 HBR; 2021","year":2016,"evidence":"solid"},{"id":"decision_hygiene","zh":"决策卫生","en":"Decision hygiene","zone":"H","stage":"noise","school":"kahneman","one_liner":"独立判断再汇总、拆分评估（MAP）、推迟直觉","source":"Kahneman, Sibony & Sunstein 2021","year":2021,"evidence":"solid"},{"id":"replication_crisis","zh":"可重复性危机","en":"Replication crisis","zone":"I","stage":"meta","school":"meta","one_liner":"100 项研究约 36% 重复成功","source":"Open Science Collaboration 2015 Science; Many Labs (Klein et al. 2014, 2018)","year":2015,"evidence":"solid"},{"id":"tfs_ch4_priming","zh":"《思考，快与慢》第 4 章：社会启动","en":"TFS ch.4 social priming","zone":"I","stage":"meta","school":"meta","one_liner":"启动效应不可靠；卡尼曼 2017 承认'对功效不足的研究投入了过多信任'","source":"Bargh et al. 1996; Doyen et al. 2012; Schimmack et al. 2017; Kahneman 2017 评论","year":2017,"evidence":"refuted"},{"id":"tfs_ch3_ego_depletion","zh":"《思考，快与慢》第 3 章：自我损耗","en":"TFS ch.3 ego depletion","zone":"I","stage":"meta","school":"meta","one_liner":"大规模重复失败","source":"Baumeister et al. 1998; Hagger et al. 2016","year":2016,"evidence":"refuted"},{"id":"adversarial_collaboration","zh":"对手合作","en":"Adversarial collaboration","zone":"I","stage":"meta","school":"meta","one_liner":"意见相反的学者共同设计实验、共同发表","source":"Mellers, Hertwig & Kahneman 2001 Psychological Science","year":2001,"evidence":"solid"},{"id":"debiasing_taxonomy","zh":"去偏分类","en":"Debiasing taxonomy","zone":"J","stage":"debias","school":"debias","one_liner":"偏差归因于任务、判断者、或两者匹配","source":"Fischhoff 1982（收录于 Judgment Under Uncertainty）","year":1982,"evidence":"solid"},{"id":"cost_benefit_errors","zh":"判断错误的代价收益","en":"Costs and benefits of judgment errors","zone":"J","stage":"debias","school":"debias","one_liner":"不同类型偏差需要不同去偏策略","source":"Arkes 1991 Psychological Bulletin","year":1991,"evidence":"solid"},{"id":"consider_opposite","zh":"考虑相反面","en":"Consider the opposite","zone":"J","stage":"debias","school":"debias","one_liner":"为对立结论找理由，确认偏误下降","source":"Lord, Lepper & Preston 1984 JPSP","year":1984,"evidence":"solid"},{"id":"debiasing_reviews","zh":"去偏综述","en":"Debiasing reviews","zone":"J","stage":"debias","school":"debias","one_liner":"'改造人' vs '改造环境'两大类","source":"Larrick 2004; Soll, Milkman & Payne 2015","year":2015,"evidence":"solid"},{"id":"premortem","zh":"事前验尸","en":"Premortem","zone":"J","stage":"debias","school":"debias","one_liner":"假设项目已失败，倒推原因","source":"Klein 2007 HBR","year":2007,"evidence":"solid"},{"id":"decision_checklist","zh":"决策前清单","en":"Pre-decision checklist","zone":"J","stage":"debias","school":"debias","one_liner":"12 个问题","source":"Kahneman, Lovallo & Sibony 2011 HBR","year":2011,"evidence":"solid"},{"id":"debiasing_training","zh":"偏差训练","en":"Debiasing training","zone":"J","stage":"debias","school":"debias","one_liner":"一次训练两月后仍减少约 24%；田野中受训者选错概率低约 29%","source":"Morewedge et al. 2015 PIBBS; Sellier, Scopelliti & Morewedge 2019 Psychological Science","year":2015,"evidence":"solid"},{"id":"mindfulness_sunk_cost","zh":"正念与沉没成本","en":"Mindfulness and sunk cost","zone":"J","stage":"debias","school":"debias","one_liner":"15 分钟正念减少沉没成本偏误","source":"Hafenbrack, Kinias & Barsade 2014 Psychological Science","year":2014,"evidence":"solid"},{"id":"nudge_defaults","zh":"助推 / 默认选项","en":"Nudge / default options","zone":"J","stage":"debias","school":"thaler","one_liner":"真实效果约为学术论文报告值的三分之一","source":"Thaler & Sunstein 2008; Johnson & Goldstein 2003 Science; DellaVigna & Linos 2022 Econometrica","year":2008,"evidence":"contested"},{"id":"save_more_tomorrow","zh":"明天多存一点","en":"Save More Tomorrow","zone":"J","stage":"debias","school":"thaler","one_liner":"把损失厌恶和现时偏差反过来用","source":"Thaler & Benartzi 2004 JPE","year":2004,"evidence":"solid"}],"edges":[{"from":"attribute_substitution","to":"availability","type":"explains"},{"from":"attribute_substitution","to":"representativeness","type":"explains"},{"from":"attribute_substitution","to":"anchoring","type":"explains"},{"from":"attribute_substitution","to":"affect_heuristic","type":"explains"},{"from":"representativeness","to":"base_rate_neglect","type":"derives"},{"from":"representativeness","to":"conjunction_fallacy","type":"derives"},{"from":"representativeness","to":"law_small_numbers","type":"derives"},{"from":"prospect_theory","to":"loss_aversion","type":"component"},{"from":"prospect_theory","to":"reference_dependence","type":"component"},{"from":"prospect_theory","to":"diminishing_sensitivity","type":"component"},{"from":"prospect_theory","to":"probability_weighting","type":"component"},{"from":"loss_aversion","to":"endowment_effect","type":"explains"},{"from":"prospect_theory","to":"sunk_cost","type":"explains"},{"from":"loss_aversion","to":"status_quo_bias","type":"explains"},{"from":"omission_bias","to":"status_quo_bias","type":"unconfounds"},{"from":"argumentative_theory","to":"confirmation_bias","type":"explains"},{"from":"naive_realism","to":"bias_blind_spot","type":"leads_to"},{"from":"kind_wicked","to":"intuitive_expertise","type":"adopted_by"},{"from":"natural_frequencies","to":"base_rate_neglect","type":"reduces"},{"from":"loss_aversion_boundary","to":"loss_aversion","type":"limits"},{"from":"experiencing_remembering","to":"peak_end","type":"derives"},{"from":"two_school_debate","to":"ecological_rationality","type":"context"},{"from":"adversarial_collaboration","to":"intuitive_expertise","type":"produced"},{"from":"adversarial_collaboration","to":"income_wellbeing","type":"produced"},{"from":"clinical_vs_statistical","to":"decision_hygiene","type":"basis"},{"from":"premortem","to":"planning_fallacy","type":"targets"},{"from":"consider_opposite","to":"confirmation_bias","type":"targets"},{"from":"debiasing_training","to":"confirmation_bias","type":"targets"},{"from":"debiasing_training","to":"anchoring","type":"targets"},{"from":"debiasing_training","to":"bias_blind_spot","type":"targets"},{"from":"mindfulness_sunk_cost","to":"sunk_cost","type":"targets"},{"from":"nudge_defaults","to":"status_quo_bias","type":"uses"},{"from":"save_more_tomorrow","to":"loss_aversion","type":"uses"},{"from":"save_more_tomorrow","to":"present_bias","type":"uses"},{"from":"decision_hygiene","to":"noise_components","type":"targets"}]}</script>
+<script>
+(function(){
+const DATA=JSON.parse(document.getElementById('data').textContent);
+const NODES=DATA.nodes, EDGES=DATA.edges, META=DATA.meta;
+const byId=Object.fromEntries(NODES.map(n=>[n.id,n]));
+document.getElementById('stat').textContent=`${NODES.length} 个节点 · ${EDGES.length} 条边 · 数据版本 ${META.version}`;
+
+const REL={explains:'解释',derives:'派生出',component:'组成部分',unconfounds:'区分混淆',leads_to:'导致',adopted_by:'被采纳于',reduces:'减少',limits:'限制',context:'背景',produced:'产出',basis:'基础',targets:'针对',uses:'利用'};
+const EDGE_STYLE=t=>(['explains','derives','component'].includes(t)?'solid':['targets','uses','reduces','limits'].includes(t)?'dashed':'dotted');
+const SCHOOL_ORDER=['kahneman','thaler','social','critique','expertise','debias','meta'];
+const EV={solid:'solid · 重复验证过',contested:'contested · 有争议',refuted:'refuted · 已基本推翻'};
+
+/* ---------------- geometry ---------------- */
+const W=2100,H=1470;
+const NW=176,NH=50,GX=14,GY=24,SQ=120,FW=168;
+const pos={}; // id -> {x,y,w,h,kind}
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+
+function gridPlace(list,x0,y0,cols,w,h,gx,gy){
+  const rows=Math.ceil(list.length/cols);
+  list.forEach((n,i)=>{const c=Math.floor(i/rows),r=i%rows;pos[n.id]={x:x0+c*(w+gx),y:y0+r*(h+gy),w,h}});
+  return {x:x0,y:y0,w:cols*w+(cols-1)*gx,h:rows*h+(rows-1)*gy,rows};
+}
+const byStage=s=>NODES.filter(n=>n.stage===s);
+
+// band & stations
+const BAND={x:40,y:480,w:2020,h:632};
+const GRID_Y=585;
+const stations=[
+  {num:'①',zh:'看到世界',en:'PERCEIVE',cx:130,marker:true,note:'流程标记，无节点'},
+  {num:'②',zh:'估计概率',en:'ESTIMATE',cx:538,stage:'estimate',zone:'B',gx:260,cols:3},
+  {num:'③',zh:'做选择',en:'CHOOSE',cx:1178,stage:'choose',zone:'C',gx:900,cols:3},
+  {num:'④',zh:'行动',en:'ACT',cx:1590,marker:true,note:'流程标记，无节点'},
+  {num:'⑤',zh:'事后记忆',en:'REMEMBER',cx:1828,stage:'remember',zone:'F',gx:1740,cols:1},
+];
+const frames={};
+for(const s of stations){ if(s.stage){ frames[s.stage]=gridPlace(byStage(s.stage),s.gx,GRID_Y,s.cols,NW,NH,GX,GY); frames[s.stage].stage=s.stage; } }
+// top inputs
+frames.self_input=gridPlace(byStage('self_input'),260,450-(4*NH+3*GY),3,NW,NH,GX,GY);
+frames.social_input=gridPlace(byStage('social_input'),900,450-(5*NH+4*GY),3,NW,NH,GX,GY);
+// legend panel (H + I chips)
+const LG={x:1596,y:104,w:2*NW+GX+40,h:346};
+const CH=34,CGY=10;
+gridPlace(byStage('noise'),LG.x+20,LG.y+50,2,NW,CH,GX,CGY);
+gridPlace(byStage('meta'),LG.x+20,LG.y+50+2*(CH+CGY)+42,2,NW,CH,GX,CGY);
+// environment labels (inside band bottom strip)
+const ENV_GROUPS=[
+  {title:'友善环境 · 反馈快、准、可学',ids:['intuitive_expertise','naturalistic_decision_making','deliberate_practice'],x:64,anchor:'start'},
+  {title:'两者之间 · 判断的效度取决于任务',ids:['kind_wicked','expert_task_characteristics'],x:1050,anchor:'middle'},
+  {title:'恶劣环境 · 反馈迟、缺、误导',ids:['clinical_vs_statistical','expert_political_judgment','superforecasting'],x:2036,anchor:'end'},
+];
+const ENV_Y=1048, ENV_DY=21;
+ENV_GROUPS.forEach(g=>g.ids.forEach((id,i)=>{pos[id]={x:g.x,y:ENV_Y+i*ENV_DY,w:0,h:0,env:true,anchor:g.anchor}}));
+// debias squares
+const DEB_Y=1200; byStage('debias').forEach((n,i)=>pos[n.id]={x:260+i*(SQ+24),y:DEB_Y,w:SQ,h:SQ});
+// foundation bars
+const FND_Y=1380; byStage('foundation').forEach((n,i)=>pos[n.id]={x:60+i*(FW+12),y:FND_Y,w:FW,h:NH});
+const LOOP_Y=1144;
+
+/* ---------------- build svg ---------------- */
+const world=document.getElementById('world');
+const out=[];
+// background band
+out.push(`<rect class="band" x="${BAND.x}" y="${BAND.y}" width="${BAND.w}" height="${BAND.h}" rx="6"/>`);
+out.push(`<text class="band-edge" x="${BAND.x+16}" y="${BAND.y+18}">G 区 · 直觉与环境 ── 左端：友善环境</text>`);
+out.push(`<text class="band-edge" x="${BAND.x+BAND.w-16}" y="${BAND.y+18}" text-anchor="end">右端：恶劣环境 ── 直觉在这里不可信</text>`);
+
+// halos behind stations
+let seed=7; const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647};
+for(const s of stations){ if(!s.stage) continue; const f=frames[s.stage]; const cx=f.x+f.w/2, cy=f.y+f.h/2;
+  out.push(`<ellipse class="halo-blob" cx="${cx}" cy="${cy}" rx="${f.w/2+44}" ry="${f.h/2+40}"/>`);
+  for(let i=0;i<70;i++){const a=rnd()*Math.PI*2, r=0.5+rnd()*0.5; const px=cx+Math.cos(a)*(f.w/2+8+r*44), py=cy+Math.sin(a)*(f.h/2+8+r*40); out.push(`<circle class="halo-dot" cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${(1+rnd()*1.6).toFixed(1)}"/>`)}
+}
+
+// layer labels
+out.push(`<text class="layer-label" x="60" y="86">上层 · 输入污染源：流进流水线的"脏水"，箭头指向 ② ③</text>`);
+
+// zone frames + titles
+function zoneFrame(f,code,pad,title,sub){
+  const x=f.x-pad,y=f.y-pad,w=f.w+pad*2,h=f.h+pad*2;
+  out.push(`<rect class="zone-frame" x="${x}" y="${y}" width="${w}" height="${h}" rx="10"/>`);
+  out.push(`<text class="zone-title" x="${x}" y="${y-8}"><tspan class="code">${code} 区</tspan> · ${esc(title)}</text>`);
+  out.push(`<text class="zone-big" x="${x+w/2}" y="${y+h/2-4}">${code} 区 · ${esc(title.split('：')[0])}</text>`);
+  out.push(`<text class="zone-big-sub" x="${x+w/2}" y="${y+h/2+22}">${esc(sub||title.split('：')[1]||'')}</text>`);
+}
+zoneFrame(frames.self_input,'D',12,META.zones.D);
+zoneFrame(frames.social_input,'E',12,META.zones.E);
+zoneFrame(frames.estimate,'B',12,META.zones.B);
+zoneFrame(frames.choose,'C',12,META.zones.C);
+zoneFrame(frames.remember,'F',12,META.zones.F);
+{const f={x:260,y:DEB_Y,w:10*SQ+9*24,h:SQ}; zoneFrame(f,'J',12,META.zones.J+' ── 下层：方块，虚线连到它作用的对象');}
+{const f={x:60,y:FND_Y,w:11*FW+10*12,h:NH}; zoneFrame(f,'A',10,META.zones.A+' ── 地基：横贯全图底部');}
+// G big label (level 1)
+out.push(`<text class="zone-big" x="${BAND.x+BAND.w/2}" y="${ENV_Y+20}">G 区 · 直觉与环境</text>`);
+out.push(`<text class="zone-big-sub" x="${BAND.x+BAND.w/2}" y="${ENV_Y+46}">${esc(META.zones.G.split('：')[1])} ── 背景色带：左浅右深</text>`);
+
+// input arrows D/E -> ② ③
+const dB=frames.self_input, eB=frames.social_input;
+out.push(`<path class="input-arrow" d="M${dB.x+dB.w/2} ${dB.y+dB.h+12} V ${BAND.y-4}"/>`);
+out.push(`<path class="input-arrow" d="M${eB.x+eB.w/2} ${eB.y+eB.h+12} V ${BAND.y-4}"/>`);
+out.push(`<path class="input-arrow secondary" d="M${dB.x+dB.w-40} ${dB.y+dB.h+12} C ${dB.x+dB.w+40} ${BAND.y-30}, ${eB.x+eB.w/2-160} ${BAND.y-60}, ${eB.x+eB.w/2-60} ${BAND.y-4}"/>`);
+out.push(`<path class="input-arrow secondary" d="M${eB.x+40} ${eB.y+eB.h+12} C ${eB.x-40} ${BAND.y-30}, ${dB.x+dB.w/2+160} ${BAND.y-60}, ${dB.x+dB.w/2+60} ${BAND.y-4}"/>`);
+
+// stations header row
+const SY=BAND.y+42;
+stations.forEach((s,i)=>{
+  const cls=s.marker?'station marker-station':'station';
+  out.push(`<g class="${cls}" data-stage="${s.stage||''}">`);
+  out.push(`<text class="station-num" x="${s.cx-62}" y="${SY+8}">${s.num}</text>`);
+  out.push(`<text class="station-zh" x="${s.cx-28}" y="${SY+6}">${s.zh}</text>`);
+  out.push(`<text class="station-en" x="${s.cx-28}" y="${SY+24}">${s.en}</text>`);
+  if(s.marker) out.push(`<text class="marker-note" x="${s.cx-28}" y="${SY+42}">${s.note}</text>`);
+  out.push(`<rect class="station-hit" x="${s.cx-75}" y="${SY-26}" width="150" height="76"/>`);
+  out.push(`</g>`);
+  if(i<stations.length-1){const n=stations[i+1]; out.push(`<path class="flow-arrow" d="M${s.cx+82} ${SY} H ${n.cx-80}"/>`);}
+});
+
+// environment labels
+for(const g of ENV_GROUPS){
+  out.push(`<text class="env-group-title" x="${g.x}" y="${ENV_Y-14}" text-anchor="${g.anchor}">${esc(g.title)}</text>`);
+  g.ids.forEach((id,i)=>{const n=byId[id]; const y=ENV_Y+i*ENV_DY; const dx=g.anchor==='start'?14:g.anchor==='end'?-14:0;
+    const dot=g.anchor==='end'?g.x:g.anchor==='start'?g.x:g.x-150;
+    out.push(`<g class="env" data-id="${id}" data-school="${n.school}" data-evidence="${n.evidence}" data-stage="environment">`);
+    out.push(`<rect x="${g.anchor==='end'?g.x-330:g.anchor==='start'?g.x-6:g.x-165}" y="${y-13}" width="336" height="${ENV_DY}" fill="transparent"/>`);
+    if(g.anchor==='middle'){ out.push(`<circle cx="${g.x-150}" cy="${y-4}" r="4"/><text x="${g.x-140}" y="${y}"><tspan class="zh">${esc(n.zh)}</tspan> <tspan class="en">${esc(n.en)}</tspan> <tspan class="yr">${n.year}</tspan></text>`); }
+    else if(g.anchor==='start'){ out.push(`<circle cx="${g.x}" cy="${y-4}" r="4"/><text x="${g.x+12}" y="${y}"><tspan class="zh">${esc(n.zh)}</tspan> <tspan class="en">${esc(n.en)}</tspan> <tspan class="yr">${n.year}</tspan></text>`); }
+    else { out.push(`<circle cx="${g.x}" cy="${y-4}" r="4"/><text x="${g.x-12}" y="${y}" text-anchor="end"><tspan class="zh">${esc(n.zh)}</tspan> <tspan class="en">${esc(n.en)}</tspan> <tspan class="yr">${n.year}</tspan></text>`); }
+    out.push(`</g>`);
+  });
+}
+
+// feedback loop
+const s2=stations[1], s5=stations[4];
+const f5=frames.remember, f2=frames.estimate;
+out.push(`<path class="loop" d="M${s5.cx} ${f5.y+f5.h+14} V ${LOOP_Y} H 1610"/>`);
+out.push(`<path class="loop" d="M1500 ${LOOP_Y} H ${s2.cx} V ${f2.y+f2.h+18}"/>`);
+out.push(`<path class="loop-break" d="M1518 ${LOOP_Y-9} l 8 18 M1592 ${LOOP_Y-9} l 8 18"/>`);
+out.push(`<text class="loop-label warn" x="1555" y="${LOOP_Y+24}" text-anchor="middle">恶劣环境段：回路断裂</text>`);
+out.push(`<text class="loop-label" x="${(s2.cx+1500)/2}" y="${LOOP_Y-8}" text-anchor="middle">⑤ → ② 反馈回路 ── 唯一的修复杠杆是"人为制造反馈"</text>`);
+
+// legend panel in svg (H + I)
+out.push(`<rect class="lg-panel" x="${LG.x}" y="${LG.y}" width="${LG.w}" height="${LG.h}" rx="10"/>`);
+out.push(`<text class="zone-title" x="${LG.x}" y="${LG.y-8}"><tspan class="code">H · I 区</tspan> · 图例：噪声 与 证据可靠性（不占流水线位置）</text>`);
+out.push(`<text class="lg-title" x="${LG.x+20}" y="${LG.y+26}">H 区 · 噪声：每站周围的散布晕</text>`);
+out.push(`<text class="lg-note" x="${LG.x+20}" y="${LG.y+40}">晕越散，判断越随机；偏差是系统性的，噪声是随机的</text>`);
+out.push(`<text class="lg-title" x="${LG.x+20}" y="${LG.y+50+2*(CH+CGY)+18}">I 区 · 证据可靠性：领域自检</text>`);
+out.push(`<text class="lg-note" x="${LG.x+20}" y="${LG.y+50+2*(CH+CGY)+32}">灰色删除线 = 已推翻，留在图上提醒"这块砖别用"</text>`);
+out.push(`<text class="zone-big" x="${LG.x+LG.w/2}" y="${LG.y+LG.h/2-4}">H · I 区</text>`);
+out.push(`<text class="zone-big-sub" x="${LG.x+LG.w/2}" y="${LG.y+LG.h/2+22}">噪声 · 证据可靠性（图例层）</text>`);
+
+// edges
+function anchor(a,b){ // point on a's rect boundary toward b center
+  if(a.env){return {x:a.ax,y:a.ay}}
+  const cx=a.x+a.w/2, cy=a.y+a.h/2, tx=b.x+b.w/2, ty=b.y+b.h/2;
+  const dx=tx-cx, dy=ty-cy; if(!dx&&!dy) return {x:cx,y:cy};
+  const sx=a.w/2/Math.abs(dx||1e-9), sy=a.h/2/Math.abs(dy||1e-9); const t=Math.min(sx,sy);
+  return {x:cx+dx*t,y:cy+dy*t};
+}
+// env label anchors: point to the dot
+for(const g of ENV_GROUPS) g.ids.forEach((id,i)=>{const p=pos[id]; p.ax=(g.anchor==='middle'?g.x-150:g.x); p.ay=ENV_Y+i*ENV_DY-4; p.x=p.ax; p.y=p.ay;});
+out.push(`<g id="edges">`);
+EDGES.forEach((e,i)=>{
+  const a=pos[e.from], b=pos[e.to]; if(!a||!b) return;
+  const p=anchor(a,b), q=anchor(b,a);
+  // shorten end for arrowhead
+  const dx=q.x-p.x, dy=q.y-p.y, L=Math.hypot(dx,dy)||1; const k=(L-3)/L; const qx=p.x+dx*k, qy=p.y+dy*k;
+  let d;
+  if(Math.abs(dx)<2||Math.abs(dy)<2||L<160) d=`M${p.x.toFixed(1)} ${p.y.toFixed(1)} L${qx.toFixed(1)} ${qy.toFixed(1)}`;
+  else { const c1x=p.x, c1y=p.y+dy*0.5, c2x=qx, c2y=qy-dy*0.5; d=`M${p.x.toFixed(1)} ${p.y.toFixed(1)} C ${c1x.toFixed(1)} ${c1y.toFixed(1)}, ${c2x.toFixed(1)} ${c2y.toFixed(1)}, ${qx.toFixed(1)} ${qy.toFixed(1)}`; }
+  out.push(`<path class="edge ${EDGE_STYLE(e.type)}" data-i="${i}" data-from="${e.from}" data-to="${e.to}" d="${d}"><title>${esc(byId[e.from].zh)} → ${REL[e.type]||e.type} → ${esc(byId[e.to].zh)}</title></path>`);
+});
+out.push(`</g>`);
+
+// nodes
+out.push(`<g id="nodes">`);
+for(const n of NODES){
+  const p=pos[n.id]; if(!p||p.env) continue;
+  const kind=n.stage==='debias'?'debias':n.stage==='foundation'?'foundation':(n.stage==='noise'||n.stage==='meta')?'chip':'bias';
+  const lblCls=kind==='debias'?'lbl sq':kind==='chip'?'lbl chip':'lbl';
+  out.push(`<g class="node ${kind}" data-id="${n.id}" data-stage="${n.stage}" data-school="${n.school}" data-evidence="${n.evidence}" transform="translate(${p.x} ${p.y})" tabindex="0" role="button" aria-label="${esc(n.zh)}">`);
+  out.push(`<rect width="${p.w}" height="${p.h}"/>`);
+  out.push(`<foreignObject width="${p.w}" height="${p.h}"><div class="${lblCls}"><div class="zh">${esc(n.zh)}</div><div class="sub"><span class="en">${esc(n.en)}</span><span class="yr">${n.year}</span></div></div></foreignObject>`);
+  if(kind!=='chip') out.push(`<foreignObject class="oneliner" y="${p.h}" width="${kind==='debias'?p.w+24:p.w}" height="${GY}"><div>${esc(n.one_liner)}</div></foreignObject>`);
+  out.push(`</g>`);
+}
+out.push(`</g>`);
+world.innerHTML=out.join('');
+
+/* ---------------- legend html ---------------- */
+const lg=document.getElementById('lgSchools');
+lg.innerHTML=SCHOOL_ORDER.map(s=>`<li><span class="sw" style="--c:var(--s-${s})"></span><span>${esc(META.schools[s].split('（')[0])}</span><span class="ex">${s}</span></li>`).join('');
+const sel=document.getElementById('schoolSel');
+SCHOOL_ORDER.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=META.schools[s].split('（')[0]+` (${s})`;sel.appendChild(o)});
+
+/* ---------------- pan / zoom ---------------- */
+const svg=document.getElementById('map'), stage=document.getElementById('stage');
+let k=1,tx=0,ty=0;
+function apply(){ world.setAttribute('transform',`translate(${tx} ${ty}) scale(${k})`); const lvl=k<0.5?1:k<1.35?2:3; svg.dataset.level=lvl; ['z1','z2','z3'].forEach((id,i)=>document.getElementById(id).setAttribute('aria-pressed',String(i+1===lvl))); }
+function fit(pad){ const r=stage.getBoundingClientRect(); k=Math.min((r.width-pad*2)/W,(r.height-pad*2)/H); tx=(r.width-W*k)/2; ty=(r.height-H*k)/2; apply(); }
+function zoomTo(nk,cx,cy){ const r=stage.getBoundingClientRect(); cx=cx??r.width/2; cy=cy??r.height/2; nk=Math.max(0.18,Math.min(3.2,nk)); tx=cx-(cx-tx)*nk/k; ty=cy-(cy-ty)*nk/k; k=nk; apply(); }
+function centerOn(wx,wy,nk){ const r=stage.getBoundingClientRect(); k=nk??k; tx=r.width/2-wx*k; ty=r.height/2-wy*k; apply(); }
+stage.addEventListener('wheel',e=>{ e.preventDefault(); const r=stage.getBoundingClientRect(); const f=Math.exp(-e.deltaY*0.0016); zoomTo(k*f,e.clientX-r.left,e.clientY-r.top); },{passive:false});
+let drag=null;
+stage.addEventListener('pointerdown',e=>{ if(e.target.closest('#card,#legend,#hint')) return; drag={x:e.clientX,y:e.clientY,tx,ty,moved:false,target:e.target}; stage.setPointerCapture(e.pointerId); });
+stage.addEventListener('pointermove',e=>{ if(!drag) return; const dx=e.clientX-drag.x, dy=e.clientY-drag.y; if(Math.hypot(dx,dy)>3){drag.moved=true;stage.classList.add('dragging')} tx=drag.tx+dx; ty=drag.ty+dy; apply(); });
+stage.addEventListener('pointerup',e=>{ const d=drag; drag=null; stage.classList.remove('dragging'); if(d&&!d.moved) handleClick(d.target); });
+stage.addEventListener('pointercancel',()=>{drag=null;stage.classList.remove('dragging')});
+document.getElementById('z1').onclick=()=>{ fit(30); zoomTo(Math.min(k,0.44)); };
+document.getElementById('z2').onclick=()=>fit(30);
+document.getElementById('z3').onclick=()=>{ const f=frames.estimate; centerOn(f.x+f.w/2+220,f.y+f.h/2,1.5); };
+window.addEventListener('resize',()=>fit(30));
+window.addEventListener('keydown',e=>{ if(e.key==='Escape'){clearActive();closeCard();} else if(e.key==='+'||e.key==='='){zoomTo(k*1.2)} else if(e.key==='-'){zoomTo(k/1.2)} });
+
+/* ---------------- highlight / selection ---------------- */
+const nodeEls=[...world.querySelectorAll('.node,.env')], edgeEls=[...world.querySelectorAll('.edge')];
+const nodeEl=id=>world.querySelector(`.node[data-id="${id}"],.env[data-id="${id}"]`);
+let activeId=null, hoverStage=null;
+function paint(){
+  const onlyK=document.getElementById('onlyK').checked, school=sel.value, hard=document.getElementById('hardOnly').checked;
+  const hiddenIds=new Set(), fadedIds=new Set();
+  for(const n of NODES){ if(hard&&n.evidence!=='solid') hiddenIds.add(n.id); if(onlyK?n.school!=='kahneman':(school&&n.school!==school)) fadedIds.add(n.id); }
+  let hiSet=null;
+  if(activeId){ hiSet=new Set([activeId]); EDGES.forEach(e=>{ if(e.from===activeId) hiSet.add(e.to); if(e.to===activeId) hiSet.add(e.from); }); }
+  else if(hoverStage){ hiSet=new Set(NODES.filter(n=>n.stage===hoverStage).map(n=>n.id)); EDGES.forEach(e=>{ if(hiSet.has(e.to)&&byId[e.from].stage==='debias') hiSet.add(e.from); }); }
+  for(const el of nodeEls){ const id=el.dataset.id; el.classList.toggle('hidden',hiddenIds.has(id)); el.classList.toggle('faded',fadedIds.has(id)&&!(hiSet&&hiSet.has(id)&&activeId===id)); el.classList.toggle('dim',!!hiSet&&!hiSet.has(id)); el.classList.toggle('active',id===activeId); }
+  for(const el of edgeEls){ const a=el.dataset.from,b=el.dataset.to; const hidden=hiddenIds.has(a)||hiddenIds.has(b); el.classList.toggle('hidden',hidden);
+    let hi=false, dim=false;
+    if(activeId){ hi=(a===activeId||b===activeId); dim=!hi; }
+    else if(hoverStage){ hi=hiSet.has(a)&&hiSet.has(b); dim=!hi; }
+    if(!hi&&(fadedIds.has(a)||fadedIds.has(b))) dim=true;
+    el.classList.toggle('hi',hi); el.classList.toggle('dim',dim); }
+}
+['onlyK','hardOnly'].forEach(id=>document.getElementById(id).addEventListener('change',paint));
+sel.addEventListener('change',()=>{ if(sel.value) document.getElementById('onlyK').checked=false; paint(); });
+document.getElementById('onlyK').addEventListener('change',()=>{ if(document.getElementById('onlyK').checked) sel.value=''; paint(); });
+world.addEventListener('pointerover',e=>{ const st=e.target.closest('.station'); if(st&&st.dataset.stage){ hoverStage=st.dataset.stage; paint(); } });
+world.addEventListener('pointerout',e=>{ const st=e.target.closest('.station'); if(st&&hoverStage){ hoverStage=null; paint(); } });
+function handleClick(t){ const el=t.closest('.node,.env'); if(el){ select(el.dataset.id); } else if(!t.closest('#card,#legend,#hint,.station')){ clearActive(); closeCard(); } }
+world.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('node')){ e.preventDefault(); select(e.target.dataset.id); } });
+function clearActive(){ activeId=null; paint(); }
+function select(id){ activeId=id; paint(); openCard(id); }
+
+/* ---------------- card ---------------- */
+const card=document.getElementById('card'), body=document.getElementById('cardBody');
+card.querySelector('.close').onclick=()=>{ clearActive(); closeCard(); };
+function closeCard(){ card.classList.remove('open'); }
+function openCard(id){
+  const n=byId[id]; const c=`var(--s-${n.school})`;
+  const conns=[]; EDGES.forEach(e=>{ if(e.from===id) conns.push({dir:'→',rel:e.type,other:e.to}); if(e.to===id) conns.push({dir:'←',rel:e.type,other:e.from}); });
+  const stageName=(META.stages[n.stage]||n.stage).replace(/^流水线/,'');
+  body.innerHTML=`
+    <div class="kicker" style="--c:${c}">
+      <span class="tag"><span class="dot"></span>${esc(META.schools[n.school].split('（')[0])}</span>
+      <span class="tag ev-${n.evidence}">${EV[n.evidence]}</span>
+    </div>
+    <h2>${esc(n.zh)}</h2>
+    <p class="en">${esc(n.en)}<span class="yr">${n.year}</span></p>
+    <p class="liner" style="--c:${c}">${esc(n.one_liner)}</p>
+    <dl>
+      <dt>出处</dt><dd>${esc(n.source)}</dd>
+      <dt>所在区</dt><dd>${n.zone} 区 · ${esc(META.zones[n.zone])}</dd>
+      <dt>流水线位置</dt><dd>${esc(stageName)}</dd>
+      <dt>学派</dt><dd>${esc(META.schools[n.school])}</dd>
+    </dl>
+    <div class="conn"><h3>相连节点 · ${conns.length}</h3>
+      ${conns.length?`<ul>${conns.map(x=>{const o=byId[x.other];return `<li><button data-go="${o.id}"><span class="dot" style="background:var(--s-${o.school})"></span><span class="rel">${x.dir} ${REL[x.rel]||x.rel}</span><span>${esc(o.zh)}</span><span class="arr">›</span></button></li>`}).join('')}</ul>`:`<p class="empty">数据中没有与它相连的边。</p>`}
+    </div>`;
+  body.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{ const id=b.dataset.go; select(id); const p=pos[id]; if(p){ const r=stage.getBoundingClientRect(); const wx=p.x+(p.w||0)/2, wy=p.y+(p.h||0)/2; const sx=wx*k+tx, sy=wy*k+ty; if(sx<40||sx>r.width-400||sy<40||sy>r.height-40) centerOn(wx,wy,Math.max(k,0.8)); } });
+  card.classList.add('open');
+}
+
+fit(30);
+paint();
+})();
+</script>
+</body>
+</html>

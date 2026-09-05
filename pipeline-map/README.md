@@ -2,7 +2,7 @@
 
 认知偏差知识地图的交互式可视化，按 `PLAN.md`（方案 1）实现，数据严格来自 `bias_map_data.json`（101 个节点、35 条边，未增删）。
 
-- `index.html` — 单文件页面，直接用浏览器打开即可；无构建步骤，无依赖（字体来自 Google Fonts，离线时回退到系统中文字体）。
+- 页面在仓库根目录 `index.html`（方便 GitHub Pages 直接从根目录发布），直接用浏览器打开即可；无构建步骤，无依赖（字体来自 Google Fonts，离线时回退到系统中文字体）。
 - `bias_map_data.json` — 数据源。页面内嵌了一份同样的数据；修改数据后需重新注入 `<script id="data">` 中的 JSON。
 - `PLAN.md` — 设计方案。
 
