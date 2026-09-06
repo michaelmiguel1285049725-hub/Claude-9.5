@@ -18,3 +18,21 @@
 | "骨架"层级一屏放下 | ✅ 1440×900：缩放 0.49；390×844（手机）：缩放 0.237，整图入屏 |
 
 说明：H、I 两区的 8 个概念现在位于图例面板而非画布，涉及它们的 4 条边（clinical_vs_statistical→decision_hygiene、decision_hygiene→noise_components、adversarial_collaboration→intuitive_expertise、adversarial_collaboration→income_wellbeing）无法在画布上画出，但仍完整保留在数据里，并在节点卡片的"相连节点"列表中显示，点击可跳到图例中的对应项。画布上可画的边为 31 条。
+
+# 手机适配检查清单（2026-09-06）
+
+| 项目 | 结果 |
+|---|---|
+| 视口 meta | ✅ `width=device-width, initial-scale=1, viewport-fit=cover` |
+| 触屏点击目标 ≥ 44×44 | ✅ 390 视口下列表页所有可见按钮 / 分组标题 / 输入框最小边 44px；`@media (pointer:coarse)` 下地图控件同样放大 |
+| < 768px 默认列表模式 | ✅ 打开即 `html.m-list`，地图不渲染；10 个分组（A→J，`meta.zones` 中文名）默认全部展开，101 项 |
+| 搜索 | ✅ 匹配 zh / en / one_liner，输入即过滤，"锚定"只剩 1 项 |
+| 列表项 | ✅ 学派色竖条 · 中文名 · 英文名+年份 · contested ⚠️ · refuted ✗ 灰色删除线 |
+| 全屏卡片 | ✅ 中英文名、一句话、出处、证据、学派、所属区、相关概念（双向、带关系类型）；点相关概念跳转；"← 返回"回列表，滚动位置（600→600）与搜索词保留 |
+| 查看地图 / 返回列表 | ✅ 列表页右上"查看地图"；地图上左上"← 返回列表"；`?view=map` 直接进地图 |
+| 双指缩放 | ✅ CDP 真实触摸事件：两指从 100px 拉到 200px，缩放 0.267 → 0.534（×2），中点为缩放中心 |
+| 单指平移 | ✅ transform 随拖动变化 |
+| 双击放大一级 | ✅ 0.267 → 0.427（×1.6） |
+| manifest / 图标 | ✅ `manifest.json`（name/short_name 偏见地图，standalone，start_url ./），icon-192 / icon-512，`apple-mobile-web-app-capable`、`apple-touch-icon`；无 Service Worker |
+| 电脑端零变化 | ✅ 1440×900 修改前后截图 PNG 字节完全一致；地图逻辑的 diff 仅限触摸手势分支和一个 `fitAxis` 导出，鼠标 / 滚轮 / 图层 / 卡片 / 连线代码未改动 |
+| 外部请求 | ✅ 0 |
