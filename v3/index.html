@@ -22,6 +22,7 @@ try{if(localStorage.getItem('bm.unlocked')!=='1')h.classList.add('locked');}catc
   --edge:#8d939c; --edge-hi:#1c1f24;
   --s-kahneman:#e2684a; --s-thaler:#3c53cd; --s-social:#b56ae7; --s-critique:#3ca694; --s-expertise:#796006; --s-debias:#7d8089; --s-meta:#7d8089;
   --shadow:0 8px 28px rgba(28,31,36,.14);
+  --tag-src-bg:#dcf2e4; --tag-src-fg:#1b6a3d; --tag-src-line:#3a9a66; --tag-proc-bg:#fdebd3; --tag-proc-fg:#8a4a00;
   --sans:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif;
   --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
 }
@@ -34,6 +35,7 @@ try{if(localStorage.getItem('bm.unlocked')!=='1')h.classList.add('locked');}catc
     --edge:#6d737d; --edge-hi:#e6e8eb;
     --s-kahneman:#e2684a; --s-thaler:#3c53cd; --s-social:#b56ae7; --s-critique:#3ca694; --s-expertise:#71640b; --s-debias:#9a9da6; --s-meta:#9a9da6;
     --shadow:0 8px 28px rgba(0,0,0,.5);
+    --tag-src-bg:#243d36; --tag-src-fg:#9fe3bd; --tag-src-line:#4fb37c; --tag-proc-bg:#4a3a2b; --tag-proc-fg:#f5c07a;
   }
 }
 :root[data-theme="dark"]{
@@ -44,6 +46,7 @@ try{if(localStorage.getItem('bm.unlocked')!=='1')h.classList.add('locked');}catc
   --edge:#6d737d; --edge-hi:#e6e8eb;
   --s-kahneman:#e2684a; --s-thaler:#3c53cd; --s-social:#b56ae7; --s-critique:#3ca694; --s-expertise:#71640b; --s-debias:#9a9da6; --s-meta:#9a9da6;
   --shadow:0 8px 28px rgba(0,0,0,.5);
+    --tag-src-bg:#243d36; --tag-src-fg:#9fe3bd; --tag-src-line:#4fb37c; --tag-proc-bg:#4a3a2b; --tag-proc-fg:#f5c07a;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -336,6 +339,29 @@ textarea.bm-ta,.bm-ask textarea,.bm-note textarea,.bm-journal-body textarea,#bm-
 .bm-md pre code{background:transparent;padding:0}
 .bm-md blockquote{margin:6px 0;padding:4px 10px;border-left:3px solid var(--line);color:var(--ink-2)}
 .bm-md a{color:var(--s-thaler)}
+/* 概念卡片下半部：结构化语料 */
+.bm-sep{border:0;border-top:1px solid var(--line);margin:16px 0 14px}
+.bm-corpus{font-size:14px;line-height:1.7}
+.bm-corpus .bm-md p{margin:0 0 10px;font-size:14px;line-height:1.7}
+.bm-corpus .bm-md li{margin:4px 0;line-height:1.65}
+.bm-lead{margin:0 0 12px;padding:10px 14px;border-left:3px solid var(--tag-src-line);background:var(--panel-2);border-radius:0 10px 10px 0;font-size:15px;line-height:1.65}
+.bm-lead .bm-md p{font-size:15px;line-height:1.65}
+.bm-legend{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 12px;font-size:12px;color:var(--muted)}
+.bm-legend span{display:inline-flex;align-items:center;gap:5px}
+.bm-tag{display:inline-block;font:500 11px/1 var(--sans);padding:3px 7px;border-radius:999px;vertical-align:.12em;margin-right:5px;letter-spacing:.02em;white-space:nowrap}
+.bm-tag.src{background:var(--tag-src-bg);color:var(--tag-src-fg)}
+.bm-tag.proc{background:var(--tag-proc-bg);color:var(--tag-proc-fg)}
+.bm-tag+.bm-tag{margin-left:-2px}
+.bm-sec{border:1px solid var(--line-2);border-radius:10px;margin:0 0 8px;background:var(--panel)}
+.bm-sec>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;font:600 13.5px var(--sans);color:var(--ink);min-height:40px}
+.bm-sec>summary::-webkit-details-marker{display:none}
+.bm-sec>summary::after{content:"";width:8px;height:8px;border-right:1.6px solid var(--muted);border-bottom:1.6px solid var(--muted);transform:rotate(-45deg);margin-right:4px;transition:transform .15s;flex:none}
+.bm-sec[open]>summary::after{transform:rotate(45deg)}
+.bm-sec>.bm-sec-body{padding:2px 12px 10px;border-top:1px solid var(--line-2)}
+.bm-sec.mine{border-style:dashed;border-color:var(--line)}
+.bm-sec.mine>summary{color:var(--ink-2)}
+.bm-corpus-missing{color:var(--muted);font-size:13px;margin:0}
+.bm-corpus-missing code{font:400 11px var(--mono);background:var(--panel-2);padding:1px 4px;border-radius:4px}
 .bm-notelist{margin-top:16px;border-top:1px solid var(--line-2);padding-top:10px}
 .bm-notelist h4{margin:0 0 6px;font:500 11px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .bm-notelist ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
@@ -784,20 +810,51 @@ const histKey=id=>`bm.chat.${id}`;
 function mountTabs(container,id,conceptHtml){
   const n=byId[id];
   container.innerHTML=`<div class="bm-tabs" role="tablist">
-      <button role="tab" data-tab="concept" aria-selected="true">概念</button><button role="tab" data-tab="corpus">深入</button><button role="tab" data-tab="ai">问 AI</button><button role="tab" data-tab="notes">笔记</button></div>
-    <div class="bm-pane" data-pane="concept">${conceptHtml}</div>
-    <div class="bm-pane" data-pane="corpus" hidden></div>
+      <button role="tab" data-tab="concept" aria-selected="true">概念</button><button role="tab" data-tab="ai">问 AI</button><button role="tab" data-tab="notes">笔记</button></div>
+    <div class="bm-pane" data-pane="concept">${conceptHtml}<hr class="bm-sep"><div class="bm-corpus" data-corpus><p class="bm-muted">读取语料…</p></div></div>
     <div class="bm-pane" data-pane="ai" hidden></div>
     <div class="bm-pane" data-pane="notes" hidden></div>`;
   const panes={}; container.querySelectorAll('.bm-pane').forEach(p=>panes[p.dataset.pane]=p);
   const loaded={};
   container.querySelector('.bm-tabs').addEventListener('click',e=>{ const b=e.target.closest('[data-tab]'); if(!b) return; const t=b.dataset.tab;
     container.querySelectorAll('[role=tab]').forEach(x=>x.setAttribute('aria-selected',String(x===b))); Object.entries(panes).forEach(([k,p])=>p.hidden=k!==t);
-    if(!loaded[t]){ loaded[t]=true; ({corpus:renderCorpus,ai:renderAI,notes:renderNotes})[t]?.(panes[t],n); } });
+    if(!loaded[t]){ loaded[t]=true; ({ai:renderAI,notes:renderNotes})[t]?.(panes[t],n); } });
+  renderCorpus(container.querySelector('[data-corpus]'),n);   // 语料直接接在概念信息下方，往下滑就能看到
 }
 const degraded=(extra)=>`<div class="bm-degraded"><p>${NOT_CONFIGURED}</p>${extra?`<p class="bm-muted small">${extra}</p>`:''}<button type="button" class="bm-link" data-open-settings>打开设置</button></div>`;
 
-async function renderCorpus(pane,n){ pane.innerHTML='<p class="bm-muted">读取语料…</p>'; const t=await fetchCorpus(n.id); pane.innerHTML=t?`<div class="bm-md">${md(t)}</div>`:`<p class="bm-muted">语料尚未编写</p><p class="bm-muted small">把 <code>corpus/${esc(n.id)}.md</code> 放进站点即可显示。</p>`; }
+/* 语料文件格式固定：首两行（标题、英文名·来源）已在概念区显示，跳过；"> 标记说明"跳过；
+   "## 一句话"做成醒目引用块；其余小节做成可折叠卡片，折叠状态按节点存 localStorage。 */
+const CORPUS_OPEN_DEFAULT={'来源与实验':true,'机制':true,'边界与争议':false,'与其他节点的关系':false,'我的思考':false};
+const tagify=html=>html.replace(/【来源\+加工】/g,'<span class="bm-tag src">来源</span><span class="bm-tag proc">加工</span>').replace(/【来源】/g,'<span class="bm-tag src">来源</span>').replace(/【加工】/g,'<span class="bm-tag proc">加工</span>');
+function parseCorpus(text){
+  const lines=String(text).replace(/\r/g,'').split('\n'); let i=0;
+  while(i<lines.length&&/^\s*$/.test(lines[i])) i++;
+  if(i<lines.length&&/^#\s/.test(lines[i])) i++;                                  // 第一行：# X-N · 标题
+  while(i<lines.length&&/^\s*$/.test(lines[i])) i++;
+  if(i<lines.length&&/^\*\*.+\*\*\s*·/.test(lines[i])) i++;                       // 第二行：**英文名** · 来源
+  const sections=[]; let cur={title:'',body:[]};
+  for(;i<lines.length;i++){ const l=lines[i];
+    if(/^>\s*标记说明/.test(l)) continue;                                            // 标记说明引用块跳过
+    const m=l.match(/^##\s+(.+?)\s*$/);
+    if(m){ if(cur.title||cur.body.some(x=>x.trim())) sections.push(cur); cur={title:m[1],body:[]}; }
+    else cur.body.push(l); }
+  if(cur.title||cur.body.some(x=>x.trim())) sections.push(cur);
+  return sections;
+}
+async function renderCorpus(el,n){
+  const t=await fetchCorpus(n.id);
+  if(!t){ el.innerHTML=`<p class="bm-corpus-missing">语料尚未编写 · 把 <code>corpus/${esc(n.id)}.md</code> 放进站点即可显示。</p>`; return; }
+  const secs=parseCorpus(t), lead=secs.find(x=>x.title==='一句话'), rest=secs.filter(x=>x!==lead);
+  const openKey=`bm.corpusOpen.${n.id}`, openState=store.get(openKey,{});
+  const isOpen=title=>title in openState?!!openState[title]:(title in CORPUS_OPEN_DEFAULT?CORPUS_OPEN_DEFAULT[title]:true);
+  let html='';
+  if(lead) html+=`<blockquote class="bm-lead"><div class="bm-md">${tagify(md(lead.body.join('\n')))}</div></blockquote>`;
+  html+=`<div class="bm-legend"><span><i class="bm-tag src">来源</i>文献里的内容</span><span><i class="bm-tag proc">加工</i>Claude 的归纳或推断，可质疑</span></div>`;
+  html+=rest.map(sec=>`<details class="bm-sec${sec.title==='我的思考'?' mine':''}" data-sec="${esc(sec.title)}"${isOpen(sec.title)?' open':''}><summary>${esc(sec.title||'（无标题）')}</summary><div class="bm-sec-body bm-md">${tagify(md(sec.body.join('\n')))}</div></details>`).join('');
+  el.innerHTML=html;
+  el.querySelectorAll('details.bm-sec').forEach(d=>d.addEventListener('toggle',()=>{ const st=store.get(openKey,{}); st[d.dataset.sec]=d.open; store.set(openKey,st); }));
+}
 
 function renderAI(pane,n){
   if(!cfg.ok()){ pane.innerHTML=degraded('问 AI 需要一个"传达室"替你保管 Anthropic 密钥。配置步骤见仓库里的 SETUP.md，约 15 分钟。'); return; }
