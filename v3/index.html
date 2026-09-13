@@ -71,9 +71,9 @@ header{display:flex;align-items:center;gap:22px;padding:10px 18px;background:var
 .eyebrow{font:500 11px/1 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 
 /* ---------- stage ---------- */
-#stage{position:relative;overflow:hidden;cursor:grab;touch-action:none}
+#stage{position:relative;overflow:hidden;cursor:grab}
 #stage.dragging{cursor:grabbing}
-svg#map{position:absolute;inset:0;width:100%;height:100%;display:block;user-select:none}
+svg#map{position:absolute;inset:0;width:100%;height:100%;display:block;user-select:none;touch-action:none}
 svg text{fill:var(--ink);font-family:var(--sans)}
 
 /* zone frames */
@@ -177,7 +177,7 @@ svg[data-level="1"] .zone-big,svg[data-level="1"] .zone-big-sub{display:block}
 svg[data-level="3"] .oneliner{display:block}
 
 /* ---------- side card ---------- */
-#card{position:absolute;top:14px;right:14px;width:370px;max-height:calc(100% - 28px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:18px 20px 20px;z-index:6;transform:translateX(16px);opacity:0;pointer-events:none;transition:opacity .18s,transform .18s}
+#card{position:absolute;top:14px;right:14px;width:370px;max-height:calc(100% - 28px);overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:18px 20px 20px;z-index:6;transform:translateX(16px);opacity:0;pointer-events:none;transition:opacity .18s,transform .18s}
 #card.open{opacity:1;transform:none;pointer-events:auto}
 #card .close{position:absolute;top:10px;right:10px;border:0;background:transparent;font-size:18px;line-height:1;cursor:pointer;color:var(--muted);padding:4px 8px;border-radius:6px}
 #card .close:hover{background:var(--panel-2);color:var(--ink)}
@@ -210,7 +210,7 @@ svg[data-level="3"] .oneliner{display:block}
 #legend summary::-webkit-details-marker{display:none}
 #legend>summary::after{content:"▾";color:var(--muted)}
 #legend:not([open])>summary::after{content:"▸"}
-#legend .body{padding:2px 14px 12px;display:grid;gap:12px;max-height:56vh;overflow:auto}
+#legend .body{padding:2px 14px 12px;display:grid;gap:12px;max-height:calc(100vh - 220px);overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y}
 #legend h4{margin:0 0 5px;font:500 10.5px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 #legend ul{list-style:none;margin:0;padding:0;display:grid;gap:4px}
 #legend li{display:flex;align-items:center;gap:8px;color:var(--ink-2)}
@@ -242,6 +242,12 @@ svg[data-level="3"] .oneliner{display:block}
 .lg-node.dim,.lg-node.faded{opacity:.25}
 .lg-node.hidden{display:none}
 
+#legend::after{content:"";position:absolute;left:1px;right:1px;bottom:1px;height:30px;border-radius:0 0 11px 11px;background:linear-gradient(to top,var(--panel) 30%,transparent);pointer-events:none;opacity:0;transition:opacity .15s}
+#legend.more::after{opacity:1}
+#legend .body::-webkit-scrollbar,#card::-webkit-scrollbar,.bm-chat::-webkit-scrollbar{width:9px}
+#legend .body::-webkit-scrollbar-track,#card::-webkit-scrollbar-track,.bm-chat::-webkit-scrollbar-track{background:transparent}
+#legend .body::-webkit-scrollbar-thumb,#card::-webkit-scrollbar-thumb,.bm-chat::-webkit-scrollbar-thumb{background:var(--line);border:2px solid var(--panel);border-radius:5px}
+#legend .body::-webkit-scrollbar-thumb:hover,#card::-webkit-scrollbar-thumb:hover,.bm-chat::-webkit-scrollbar-thumb:hover{background:var(--muted)}
 #hint{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 14px;font-size:11.5px;color:var(--muted);z-index:5;white-space:nowrap}
 #hint kbd{font-family:var(--mono);font-size:10.5px;background:var(--panel-2);border:1px solid var(--line);border-radius:4px;padding:0 4px}
 
@@ -302,7 +308,7 @@ html.locked #app,html.locked #mobile,html.locked #m-back-map,html.locked .bm-mod
 textarea.bm-ta,.bm-ask textarea,.bm-note textarea,.bm-journal-body textarea,#bm-settings input{width:100%;border:1px solid var(--line);border-radius:8px;background:var(--panel-2);color:var(--ink);font:400 14px/1.5 var(--sans);padding:8px 10px;resize:vertical;-webkit-appearance:none}
 #bm-settings input{font-family:var(--mono);font-size:13px}
 .bm-ask textarea:focus,.bm-note textarea:focus,.bm-journal-body textarea:focus,#bm-settings input:focus{outline:2px solid var(--s-kahneman);outline-offset:-1px}
-.bm-chat{display:flex;flex-direction:column;gap:10px;max-height:46vh;overflow-y:auto;padding:2px 0 8px}
+.bm-chat{display:flex;flex-direction:column;gap:10px;max-height:46vh;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;padding:2px 0 8px}
 .bm-msg{max-width:96%;border-radius:10px;padding:8px 12px;font-size:13.5px;line-height:1.55}
 .bm-msg.user{align-self:flex-end;background:color-mix(in oklab,var(--s-kahneman) 14%,var(--surface));border:1px solid color-mix(in oklab,var(--s-kahneman) 40%,var(--line))}
 .bm-msg.assistant{align-self:flex-start;background:var(--panel-2);border:1px solid var(--line-2)}
@@ -566,6 +572,12 @@ html.m-map #m-back-map{display:flex}
 /* ===== 节点编号：按数据里的原始顺序，在每个 zone 内从 1 开始，页面加载时计算 ===== */
 window.NODE_NUM=(function(){const d=JSON.parse(document.getElementById('data').textContent),c={},m={};for(const n of d.nodes){c[n.zone]=(c[n.zone]||0)+1;m[n.id]=n.zone+'-'+c[n.zone];}return m;})();
 window.numKey=s=>String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+(function(){ /* 图例底部渐隐：提示下面还有内容（macOS 的悬浮滚动条会自动隐藏，光靠它看不出能滚） */
+  const lg=document.getElementById('legend'); if(!lg) return; const body=lg.querySelector('.body'); if(!body) return;
+  const sync=()=>lg.classList.toggle('more', lg.open && body.scrollTop+body.clientHeight < body.scrollHeight-2);
+  body.addEventListener('scroll',sync,{passive:true}); lg.addEventListener('toggle',sync); addEventListener('resize',sync);
+  new MutationObserver(sync).observe(body,{subtree:true,childList:true,attributes:true}); sync();
+})();
 (function(){const cb=document.getElementById('showNums'),h=document.documentElement;if(!cb)return;
   cb.checked=!h.classList.contains('no-nums');
   cb.addEventListener('change',()=>{h.classList.toggle('no-nums',!cb.checked);try{localStorage.setItem('bm.showNums',cb.checked?'1':'0')}catch(_){}});})();
@@ -995,7 +1007,7 @@ function fitAxis(pad){ const r=stage.getBoundingClientRect(); const kAll=Math.mi
   if(kAll>=kAxis){ fitAll(pad); return; } k=kAxis; tx=(r.width-BAND.w*k)/2-BAND.x*k; const cy=BAND.y+BAND.h*0.5; ty=r.height/2-cy*k; apply(); }
 function zoomTo(nk,cx,cy){ const r=stage.getBoundingClientRect(); cx=cx??r.width/2; cy=cy??r.height/2; nk=Math.max(0.1,Math.min(3.2,nk)); tx=cx-(cx-tx)*nk/k; ty=cy-(cy-ty)*nk/k; k=nk; apply(); }
 function centerOn(wx,wy,nk){ const r=stage.getBoundingClientRect(); k=nk??k; tx=r.width/2-wx*k; ty=r.height/2-wy*k; apply(); }
-stage.addEventListener('wheel',e=>{ e.preventDefault(); const r=stage.getBoundingClientRect(); zoomTo(k*Math.exp(-e.deltaY*0.0016),e.clientX-r.left,e.clientY-r.top); },{passive:false});
+stage.addEventListener('wheel',e=>{ if(e.target.closest&&e.target.closest('#card,#legend,#hint,.bm-modal')) return; /* 面板自己滚，不缩放地图 */ e.preventDefault(); const r=stage.getBoundingClientRect(); zoomTo(k*Math.exp(-e.deltaY*0.0016),e.clientX-r.left,e.clientY-r.top); },{passive:false});
 let drag=null;
 /* touch gestures: one finger pans (same drag path as the mouse), two fingers pinch-zoom about their midpoint, double-tap zooms one step */
 const ptrs=new Map(); let pinch=null, lastTap=null;
