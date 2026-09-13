@@ -52,7 +52,9 @@ button,select{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--s-kahneman);outline-offset:2px}
 
 /* ---------- chrome ---------- */
-#app{position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr}
+#app{position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr;grid-template-columns:minmax(0,1fr);min-width:0}
+header{min-width:0}
+.controls{min-width:0}
 header{display:flex;align-items:center;gap:22px;padding:10px 18px;background:var(--panel);border-bottom:1px solid var(--line);z-index:5;flex-wrap:wrap}
 .brand{display:flex;flex-direction:column;min-width:200px}
 .brand h1{margin:0;font:700 19px/1.2 var(--sans);letter-spacing:.02em;text-wrap:balance}
@@ -252,10 +254,22 @@ svg[data-level="3"] .oneliner{display:block}
 #hint kbd{font-family:var(--mono);font-size:10.5px;background:var(--panel-2);border:1px solid var(--line);border-radius:4px;padding:0 4px}
 
 @media (max-width:760px){
-  #card{left:8px;right:8px;width:auto;top:auto;bottom:8px;max-height:60%}
+  /* 手机地图模式：头部压成两行，控件横向滚动，不再换行堆满整屏 */
+  header{gap:6px 10px;padding:calc(6px + env(safe-area-inset-top)) 10px 6px;align-items:center}
+  .brand{flex:1 1 auto;min-width:0;order:1}
+  .brand h1{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .brand h1 .ver{display:none}
+  .brand p{display:none}
+  .ctl-actions{order:2;flex:none;gap:6px}
+  .ctl-actions .icon-btn{padding:4px 8px}
+  .controls{order:3;flex:1 0 100%;margin-left:0;gap:14px;flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;padding-bottom:2px;scrollbar-width:none}
+  .controls::-webkit-scrollbar{display:none}
+  .controls .eyebrow{display:none}
+  .ctl{flex:none}
+  .ctl select{max-width:132px}
+  #card{left:8px;right:8px;width:auto;top:auto;bottom:8px;max-height:66%}
   #legend{display:none}
   #hint{display:none}
-  .brand{min-width:0}
 }
 @media (prefers-reduced-motion: reduce){
   *{transition:none !important}
@@ -416,7 +430,7 @@ html.m-map #m-back-map{display:flex}
 .m-card .rel-list .arr{margin-left:auto;color:var(--muted)}
 .m-card .empty{color:var(--muted);font-size:14px}
 /* "back to list" pill shown over the map when a phone forces map mode */
-#m-back-map{position:fixed;left:10px;top:calc(62px + env(safe-area-inset-top));z-index:30;box-shadow:var(--shadow)}
+#m-back-map{position:absolute;left:10px;top:10px;z-index:30;box-shadow:var(--shadow)}
 /* touch targets >= 44px on coarse pointers (phones/tablets); mouse users see no change */
 @media (pointer:coarse){
   .seg button,.ctl select{min-height:44px;min-width:44px}
@@ -466,10 +480,10 @@ html.m-map #m-back-map{display:flex}
         <label><input type="checkbox" id="hardOnly"> 只看硬证据</label>
         <label><input type="checkbox" id="showNums" checked> 显示编号</label>
       </div>
-      <div class="ctl">
-        <button type="button" class="icon-btn" data-open-journal title="随手记">✎ 随手记</button>
-        <button type="button" class="icon-btn" data-open-settings title="设置" aria-label="设置">⚙</button>
-      </div>
+    </div>
+    <div class="ctl ctl-actions">
+      <button type="button" class="icon-btn" data-open-journal title="随手记">✎ 随手记</button>
+      <button type="button" class="icon-btn" data-open-settings title="设置" aria-label="设置">⚙</button>
     </div>
   </header>
   <div id="stage">
@@ -1007,7 +1021,7 @@ function fitAxis(pad){ const r=stage.getBoundingClientRect(); const kAll=Math.mi
   if(kAll>=kAxis){ fitAll(pad); return; } k=kAxis; tx=(r.width-BAND.w*k)/2-BAND.x*k; const cy=BAND.y+BAND.h*0.5; ty=r.height/2-cy*k; apply(); }
 function zoomTo(nk,cx,cy){ const r=stage.getBoundingClientRect(); cx=cx??r.width/2; cy=cy??r.height/2; nk=Math.max(0.1,Math.min(3.2,nk)); tx=cx-(cx-tx)*nk/k; ty=cy-(cy-ty)*nk/k; k=nk; apply(); }
 function centerOn(wx,wy,nk){ const r=stage.getBoundingClientRect(); k=nk??k; tx=r.width/2-wx*k; ty=r.height/2-wy*k; apply(); }
-stage.addEventListener('wheel',e=>{ if(e.target.closest&&e.target.closest('#card,#legend,#hint,.bm-modal')) return; /* 面板自己滚，不缩放地图 */ e.preventDefault(); const r=stage.getBoundingClientRect(); zoomTo(k*Math.exp(-e.deltaY*0.0016),e.clientX-r.left,e.clientY-r.top); },{passive:false});
+stage.addEventListener('wheel',e=>{ if(e.target.closest&&e.target.closest('#card,#legend,#hint,.bm-modal,#m-back-map')) return; /* 面板自己滚，不缩放地图 */ e.preventDefault(); const r=stage.getBoundingClientRect(); zoomTo(k*Math.exp(-e.deltaY*0.0016),e.clientX-r.left,e.clientY-r.top); },{passive:false});
 let drag=null;
 /* touch gestures: one finger pans (same drag path as the mouse), two fingers pinch-zoom about their midpoint, double-tap zooms one step */
 const ptrs=new Map(); let pinch=null, lastTap=null;
@@ -1015,7 +1029,7 @@ function pinchUpdate(){ const [a,b]=[...ptrs.values()]; const r=stage.getBoundin
   const nk=Math.max(0.1,Math.min(3.2,pinch.k*d/pinch.d));
   // keep the world point that was under the original midpoint under the current midpoint
   tx=mx-(pinch.mx-pinch.tx)/pinch.k*nk; ty=my-(pinch.my-pinch.ty)/pinch.k*nk; k=nk; apply(); }
-stage.addEventListener('pointerdown',e=>{ if(e.target.closest('#card,#legend,#hint,.bm-modal')) return; ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY}); try{stage.setPointerCapture(e.pointerId)}catch(_){}
+stage.addEventListener('pointerdown',e=>{ if(e.target.closest('#card,#legend,#hint,.bm-modal,#m-back-map')) return; ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY}); try{stage.setPointerCapture(e.pointerId)}catch(_){}
   if(ptrs.size===2){ const [a,b]=[...ptrs.values()]; const r=stage.getBoundingClientRect(); pinch={d:Math.hypot(a.x-b.x,a.y-b.y)||1,mx:(a.x+b.x)/2-r.left,my:(a.y+b.y)/2-r.top,k,tx,ty}; drag=null; stage.classList.add('dragging'); return; }
   if(ptrs.size>2) return;
   drag={x:e.clientX,y:e.clientY,tx,ty,moved:false,target:e.target}; });
@@ -1062,7 +1076,7 @@ world.addEventListener('pointerover',e=>{ const st=e.target.closest('.station');
 world.addEventListener('pointerout',e=>{ const st=e.target.closest('.station'); if(st&&hoverStage&&!st.contains(e.relatedTarget)){ hoverStage=null; paint(); } const n=e.target.closest('.node,.env'); if(n&&hoverId&&!n.contains(e.relatedTarget)){ hoverId=null; paint(); } });
 document.getElementById('legend').addEventListener('click',e=>{ const li=e.target.closest('.lg-node'); if(li) select(li.dataset.id); });
 document.getElementById('legend').addEventListener('keydown',e=>{ const li=e.target.closest('.lg-node'); if(li&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); select(li.dataset.id); } });
-function handleClick(t){ const el=t.closest('.node,.env'); if(el){ select(el.dataset.id); } else if(!t.closest('#card,#legend,#hint,.station,.bm-modal')){ clearActive(); closeCard(); } }
+function handleClick(t){ const el=t.closest('.node,.env'); if(el){ select(el.dataset.id); } else if(!t.closest('#card,#legend,#hint,.station,.bm-modal,#m-back-map')){ clearActive(); closeCard(); } }
 world.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('node')){ e.preventDefault(); select(e.target.dataset.id); } });
 function clearActive(){ activeId=null; paint(); }
 function select(id){ activeId=id; paint(); openCard(id); }
@@ -1155,6 +1169,7 @@ $('m-back').addEventListener('click',closeCard);
 // list <-> map switch (phones only; the map refits itself when it becomes visible)
 function showMap(){ html.classList.remove('m-list'); html.classList.add('m-map'); requestAnimationFrame(()=>window.__map&&window.__map.fitAxis()); }
 function showList(){ html.classList.add('m-list'); html.classList.remove('m-map'); }
+document.getElementById('stage').appendChild($('m-back-map'));   // 放进地图区域，定位不受头部高度影响
 $('m-to-map').addEventListener('click',showMap);
 $('m-back-map').addEventListener('click',showList);
 mq.addEventListener('change',ev=>{ if(ev.matches){ if(!html.classList.contains('m-map')) showList(); } else { html.classList.remove('m-list','m-map'); requestAnimationFrame(()=>window.__map&&window.__map.fitAxis()); } });
