@@ -1,6 +1,25 @@
 # 偏见地图 · 交接简报
 
-把这份文件连同 `bias_map_data.json` 一起发给新的对话窗口，它就能接上进度。本文件是**给 AI 读的项目现状说明**，不是使用手册。
+本文件是**给 AI 读的项目现状说明**，不是使用手册。读完这份，再按下面的地址取需要的文件。
+
+## 0. 文件在哪里（可直接抓取的原始地址）
+
+仓库 `michaelmiguel1285049725-hub/Claude-9.5` 为公开仓库，以下地址返回纯文本，无需登录：
+
+| 文件 | 地址 | 什么时候需要读 |
+|---|---|---|
+| 知识图谱数据 | `https://raw.githubusercontent.com/michaelmiguel1285049725-hub/Claude-9.5/HEAD/v3/bias_map_data.json` | **讨论内容时必读**。101 节点 35 边 |
+| 节点编号对照表 | `https://raw.githubusercontent.com/michaelmiguel1285049725-hub/Claude-9.5/HEAD/v3/NUMBERING.md` | 需要按编号（A-1、B-7）定位概念时 |
+| 设计方案一 | `https://raw.githubusercontent.com/michaelmiguel1285049725-hub/Claude-9.5/HEAD/pipeline-map/PLAN.md` | 讨论布局或视觉时 |
+| 网页全文（v3） | `https://raw.githubusercontent.com/michaelmiguel1285049725-hub/Claude-9.5/HEAD/v3/index.html` | **只在要改代码时读**，约 4 万 token，很占空间 |
+| 传达室代码 | `https://raw.githubusercontent.com/michaelmiguel1285049725-hub/Claude-9.5/HEAD/v3/worker.js` | 讨论 AI / Notion 后端时 |
+| 部署指引 | `https://raw.githubusercontent.com/michaelmiguel1285049725-hub/Claude-9.5/HEAD/v3/SETUP.md` | 排查后端配置问题时 |
+| 本文件 | `https://raw.githubusercontent.com/michaelmiguel1285049725-hub/Claude-9.5/HEAD/HANDOVER.md` | — |
+
+`HEAD` 指向默认分支 `claude/new-session-sefln5`，内容随项目更新，不用改地址。
+仓库网页版入口：`https://github.com/michaelmiguel1285049725-hub/Claude-9.5`
+
+**按需取用，不要一次性全读。** 多数讨论只需要这份简报加数据文件；`index.html` 只有真要改代码时才值得读进来。
 
 ---
 
