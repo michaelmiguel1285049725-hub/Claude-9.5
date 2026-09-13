@@ -567,6 +567,7 @@ html.m-map #m-back-map{display:flex}
     <div class="bm-row"><button type="button" class="bm-link" id="bm-test">测试连接</button><span id="bm-ping" aria-live="polite"></span><button type="button" class="bm-btn" id="bm-save">保存</button></div>
     <div id="bm-usage"></div>
     <div class="bm-row" style="margin-top:6px"><button type="button" class="bm-link" id="bm-reset-usage">清零本月计数</button></div>
+    <div class="bm-row" style="margin-top:10px;border-top:1px solid var(--line-2);padding-top:10px"><button type="button" class="bm-link" id="bm-export">导出本机笔记</button><span class="bm-muted small" id="bm-local-count" style="margin:0 0 0 auto"></span></div>
     <div class="bm-row" id="bm-lock-row" style="margin-top:10px;border-top:1px solid var(--line-2);padding-top:10px">
       <span class="bm-muted small" id="bio-state" style="margin:0"></span>
       <button type="button" class="bm-link" id="bio-toggle" hidden></button>
@@ -738,6 +739,26 @@ async function retryPending(){ const q=store.get('bm.pendingNotes',[]); if(!q.le
   for(const b of q){ try{ const {queued_at,...body}=b; await api('/notes',{method:'POST',body}); sent++; }catch(_){ left.push(b); } }
   store.set('bm.pendingNotes',left); if(sent) toast(`已补发 ${sent} 条暂存笔记${left.length?`，仍有 ${left.length} 条未发送`:''}`); }
 
+/* ---------- 本机笔记：没配 Notion 也能记，零配置 ---------- */
+const LKEY=id=>`bm.notes.${id||'journal'}`;
+const localNotes=id=>store.get(LKEY(id),[]);
+function localSave(id,content){ const arr=localNotes(id); arr.unshift({id:'L'+Date.now().toString(36),created:new Date().toISOString(),title:content.split('\n')[0].slice(0,60),content}); store.set(LKEY(id),arr); return arr[0]; }
+function localDrop(id,noteId){ store.set(LKEY(id),localNotes(id).filter(x=>x.id!==noteId)); }
+function allLocal(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i)||''; if(k.startsWith('bm.notes.')) for(const n of store.get(k,[])) out.push({...n,node_id:k.slice(9)}); } }catch(_){ } return out; }
+function exportNotes(){
+  const all=allLocal(); if(!all.length){ toast('这台设备上还没有笔记'); return; }
+  const by={}; for(const n of all) (by[n.node_id]=by[n.node_id]||[]).push(n);
+  const L=[`# 偏见地图笔记导出 · ${new Date().toISOString().slice(0,10)}`,'',`共 ${all.length} 条，来自这台设备的浏览器。`,''];
+  for(const [nid,arr] of Object.entries(by)){
+    const node=byId[nid], num=(window.NODE_NUM||{})[nid]||'';
+    L.push(`## ${nid==='journal'?'随手记':`${num} ${node?node.zh:nid}`}`,'');
+    for(const x of arr.slice().sort((a,b)=>String(b.created).localeCompare(String(a.created)))) L.push(`### ${String(x.created).replace('T',' ').slice(0,16)}`,'',x.content,'');
+  }
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([L.join('\n')],{type:'text/markdown;charset=utf-8'}));
+  a.download=`bias-map-notes-${new Date().toISOString().slice(0,10)}.md`; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },0); toast(`已导出 ${all.length} 条`);
+}
+
 function toast(msg,ms=2600){ let t=$('bm-toast'); if(!t){ t=document.createElement('div'); t.id='bm-toast'; document.body.appendChild(t); } t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),ms); }
 
 /* ---------- 上下文拼装（文档第 4 节顺序） ---------- */
@@ -749,7 +770,10 @@ async function buildSystem(id){
   const conn=connections(id).slice(0,PROMPTS.limits.connections).map(x=>`- ${x.o.zh}（${x.dir} ${x.rel}）：${x.o.one_liner}`).join('\n')||'（无）';
   const corpus=await fetchCorpus(id);
   let notesTxt=PROMPTS.notesMissing;
-  if(cfg.ok()){ try{ const d=await api(`/notes/${encodeURIComponent(id)}?full=1&limit=${PROMPTS.limits.notes}`); const arr=(d.notes||[]).filter(x=>x.content); if(arr.length) notesTxt=clip(arr.map(x=>`- ${(x.created||'').slice(0,10)}：${x.content}`).join('\n'),PROMPTS.limits.notesChars); }catch(_){ } }
+  const lines=[];
+  if(cfg.ok()){ try{ const d=await api(`/notes/${encodeURIComponent(id)}?full=1&limit=${PROMPTS.limits.notes}`); for(const x of (d.notes||[]).filter(x=>x.content)) lines.push(`- ${String(x.created||'').slice(0,10)}：${x.content}`); }catch(_){ } }
+  for(const x of localNotes(id).slice(0,PROMPTS.limits.notes)) lines.push(`- ${String(x.created||'').slice(0,10)}（本机）：${x.content}`);
+  if(lines.length) notesTxt=clip(lines.join('\n'),PROMPTS.limits.notesChars);
   return [PROMPTS.system,'【节点数据】',JSON.stringify(n,null,0),'【相连概念】',conn,'【语料】',corpus?clip(corpus,PROMPTS.limits.corpusChars):PROMPTS.corpusMissing,'【用户笔记】',notesTxt].join('\n\n');
 }
 /* 对话历史截断：最多 N 轮，且总字符数不超过阈值；保证以 user 开头 */
@@ -771,12 +795,12 @@ function mountTabs(container,id,conceptHtml){
     container.querySelectorAll('[role=tab]').forEach(x=>x.setAttribute('aria-selected',String(x===b))); Object.entries(panes).forEach(([k,p])=>p.hidden=k!==t);
     if(!loaded[t]){ loaded[t]=true; ({corpus:renderCorpus,ai:renderAI,notes:renderNotes})[t]?.(panes[t],n); } });
 }
-const degraded=()=>`<div class="bm-degraded"><p>${NOT_CONFIGURED}</p><button type="button" class="bm-link" data-open-settings>打开设置</button></div>`;
+const degraded=(extra)=>`<div class="bm-degraded"><p>${NOT_CONFIGURED}</p>${extra?`<p class="bm-muted small">${extra}</p>`:''}<button type="button" class="bm-link" data-open-settings>打开设置</button></div>`;
 
 async function renderCorpus(pane,n){ pane.innerHTML='<p class="bm-muted">读取语料…</p>'; const t=await fetchCorpus(n.id); pane.innerHTML=t?`<div class="bm-md">${md(t)}</div>`:`<p class="bm-muted">语料尚未编写</p><p class="bm-muted small">把 <code>corpus/${esc(n.id)}.md</code> 放进站点即可显示。</p>`; }
 
 function renderAI(pane,n){
-  if(!cfg.ok()){ pane.innerHTML=degraded(); return; }
+  if(!cfg.ok()){ pane.innerHTML=degraded('问 AI 需要一个"传达室"替你保管 Anthropic 密钥。配置步骤见仓库里的 SETUP.md，约 15 分钟。'); return; }
   const hist=store.get(histKey(n.id),[]);
   pane.innerHTML=`<div class="bm-chat" aria-live="polite"></div>
     <form class="bm-ask"><textarea rows="2" placeholder="就「${esc(n.zh)}」提问…" aria-label="提问"></textarea><div class="bm-row"><button type="button" class="bm-link" data-clear>清空对话</button><span class="bm-muted small bm-status"></span><button type="submit" class="bm-btn">发送</button></div></form>`;
@@ -794,19 +818,38 @@ function renderAI(pane,n){
 }
 
 function renderNotes(pane,n){
-  if(!cfg.ok()){ pane.innerHTML=degraded(); return; }
-  pane.innerHTML=`<form class="bm-note"><textarea rows="4" placeholder="记下你对「${esc(n.zh)}」的想法…" aria-label="笔记"></textarea><div class="bm-row"><span class="bm-muted small bm-status"></span><button type="submit" class="bm-btn">保存到 Notion</button></div></form>
+  const online=cfg.ok();
+  pane.innerHTML=`<form class="bm-note"><textarea rows="4" placeholder="记下你对「${esc(n.zh)}」的想法…" aria-label="笔记"></textarea>
+      <div class="bm-row"><span class="bm-muted small bm-status"></span><button type="submit" class="bm-btn">${online?'保存到 Notion':'保存到本机'}</button></div>
+      ${online?'':'<p class="bm-muted small" style="margin:8px 0 0">未连 Notion，笔记存在这台设备的浏览器里。设置里可以导出备份。</p>'}</form>
     <div class="bm-notelist"><h4>已有笔记</h4><p class="bm-muted">读取中…</p></div>`;
   const form=pane.querySelector('form'), ta=form.querySelector('textarea'), status=form.querySelector('.bm-status'), list=pane.querySelector('.bm-notelist');
-  const load=async()=>{ try{ const d=await api(`/notes/${encodeURIComponent(n.id)}?limit=10`); const arr=d.notes||[]; list.innerHTML=`<h4>已有笔记 · ${arr.length}</h4>`+(arr.length?`<ul>${arr.map(x=>`<li><span class="t">${esc(x.title||'（无标题）')}</span><span class="d">${esc((x.created||'').replace('T',' ').slice(0,16))}</span><a href="${esc(x.url)}" target="_blank" rel="noopener">在 Notion 中打开</a></li>`).join('')}</ul>`:'<p class="bm-muted">还没有笔记。编辑和整理请在 Notion 里做。</p>'); }catch(err){ list.innerHTML=`<h4>已有笔记</h4><p class="bm-muted">读取失败：${esc(err.message)}</p>`; } };
+  const row=x=>x.url
+    ? `<li><span class="t">${esc(x.title||'（无标题）')}</span><span class="d">${esc(String(x.created||'').replace('T',' ').slice(0,16))}</span><a href="${esc(x.url)}" target="_blank" rel="noopener">在 Notion 中打开</a></li>`
+    : `<li><span class="t">${esc(x.title||'（无标题）')}</span><span class="d">${esc(String(x.created||'').replace('T',' ').slice(0,16))} · 本机</span><button type="button" class="bm-link" data-drop="${esc(x.id)}" style="padding:0;justify-self:end">删除</button></li>`;
+  const load=async()=>{
+    let remote=[], err=null;
+    if(online){ try{ remote=(await api(`/notes/${encodeURIComponent(n.id)}?limit=10`)).notes||[]; }catch(e){ err=e; } }
+    const arr=[...remote,...localNotes(n.id)];
+    const pend=store.get('bm.pendingNotes',[]).filter(x=>(x.node_id||'journal')===n.id).length;
+    list.innerHTML=`<h4>已有笔记 · ${arr.length}</h4>`
+      +(arr.length?`<ul>${arr.map(row).join('')}</ul>`:`<p class="bm-muted">还没有笔记。</p>`)
+      +(pend?`<p class="bm-muted small">另有 ${pend} 条待发送，下次打开会自动重试。</p>`:'')
+      +(err?`<p class="bm-muted small">Notion 读取失败：${esc(err.message)}</p>`:'');
+    list.querySelectorAll('[data-drop]').forEach(b=>b.onclick=()=>{ localDrop(n.id,b.dataset.drop); load(); });
+  };
   load();
-  form.addEventListener('submit',async e=>{ e.preventDefault(); const content=ta.value.trim(); if(!content) return; const body={node_id:n.id,node_zh:n.zh,zone:zoneLabel(n.zone),school:n.school,type:'概念笔记',content}; status.textContent='保存中…';
+  form.addEventListener('submit',async e=>{ e.preventDefault(); const content=ta.value.trim(); if(!content) return;
+    if(!online){ localSave(n.id,content); ta.value=''; status.textContent='已存到本机'; load(); return; }
+    const body={node_id:n.id,node_zh:n.zh,zone:zoneLabel(n.zone),school:n.school,type:'概念笔记',content}; status.textContent='保存中…';
     try{ const d=await api('/notes',{method:'POST',body}); ta.value=''; status.innerHTML=`已保存 · <a href="${esc(d.url||'#')}" target="_blank" rel="noopener">在 Notion 中打开</a>`; load(); }
-    catch(err){ queueNote(body); ta.value=''; status.textContent='未能保存，已暂存，下次打开会重试'; } });
+    catch(err){ queueNote(body); ta.value=''; status.textContent='未能保存，已暂存，下次打开会重试'; load(); } });
 }
 
 /* ---------- 设置面板 ---------- */
-function openSettings(){ const m=$('bm-settings'); $('bm-url').value=store.get('bm.workerUrl','')||APP_CONFIG.workerUrl; $('bm-url').placeholder=APP_CONFIG.workerUrl||'https://xxx.workers.dev'; $('bm-token').value=cfg.token(); $('bm-ping').textContent=''; renderUsage(); m.hidden=false; setTimeout(()=>$('bm-token').focus(),50); }
+function openSettings(){ const m=$('bm-settings'); $('bm-url').value=store.get('bm.workerUrl','')||APP_CONFIG.workerUrl; $('bm-url').placeholder=APP_CONFIG.workerUrl||'https://xxx.workers.dev'; $('bm-token').value=cfg.token(); $('bm-ping').textContent=''; renderUsage();
+  const lc=$('bm-local-count'); if(lc){ const c=allLocal().length; lc.textContent=c?`本机 ${c} 条笔记`:'本机暂无笔记'; }
+  m.hidden=false; setTimeout(()=>$('bm-token').focus(),50); }
 function closeModal(id){ $(id).hidden=true; }
 function initSettings(){
   $('bm-save').addEventListener('click',()=>{ const u=$('bm-url').value.trim().replace(/\/+$/,''); if(u&&u!==APP_CONFIG.workerUrl) store.set('bm.workerUrl',u); else store.del('bm.workerUrl'); store.set('bm.appToken',$('bm-token').value.trim()); toast(cfg.ok()?'已保存':'已保存（地址或口令为空，AI 与笔记功能不可用）'); closeModal('bm-settings'); retryPending(); });
@@ -814,6 +857,7 @@ function initSettings(){
     try{ const r=await fetch(u+'/ping',{headers:{'content-type':'application/json','x-app-token':t}}); const d=await r.json().catch(()=>({})); out.textContent=r.ok?`ok · 模型 ${d.model||'?'}${d.effort?` · effort ${d.effort}`:''}`:`失败：HTTP ${r.status}${d.error?' · '+(typeof d.error==='string'?d.error:JSON.stringify(d.error)):''}`; }
     catch(err){ out.textContent='失败：'+err.message+'（检查地址、CORS 的 ALLOWED_ORIGIN、网络）'; } });
   $('bm-reset-usage').addEventListener('click',()=>{ store.del(monthKey()); renderUsage(); });
+  $('bm-export').addEventListener('click',exportNotes);
   document.querySelectorAll('[data-close-modal]').forEach(b=>b.addEventListener('click',()=>closeModal(b.dataset.closeModal)));
   document.querySelectorAll('.bm-modal').forEach(m=>m.addEventListener('pointerdown',e=>{ if(e.target===m) m.hidden=true; }));
   document.addEventListener('click',e=>{ if(e.target.closest('[data-open-settings]')){ e.preventDefault(); openSettings(); } });
@@ -821,10 +865,15 @@ function initSettings(){
   window.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySelectorAll('.bm-modal').forEach(m=>m.hidden=true); });
 }
 /* ---------- 随手记 ---------- */
-function openJournal(){ const m=$('bm-journal'); const body=m.querySelector('.bm-journal-body'); if(!cfg.ok()){ body.innerHTML=degraded(); } else { body.innerHTML=`<textarea rows="6" placeholder="任何想法，不挂在具体概念下…" aria-label="随手记"></textarea><div class="bm-row"><span class="bm-muted small bm-status"></span><button type="button" class="bm-btn" data-journal-save>保存到 Notion</button></div>`;
-    body.querySelector('[data-journal-save]').addEventListener('click',async()=>{ const ta=body.querySelector('textarea'), st=body.querySelector('.bm-status'); const content=ta.value.trim(); if(!content) return; const payload={type:'自由笔记',content}; st.textContent='保存中…';
-      try{ const d=await api('/notes',{method:'POST',body:payload}); ta.value=''; st.innerHTML=`已保存 · <a href="${esc(d.url||'#')}" target="_blank" rel="noopener">在 Notion 中打开</a>`; }
-      catch(err){ queueNote(payload); ta.value=''; st.textContent='未能保存，已暂存，下次打开会重试'; } }); }
+function openJournal(){ const m=$('bm-journal'), body=m.querySelector('.bm-journal-body'), online=cfg.ok();
+  body.innerHTML=`<textarea rows="6" placeholder="任何想法，不挂在具体概念下…" aria-label="随手记"></textarea>
+    <div class="bm-row"><span class="bm-muted small bm-status"></span><button type="button" class="bm-btn" data-journal-save>${online?'保存到 Notion':'保存到本机'}</button></div>
+    ${online?'':'<p class="bm-muted small" style="margin:8px 0 0">未连 Notion，随手记存在这台设备的浏览器里。设置里可以导出备份。</p>'}`;
+  body.querySelector('[data-journal-save]').addEventListener('click',async()=>{ const ta=body.querySelector('textarea'), st=body.querySelector('.bm-status'); const content=ta.value.trim(); if(!content) return;
+    if(!online){ localSave('journal',content); ta.value=''; st.textContent='已存到本机'; return; }
+    const payload={type:'自由笔记',content}; st.textContent='保存中…';
+    try{ const d=await api('/notes',{method:'POST',body:payload}); ta.value=''; st.innerHTML=`已保存 · <a href="${esc(d.url||'#')}" target="_blank" rel="noopener">在 Notion 中打开</a>`; }
+    catch(err){ queueNote(payload); ta.value=''; st.textContent='未能保存，已暂存，下次打开会重试'; } });
   m.hidden=false; setTimeout(()=>body.querySelector('textarea')?.focus(),50); }
 
 window.BM={mountTabs,openSettings,openJournal,md,cfg,PROMPTS,trimHistory,buildSystem};
@@ -1044,7 +1093,7 @@ document.getElementById('z1').onclick=()=>{ fitAll(30); if(k>=0.5) zoomTo(0.49);
 document.getElementById('z2').onclick=()=>fitAxis(20);
 document.getElementById('z3').onclick=()=>{ const f=frames.estimate; centerOn(f.x+f.w/2+220,f.y+f.h/2,1.5); };
 window.addEventListener('resize',()=>fitAxis(20));
-window.addEventListener('keydown',e=>{ if(e.key==='Escape'){clearActive();closeCard();} else if(e.key==='+'||e.key==='='){zoomTo(k*1.2)} else if(e.key==='-'){zoomTo(k/1.2)} });
+window.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(document.querySelector('.bm-modal:not([hidden])')) return; /* 弹窗开着时 Esc 只关弹窗 */ clearActive();closeCard();} else if(e.key==='+'||e.key==='='){zoomTo(k*1.2)} else if(e.key==='-'){zoomTo(k/1.2)} });
 
 /* ---------------- highlight / selection / edge visibility ---------------- */
 const nodeEls=[...world.querySelectorAll('.node,.env'),...document.querySelectorAll('.lg-node')], edgeEls=[...world.querySelectorAll('.edge')];
