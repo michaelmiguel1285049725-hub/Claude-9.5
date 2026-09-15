@@ -11,36 +11,40 @@
     --l3:#13897f; --l3b:#e2f3f1;   /* 第三层 业务侧 */
     --g:#2e9e44; --y:#e3a600; --r:#d64541;
     --ink:#1f2937; --mute:#6b7280; --line:#e5e7eb; --bg:#f6f7f9; --card:#fff;
-    --nav:56px;
+    --nav:56px; --s:1; --maxw:1380px;
   }
+  @media (max-height:800px){:root{--s:.88} section{padding-top:calc(var(--nav) + 12px);padding-bottom:16px} .sh{margin-bottom:10px} .card{padding:10px 12px} .gantt .r{height:calc(30px*var(--s))} .bar{top:5px} #s8 table.t th,#s8 table.t td{padding:3px 6px} #s3 .merge svg{max-height:34vh;margin:0 auto}}
+  @media (min-width:1700px){:root{--s:1.15;--maxw:1560px}}
+  @media (min-width:2100px){:root{--s:1.3;--maxw:1800px}}
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
-  body{margin:0;font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;color:var(--ink);background:var(--bg);font-size:15px;line-height:1.55}
+  body{margin:0;font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;color:var(--ink);background:var(--bg);font-size:calc(15px*var(--s));line-height:1.55}
   b,strong{font-weight:600}
   ul{margin:0;padding-left:18px}
   li{margin:3px 0}
   p{margin:0 0 8px}
 
   /* 导航 */
-  nav{position:fixed;top:0;left:0;right:0;height:var(--nav);background:rgba(255,255,255,.97);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 20px;gap:2px;z-index:50;overflow-x:auto}
-  nav .brand{font-weight:600;margin-right:14px;white-space:nowrap;font-size:14px}
-  nav a{color:var(--mute);text-decoration:none;font-size:13px;padding:6px 9px;border-radius:6px;white-space:nowrap}
+  nav{position:fixed;top:0;left:0;right:0;height:var(--nav);background:rgba(255,255,255,.97);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 max(20px,calc((100vw - var(--maxw))/2 + 4px));gap:2px;z-index:50;overflow-x:auto}
+  nav .brand{font-weight:600;margin-right:14px;white-space:nowrap;font-size:calc(14px*var(--s))}
+  nav a{color:var(--mute);text-decoration:none;font-size:calc(13px*var(--s));padding:6px 9px;border-radius:6px;white-space:nowrap}
   nav a:hover{color:var(--ink);background:#eef0f4}
   nav a.on{color:var(--ink);background:#e6e9ef;font-weight:500}
 
   /* 分节 */
-  section{min-height:100vh;padding:calc(var(--nav) + 26px) 48px 30px;scroll-margin-top:var(--nav);border-bottom:1px solid var(--line)}
+  section{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:calc(var(--nav) + 26px) max(48px,calc((100vw - var(--maxw))/2)) 40px;scroll-margin-top:var(--nav);border-bottom:1px solid var(--line)}
+  section > *{flex:none}
   section:last-of-type{border-bottom:none}
   .sh{display:flex;align-items:baseline;gap:12px;margin-bottom:18px;flex-wrap:wrap}
-  .sh .n{font-size:13px;color:var(--mute);font-variant-numeric:tabular-nums;letter-spacing:.5px}
-  .sh h2{margin:0;font-size:24px;font-weight:600}
-  .sh .sub{margin:0;color:var(--mute);font-size:14px}
+  .sh .n{font-size:calc(13px*var(--s));color:var(--mute);font-variant-numeric:tabular-nums;letter-spacing:.5px}
+  .sh h2{margin:0;font-size:calc(24px*var(--s));font-weight:600}
+  .sh .sub{margin:0;color:var(--mute);font-size:calc(14px*var(--s))}
 
   .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
-  .card h3{margin:0 0 6px;font-size:15px;font-weight:600}
+  .card h3{margin:0 0 6px;font-size:calc(15px*var(--s));font-weight:600}
   .card.soft{background:#fbfbfc}
   .muted{color:var(--mute)}
-  .small{font-size:13px}
+  .small{font-size:calc(13px*var(--s))}
   .grid{display:grid;gap:14px}
   .g2{grid-template-columns:1fr 1fr}
   .g3{grid-template-columns:repeat(3,1fr)}
@@ -49,7 +53,7 @@
   .stack{display:flex;flex-direction:column;gap:12px}
 
   /* 标签与圆点 */
-  .tag{display:inline-block;font-size:12px;line-height:1.5;padding:1px 9px;border-radius:999px;font-weight:500;vertical-align:middle;white-space:nowrap}
+  .tag{display:inline-block;font-size:calc(12px*var(--s));line-height:1.5;padding:1px 9px;border-radius:999px;font-weight:500;vertical-align:middle;white-space:nowrap}
   .t1{background:var(--l1b);color:var(--l1)}
   .t2{background:var(--l2b);color:var(--l2)}
   .t3{background:var(--l3b);color:var(--l3)}
@@ -58,19 +62,19 @@
   .dot{display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:middle;margin-right:5px;position:relative;top:-1px}
   .dg{background:var(--g)} .dy{background:var(--y)} .dr{background:var(--r)}
   .bl1{border-left:4px solid var(--l1)} .bl2{border-left:4px solid var(--l2)} .bl3{border-left:4px solid var(--l3)}
-  .chip{display:inline-block;padding:4px 10px;border:1px solid var(--line);background:#fff;border-radius:8px;font-size:13px;margin:2px 2px 2px 0}
+  .chip{display:inline-block;padding:4px 10px;border:1px solid var(--line);background:#fff;border-radius:8px;font-size:calc(13px*var(--s));margin:2px 2px 2px 0}
   .chip.hi{border-color:var(--l2);color:var(--l2);background:var(--l2b)}
-  .big{font-size:22px;line-height:1.5;font-weight:500}
-  .note{font-size:13px;color:var(--mute);margin-top:8px}
+  .big{font-size:calc(22px*var(--s));line-height:1.5;font-weight:500}
+  .note{font-size:calc(13px*var(--s));color:var(--mute);margin-top:8px}
   .ph{font-variant-numeric:tabular-nums;background:#fff8e1;border:1px dashed #e3c15a;padding:0 4px;border-radius:4px}
 
-  table.t{width:100%;border-collapse:collapse;font-size:13px;background:#fff}
+  table.t{width:100%;border-collapse:collapse;font-size:calc(13px*var(--s));background:#fff}
   table.t th,table.t td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
   table.t th{background:#f3f4f6;font-weight:600}
 
   /* 第 0 节 */
   .hero{display:grid;grid-template-columns:1.4fr 1fr;gap:20px;align-items:start}
-  .legend{display:flex;gap:18px;flex-wrap:wrap;align-items:center;font-size:13px}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;align-items:center;font-size:calc(13px*var(--s))}
   .legend .sw{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:middle;margin-right:6px}
 
   /* 第 2 节 */
@@ -78,23 +82,23 @@
   .layers svg{width:100%;height:auto;display:block}
   .lc{padding:11px 14px}
   .lc h3{display:flex;align-items:center;gap:8px}
-  .kv{display:grid;grid-template-columns:58px 1fr;gap:2px 8px;font-size:13px}
+  .kv{display:grid;grid-template-columns:58px 1fr;gap:2px 8px;font-size:calc(13px*var(--s))}
   .kv dt{color:var(--mute)} .kv dd{margin:0}
 
   /* 第 3 节 */
   .merge svg{width:100%;height:auto;display:block}
   .verdict{display:flex;gap:10px;flex-wrap:wrap}
-  .verdict .v{flex:1;min-width:140px;border-radius:8px;padding:8px 12px;font-size:13px;border:1px solid var(--line);background:#fff}
-  .verdict .v b{display:block;font-size:14px}
+  .verdict .v{flex:1;min-width:140px;border-radius:8px;padding:8px 12px;font-size:calc(13px*var(--s));border:1px solid var(--line);background:#fff}
+  .verdict .v b{display:block;font-size:calc(14px*var(--s))}
 
   /* 第 5 节 */
-  .formula{font-size:22px;padding:14px 18px;background:#fff;border:1px solid var(--line);border-radius:10px;font-variant-numeric:tabular-nums;text-align:center}
-  .formula small{display:block;font-size:13px;color:var(--mute);margin-top:6px}
+  .formula{font-size:calc(22px*var(--s));padding:14px 18px;background:#fff;border:1px solid var(--line);border-radius:10px;font-variant-numeric:tabular-nums;text-align:center}
+  .formula small{display:block;font-size:calc(13px*var(--s));color:var(--mute);margin-top:6px}
 
   /* 第 6 节 */
   .vs{display:grid;grid-template-columns:1fr 1fr;gap:16px}
   .vs .card{padding:0;overflow:hidden}
-  .vs .hd{padding:10px 16px;font-weight:600;font-size:15px}
+  .vs .hd{padding:10px 16px;font-weight:600;font-size:calc(15px*var(--s))}
   .vs .can .hd{background:#e9f6ec;color:#1e6b31}
   .vs .cant .hd{background:#fbe9e8;color:#9a2f2a}
   .vs ul{padding:12px 16px 12px 34px}
@@ -106,43 +110,43 @@
   .rule:hover,.rule:focus{border-color:#9ca3af;box-shadow:0 2px 8px rgba(0,0,0,.06);outline:none}
   .rule .k{font-weight:600}
   .rule .cap{text-align:right;white-space:nowrap}
-  .rule .hint{font-size:12px;color:var(--mute);margin-left:6px}
+  .rule .hint{font-size:calc(12px*var(--s));color:var(--mute);margin-left:6px}
 
   /* 第 8 节 甘特图 */
   .gantt{background:#fff;border:1px solid var(--line);border-radius:10px;padding:30px 14px 10px;position:relative}
-  .gantt .r{display:flex;align-items:center;height:36px}
+  .gantt .r{display:flex;align-items:center;height:calc(36px*var(--s))}
   .gantt .r.head{height:34px;border-bottom:1px solid var(--line);margin-bottom:4px}
-  .gantt .lab{width:200px;flex:none;font-size:13px;padding-right:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .gantt .lab{width:calc(200px*var(--s));flex:none;font-size:calc(13px*var(--s));padding-right:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .gantt .lab b{font-weight:600}
   .gantt .tl{flex:1;position:relative;height:100%;display:grid;grid-template-columns:repeat(11,1fr)}
-  .gantt .d{border-left:1px solid #f0f1f3;font-size:12px;color:var(--mute);text-align:center;line-height:1.2;padding-top:2px}
+  .gantt .d{border-left:1px solid #f0f1f3;font-size:calc(12px*var(--s));color:var(--mute);text-align:center;line-height:1.2;padding-top:2px}
   .gantt .d.we{background:#f7f8fa}
-  .gantt .d span{display:block;font-size:11px}
+  .gantt .d span{display:block;font-size:calc(11px*var(--s))}
   .gantt .r:not(.head) .d{color:transparent;font-size:0}
-  .bar{position:absolute;top:7px;height:22px;border-radius:6px;color:#fff;font-size:12px;line-height:22px;padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:help;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+  .bar{position:absolute;top:7px;height:22px;border-radius:6px;color:#fff;font-size:calc(12px*var(--s));line-height:22px;padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:help;box-shadow:0 1px 2px rgba(0,0,0,.12)}
   .bar.b1{background:var(--l1)} .bar.b2{background:var(--l2)} .bar.b12{background:linear-gradient(90deg,var(--l2),var(--l1))} .bar.bn{background:#9aa3b2}
   .bar:hover{filter:brightness(1.08)}
   .ms{position:absolute;top:8px;width:20px;height:20px;transform:translateX(-50%) rotate(45deg);background:#fff;border:3px solid var(--ink);border-radius:3px;cursor:help}
-  .mslab{position:absolute;top:9px;font-size:12px;white-space:nowrap;margin-left:16px;font-weight:500}
-  .lines{position:absolute;left:214px;right:14px;top:8px;bottom:10px;pointer-events:none}
+  .mslab{position:absolute;top:9px;font-size:calc(12px*var(--s));white-space:nowrap;margin-left:16px;font-weight:500}
+  .lines{position:absolute;left:calc(200px*var(--s) + 14px);right:14px;top:8px;bottom:10px;pointer-events:none}
   .vl{position:absolute;top:0;bottom:0;width:0;border-left:2px dashed var(--r)}
   .vl.today{border-left:2px solid var(--r)}
   .vl.due{border-left:2px dashed var(--ink)}
-  .vl i{position:absolute;top:0;font-style:normal;font-size:11px;background:#fff;padding:0 4px;border-radius:4px;white-space:nowrap;font-weight:600}
+  .vl i{position:absolute;top:0;font-style:normal;font-size:calc(11px*var(--s));background:#fff;padding:0 4px;border-radius:4px;white-space:nowrap;font-weight:600}
   .vl.today i{color:var(--r);left:4px}
   .vl.due i{color:var(--ink);right:4px}
 
   /* 第 9 节 风险卡 */
   .risk{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-  .risk .card h3 .id{display:inline-block;width:24px;height:24px;border-radius:6px;background:#fbe9e8;color:#9a2f2a;text-align:center;line-height:24px;font-size:13px;margin-right:8px}
+  .risk .card h3 .id{display:inline-block;width:24px;height:24px;border-radius:6px;background:#fbe9e8;color:#9a2f2a;text-align:center;line-height:24px;font-size:calc(13px*var(--s));margin-right:8px}
   .risk .card.wide{grid-column:span 3;border-left:4px solid #4b5563}
 
   /* 提示浮层 */
-  .tip{position:fixed;z-index:99;max-width:360px;background:#111827;color:#f9fafb;font-size:13px;line-height:1.5;padding:9px 12px;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.18);pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s}
+  .tip{position:fixed;z-index:99;max-width:360px;background:#111827;color:#f9fafb;font-size:calc(13px*var(--s));line-height:1.5;padding:9px 12px;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.18);pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s}
   .tip.show{opacity:1;transform:none}
   .tip b{color:#fbbf24;font-weight:600}
 
-  footer{padding:24px 48px 40px;color:var(--mute);font-size:12px}
+  footer{padding:24px max(48px,calc((100vw - var(--maxw))/2)) 40px;color:var(--mute);font-size:calc(12px*var(--s))}
 
   @media (max-width:980px){
     .g3,.g4,.risk,.hero,.layers,.vs{grid-template-columns:1fr 1fr}
@@ -159,19 +163,20 @@
   @page{size:A4 landscape;margin:11mm}
   @media print{
     html{scroll-behavior:auto}
-    body{background:#fff;font-size:12.5px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    body{background:#fff;font-size:calc(12.5px*var(--s));-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    :root{--s:1}
     nav,.tip{display:none !important}
-    section{min-height:0;padding:6mm 4mm 6mm;border-bottom:none;break-after:page;page-break-after:always}
+    section{display:block;min-height:0;padding:6mm 4mm 6mm;border-bottom:none;break-after:page;page-break-after:always}
     section:last-of-type{break-after:auto;page-break-after:auto}
-    .sh h2{font-size:20px}
+    .sh h2{font-size:calc(20px*var(--s))}
     .card,.gantt,.formula,.rule,.verdict .v{box-shadow:none;break-inside:avoid;page-break-inside:avoid}
     .bar{cursor:default}
     #s3 .sh,#s8 .sh{margin-bottom:10px}
     #s3 .merge{padding:6px 8px 0}#s3 .merge svg{max-height:235px;margin:0 auto}#s3 .card{padding:8px 12px}
     .gantt{padding:24px 12px 6px}.gantt .r{height:28px}.gantt .r.head{height:30px}.bar{top:4px;height:20px;line-height:20px}.ms{top:5px;width:18px;height:18px}.mslab{top:6px}
-    #s8 table.t{font-size:11px}#s8 table.t th,#s8 table.t td{padding:4px 6px}
+    #s8 table.t{font-size:calc(11px*var(--s))}#s8 table.t th,#s8 table.t td{padding:4px 6px}
     #s8 .card{padding:8px 12px}
-    .big{font-size:18px}
+    .big{font-size:calc(18px*var(--s))}
     footer{padding:0 4mm}
   }
 </style>
