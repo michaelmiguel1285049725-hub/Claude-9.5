@@ -59,6 +59,7 @@
   .t3{background:var(--l3b);color:var(--l3)}
   .tn{background:#eef0f4;color:#4b5563}
   .tw{background:#fff4d6;color:#8a5a00}
+  .t12{background:linear-gradient(90deg,var(--l2b),var(--l1b));color:var(--l1)}
   .dot{display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:middle;margin-right:5px;position:relative;top:-1px}
   .dg{background:var(--g)} .dy{background:var(--y)} .dr{background:var(--r)}
   .bl1{border-left:4px solid var(--l1)} .bl2{border-left:4px solid var(--l2)} .bl3{border-left:4px solid var(--l3)}
@@ -76,6 +77,12 @@
   .hero{display:grid;grid-template-columns:1.4fr 1fr;gap:20px;align-items:start}
   .legend{display:flex;gap:18px;flex-wrap:wrap;align-items:center;font-size:calc(13px*var(--s))}
   .legend .sw{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:middle;margin-right:6px}
+  .gloss summary{cursor:pointer;font-weight:600;font-size:calc(15px*var(--s));list-style:none;display:flex;align-items:center;gap:6px}
+  .gloss summary::-webkit-details-marker{display:none}
+  .gloss summary::before{content:"▸";font-size:calc(12px*var(--s));color:var(--mute);transition:transform .15s}
+  .gloss[open] summary::before{transform:rotate(90deg)}
+  .gloss dl{margin:8px 0 0;display:grid;grid-template-columns:auto 1fr;gap:4px 10px}
+  .gloss dt{font-weight:600;white-space:nowrap} .gloss dd{margin:0}
 
   /* 第 2 节 */
   .layers{display:grid;grid-template-columns:1.05fr 1fr;gap:18px;align-items:start}
@@ -116,7 +123,7 @@
   .gantt{background:#fff;border:1px solid var(--line);border-radius:10px;padding:30px 14px 10px;position:relative}
   .gantt .r{display:flex;align-items:center;height:calc(36px*var(--s))}
   .gantt .r.head{height:34px;border-bottom:1px solid var(--line);margin-bottom:4px}
-  .gantt .lab{width:calc(200px*var(--s));flex:none;font-size:calc(13px*var(--s));padding-right:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .gantt .lab{width:calc(270px*var(--s));flex:none;font-size:calc(13px*var(--s));line-height:1.25;padding-right:10px;overflow:hidden}
   .gantt .lab b{font-weight:600}
   .gantt .tl{flex:1;position:relative;height:100%;display:grid;grid-template-columns:repeat(11,1fr)}
   .gantt .d{border-left:1px solid #f0f1f3;font-size:calc(12px*var(--s));color:var(--mute);text-align:center;line-height:1.2;padding-top:2px}
@@ -128,7 +135,7 @@
   .bar:hover{filter:brightness(1.08)}
   .ms{position:absolute;top:8px;width:20px;height:20px;transform:translateX(-50%) rotate(45deg);background:#fff;border:3px solid var(--ink);border-radius:3px;cursor:help}
   .mslab{position:absolute;top:9px;font-size:calc(12px*var(--s));white-space:nowrap;margin-left:16px;font-weight:500}
-  .lines{position:absolute;left:calc(200px*var(--s) + 14px);right:14px;top:8px;bottom:10px;pointer-events:none}
+  .lines{position:absolute;left:calc(270px*var(--s) + 14px);right:14px;top:8px;bottom:10px;pointer-events:none}
   .vl{position:absolute;top:0;bottom:0;width:0;border-left:2px dashed var(--r)}
   .vl.today{border-left:2px solid var(--r)}
   .vl.due{border-left:2px dashed var(--ink)}
@@ -176,6 +183,14 @@
     .gantt{padding:24px 12px 6px}.gantt .r{height:28px}.gantt .r.head{height:30px}.bar{top:4px;height:20px;line-height:20px}.ms{top:5px;width:18px;height:18px}.mslab{top:6px}
     #s8 table.t{font-size:calc(11px*var(--s))}#s8 table.t th,#s8 table.t td{padding:4px 6px}
     #s8 .card{padding:8px 12px}
+    #s0{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;align-content:start}
+    #s0 .sh{grid-column:1/-1;margin-bottom:0}
+    #s0 .hero,#s0 .stack{display:contents}
+    #s0 .hero > .stack:first-child > .card:first-child,#s0 .grid.g3,#s0 .gloss{grid-column:1/-1}
+    #s0 .grid.g3{grid-template-columns:repeat(3,1fr);gap:10px}
+    #s0 .card{padding:8px 12px}
+    #s0 .gloss{order:10}
+    .gloss dl{grid-template-columns:auto 1fr auto 1fr;gap:3px 10px}
     .big{font-size:calc(18px*var(--s))}
     footer{padding:0 4mm}
   }
@@ -230,6 +245,17 @@
           <span><span class="ph">[N]</span> 数字占位，待填</span>
         </div>
       </div>
+      <details class="card soft gloss">
+        <summary>术语（6 个）<span class="muted small">　点开查看</span></summary>
+        <dl class="small">
+          <dt>试卷 / 黄金评测集</dt><dd>固定的一组用户问题，反复拿去问 AI 引擎，所有第二层指标都是"这份试卷上的得分"</dd>
+          <dt>优化集 / 保留集</dt><dd>试卷分两份；优化集用来校准和看效果，保留集只测不用来调，最终汇报用它</dd>
+          <dt>校准</dt><dd>把文章按"被引过 / 没被引过"分两组，比 9 个维度的平均分，看哪些维度有效、无效、有害</dd>
+          <dt>判灯</dt><dd>按结论类型（数 / 比 / 解释 / 处方）决定它最高能标绿黄红哪一档</dd>
+          <dt>吸收度</dt><dd>被引页面对 AI 回答的实际贡献深度（不只是被引了没有）；来自一篇 2026 年论文，非行业标准，需原始回答全文自算</dd>
+          <dt>候选池</dt><dd>页面被引擎抓取并索引后才有资格被引用；不在池里的页面，内容再好也不会出现</dd>
+        </dl>
+      </details>
       <div class="card soft">
         <h3>今天要拍板的</h3>
         <ul class="small">
@@ -237,6 +263,14 @@
           <li>两周分工：线 1 / 线 2 / 线 2′ / 线 3 的 owner</li>
           <li>待讨论项：Semrush 缺口 prompt 能否进试卷（第 10–11 节）</li>
         </ul>
+      </div>
+      <div class="card soft">
+        <h3>散会后 48 小时</h3>
+        <dl class="kv small">
+          <dt>产品</dt><dd>出 Semrush 截图清单并截图</dd>
+          <dt>运营</dt><dd>开始收集客服高频问题、站内搜索词（脱敏）</dd>
+          <dt>技术</dt><dd>确认能导出"URL + 9 维得分"表</dd>
+        </dl>
       </div>
     </div>
   </div>
@@ -480,13 +514,14 @@
       </div>
       <div class="formula">
         误差 ≈ ±2 × √( p(1−p) / n )
-        <small>n = 30 → 约 ±17 个百分点 · n = 300 → 约 ±5 个百分点 · 误差减半，数据需翻四倍</small>
+        <small>以提及率 p = 30% 为例：n = 30 → 约 ±17 个百分点 · n = 300 → 约 ±5 个百分点 · 误差减半，数据需翻四倍</small>
       </div>
       <table class="t">
         <tr><th>样本量 n</th><th>误差（约）</th><th>含义</th></tr>
         <tr><td>30</td><td>±17 个百分点</td><td>只能看到很大的变化</td></tr>
         <tr><td>300</td><td>±5 个百分点</td><td>能分辨中等变化</td></tr>
         <tr><td>×4</td><td>误差减半</td><td>靠时间和 prompt 数量积累</td></tr>
+        <tr><td>我们：<span class="ph">[N]</span> 条 × 7 天</td><td>约 ±<span class="ph">[N]</span></td><td>每引擎每周的回答数——这是按周读不按天读的原因</td></tr>
       </table>
     </div>
     <div class="stack">
@@ -642,7 +677,7 @@
     <tr><th style="width:90px">线</th><th style="width:200px">分工</th><th>产出</th><th style="width:220px">完成标志</th></tr>
     <tr><td><span class="tag t2">线 1</span></td><td>主做：产品；运营辅助</td><td>手册第一页「能做 / 做不到」清单；被引 URL 类型分布（GEO 文章页占比 <span class="ph">[N]</span>%）；专门域名索引率 <span class="ph">[N]</span>%（Search Console）；两个 Prompt Tracking campaign（优化集 / 保留集）用 v0.5 试卷跑起来</td><td>9.17 campaign 出第一天数据</td></tr>
     <tr><td><span class="tag t2">线 2</span></td><td>设计：产品；执行：运营；数据出口：技术</td><td>意图 × 家族分类表；试卷 v1.0（编号、来源、优化 / 保留、冻结日期）；存量文章标签表（URL、意图、家族、生产月份、评分版本）</td><td>v1.0 在跑；标签表能按意图筛文章</td></tr>
-    <tr><td><span class="tag t1">线 2′</span></td><td>分析：产品；出表：技术</td><td>被引 vs 未引 9 维平均分对比表（带两组样本数和误差）+ 一段结论</td><td>表和结论带标签进手册</td></tr>
+    <tr><td><span class="tag t12">线 2′</span></td><td>分析：产品；出表：技术</td><td>被引 vs 未引 9 维平均分对比表（带两组样本数和误差）+ 一段结论</td><td>表和结论带标签进手册</td></tr>
     <tr><td><span class="tag t1">线 3</span></td><td>方案：产品；实现：技术（可延后）</td><td>输入：校准 v0 结论 + 已知冗余矛盾。产出：v2 定义、工作流节点改动、v2 上线日期记录（此后文章的分标注 v2，新旧分不直接比）</td><td>9.24–9.25 定义定稿</td></tr>
     <tr><td><span class="tag tn">贯穿</span></td><td>产品</td><td>沉淀手册 + 团队讲解标签规则；从「周报 + 可追溯来源的库」起步</td><td>库好用，三人都能查</td></tr>
   </table>
@@ -762,6 +797,32 @@
     secs.forEach(function(s){ if (s) io.observe(s); });
   }
   setOn('s0');
+
+  // 键盘导航：PageDown / → / J 下一节；PageUp / ← / K 上一节
+  var order = secs.filter(Boolean);
+  function currentIndex(){
+    var y = window.scrollY + 56 + 2, idx = 0;
+    for (var i = 0; i < order.length; i++){ if (order[i].offsetTop <= y) idx = i; }
+    return idx;
+  }
+  document.addEventListener('keydown', function(e){
+    var t = e.target, tag = t && t.tagName;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || (t && t.isContentEditable)) return;
+    var k = e.key, d = 0;
+    if (k === 'PageDown' || k === 'ArrowRight' || k === 'j' || k === 'J') d = 1;
+    else if (k === 'PageUp' || k === 'ArrowLeft' || k === 'k' || k === 'K') d = -1;
+    if (!d) return;
+    var i = Math.min(order.length - 1, Math.max(0, currentIndex() + d));
+    e.preventDefault();
+    order[i].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setOn(order[i].id);
+  });
+
+  // 打印时展开术语卡，打印后恢复
+  var gloss = document.querySelector('.gloss'), wasOpen = false;
+  window.addEventListener('beforeprint', function(){ if (gloss){ wasOpen = gloss.open; gloss.open = true; } });
+  window.addEventListener('afterprint', function(){ if (gloss) gloss.open = wasOpen; });
 })();
 </script>
 </body>
