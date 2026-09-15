@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GEO 评测体系：规划与两周落地计划</title>
+<style>
+  :root{
+    --l1:#2f6bd8; --l1b:#e6eefb;   /* 第一层 内容侧 */
+    --l2:#7a4fc2; --l2b:#efe8fa;   /* 第二层 引擎侧 */
+    --l3:#13897f; --l3b:#e2f3f1;   /* 第三层 业务侧 */
+    --g:#2e9e44; --y:#e3a600; --r:#d64541;
+    --ink:#1f2937; --mute:#6b7280; --line:#e5e7eb; --bg:#f6f7f9; --card:#fff;
+    --nav:56px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;color:var(--ink);background:var(--bg);font-size:15px;line-height:1.55}
+  b,strong{font-weight:600}
+  ul{margin:0;padding-left:18px}
+  li{margin:3px 0}
+  p{margin:0 0 8px}
+
+  /* 导航 */
+  nav{position:fixed;top:0;left:0;right:0;height:var(--nav);background:rgba(255,255,255,.97);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 20px;gap:2px;z-index:50;overflow-x:auto}
+  nav .brand{font-weight:600;margin-right:14px;white-space:nowrap;font-size:14px}
+  nav a{color:var(--mute);text-decoration:none;font-size:13px;padding:6px 9px;border-radius:6px;white-space:nowrap}
+  nav a:hover{color:var(--ink);background:#eef0f4}
+  nav a.on{color:var(--ink);background:#e6e9ef;font-weight:500}
+
+  /* 分节 */
+  section{min-height:100vh;padding:calc(var(--nav) + 26px) 48px 30px;scroll-margin-top:var(--nav);border-bottom:1px solid var(--line)}
+  section:last-of-type{border-bottom:none}
+  .sh{display:flex;align-items:baseline;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+  .sh .n{font-size:13px;color:var(--mute);font-variant-numeric:tabular-nums;letter-spacing:.5px}
+  .sh h2{margin:0;font-size:24px;font-weight:600}
+  .sh .sub{margin:0;color:var(--mute);font-size:14px}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .card h3{margin:0 0 6px;font-size:15px;font-weight:600}
+  .card.soft{background:#fbfbfc}
+  .muted{color:var(--mute)}
+  .small{font-size:13px}
+  .grid{display:grid;gap:14px}
+  .g2{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  .row{display:flex;gap:14px;flex-wrap:wrap}
+  .stack{display:flex;flex-direction:column;gap:12px}
+
+  /* 标签与圆点 */
+  .tag{display:inline-block;font-size:12px;line-height:1.5;padding:1px 9px;border-radius:999px;font-weight:500;vertical-align:middle;white-space:nowrap}
+  .t1{background:var(--l1b);color:var(--l1)}
+  .t2{background:var(--l2b);color:var(--l2)}
+  .t3{background:var(--l3b);color:var(--l3)}
+  .tn{background:#eef0f4;color:#4b5563}
+  .tw{background:#fff4d6;color:#8a5a00}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:middle;margin-right:5px;position:relative;top:-1px}
+  .dg{background:var(--g)} .dy{background:var(--y)} .dr{background:var(--r)}
+  .bl1{border-left:4px solid var(--l1)} .bl2{border-left:4px solid var(--l2)} .bl3{border-left:4px solid var(--l3)}
+  .chip{display:inline-block;padding:4px 10px;border:1px solid var(--line);background:#fff;border-radius:8px;font-size:13px;margin:2px 2px 2px 0}
+  .chip.hi{border-color:var(--l2);color:var(--l2);background:var(--l2b)}
+  .big{font-size:22px;line-height:1.5;font-weight:500}
+  .note{font-size:13px;color:var(--mute);margin-top:8px}
+  .ph{font-variant-numeric:tabular-nums;background:#fff8e1;border:1px dashed #e3c15a;padding:0 4px;border-radius:4px}
+
+  table.t{width:100%;border-collapse:collapse;font-size:13px;background:#fff}
+  table.t th,table.t td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+  table.t th{background:#f3f4f6;font-weight:600}
+
+  /* 第 0 节 */
+  .hero{display:grid;grid-template-columns:1.4fr 1fr;gap:20px;align-items:start}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;align-items:center;font-size:13px}
+  .legend .sw{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:middle;margin-right:6px}
+
+  /* 第 2 节 */
+  .layers{display:grid;grid-template-columns:1.05fr 1fr;gap:18px;align-items:start}
+  .layers svg{width:100%;height:auto;display:block}
+  .lc{padding:11px 14px}
+  .lc h3{display:flex;align-items:center;gap:8px}
+  .kv{display:grid;grid-template-columns:58px 1fr;gap:2px 8px;font-size:13px}
+  .kv dt{color:var(--mute)} .kv dd{margin:0}
+
+  /* 第 3 节 */
+  .merge svg{width:100%;height:auto;display:block}
+  .verdict{display:flex;gap:10px;flex-wrap:wrap}
+  .verdict .v{flex:1;min-width:140px;border-radius:8px;padding:8px 12px;font-size:13px;border:1px solid var(--line);background:#fff}
+  .verdict .v b{display:block;font-size:14px}
+
+  /* 第 5 节 */
+  .formula{font-size:22px;padding:14px 18px;background:#fff;border:1px solid var(--line);border-radius:10px;font-variant-numeric:tabular-nums;text-align:center}
+  .formula small{display:block;font-size:13px;color:var(--mute);margin-top:6px}
+
+  /* 第 6 节 */
+  .vs{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .vs .card{padding:0;overflow:hidden}
+  .vs .hd{padding:10px 16px;font-weight:600;font-size:15px}
+  .vs .can .hd{background:#e9f6ec;color:#1e6b31}
+  .vs .cant .hd{background:#fbe9e8;color:#9a2f2a}
+  .vs ul{padding:12px 16px 12px 34px}
+  .vs li{margin:5px 0}
+
+  /* 第 7 节 判灯规则 */
+  .rules{display:grid;gap:8px}
+  .rule{display:grid;grid-template-columns:110px 1fr 90px;gap:12px;align-items:center;padding:10px 14px;background:#fff;border:1px solid var(--line);border-radius:8px;cursor:help;transition:border-color .15s,box-shadow .15s}
+  .rule:hover,.rule:focus{border-color:#9ca3af;box-shadow:0 2px 8px rgba(0,0,0,.06);outline:none}
+  .rule .k{font-weight:600}
+  .rule .cap{text-align:right;white-space:nowrap}
+  .rule .hint{font-size:12px;color:var(--mute);margin-left:6px}
+
+  /* 第 8 节 甘特图 */
+  .gantt{background:#fff;border:1px solid var(--line);border-radius:10px;padding:30px 14px 10px;position:relative}
+  .gantt .r{display:flex;align-items:center;height:36px}
+  .gantt .r.head{height:34px;border-bottom:1px solid var(--line);margin-bottom:4px}
+  .gantt .lab{width:200px;flex:none;font-size:13px;padding-right:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .gantt .lab b{font-weight:600}
+  .gantt .tl{flex:1;position:relative;height:100%;display:grid;grid-template-columns:repeat(11,1fr)}
+  .gantt .d{border-left:1px solid #f0f1f3;font-size:12px;color:var(--mute);text-align:center;line-height:1.2;padding-top:2px}
+  .gantt .d.we{background:#f7f8fa}
+  .gantt .d span{display:block;font-size:11px}
+  .gantt .r:not(.head) .d{color:transparent;font-size:0}
+  .bar{position:absolute;top:7px;height:22px;border-radius:6px;color:#fff;font-size:12px;line-height:22px;padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:help;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+  .bar.b1{background:var(--l1)} .bar.b2{background:var(--l2)} .bar.b12{background:linear-gradient(90deg,var(--l2),var(--l1))} .bar.bn{background:#9aa3b2}
+  .bar:hover{filter:brightness(1.08)}
+  .ms{position:absolute;top:8px;width:20px;height:20px;transform:translateX(-50%) rotate(45deg);background:#fff;border:3px solid var(--ink);border-radius:3px;cursor:help}
+  .mslab{position:absolute;top:9px;font-size:12px;white-space:nowrap;margin-left:16px;font-weight:500}
+  .lines{position:absolute;left:214px;right:14px;top:8px;bottom:10px;pointer-events:none}
+  .vl{position:absolute;top:0;bottom:0;width:0;border-left:2px dashed var(--r)}
+  .vl.today{border-left:2px solid var(--r)}
+  .vl.due{border-left:2px dashed var(--ink)}
+  .vl i{position:absolute;top:0;font-style:normal;font-size:11px;background:#fff;padding:0 4px;border-radius:4px;white-space:nowrap;font-weight:600}
+  .vl.today i{color:var(--r);left:4px}
+  .vl.due i{color:var(--ink);right:4px}
+
+  /* 第 9 节 风险卡 */
+  .risk{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .risk .card h3 .id{display:inline-block;width:24px;height:24px;border-radius:6px;background:#fbe9e8;color:#9a2f2a;text-align:center;line-height:24px;font-size:13px;margin-right:8px}
+  .risk .card.wide{grid-column:span 3;border-left:4px solid #4b5563}
+
+  /* 提示浮层 */
+  .tip{position:fixed;z-index:99;max-width:360px;background:#111827;color:#f9fafb;font-size:13px;line-height:1.5;padding:9px 12px;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.18);pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s}
+  .tip.show{opacity:1;transform:none}
+  .tip b{color:#fbbf24;font-weight:600}
+
+  footer{padding:24px 48px 40px;color:var(--mute);font-size:12px}
+
+  @media (max-width:980px){
+    .g3,.g4,.risk,.hero,.layers,.vs{grid-template-columns:1fr 1fr}
+    .risk .card.wide{grid-column:span 2}
+  }
+  @media (max-width:700px){
+    section{padding-left:20px;padding-right:20px}
+    .g2,.g3,.g4,.risk,.hero,.layers,.vs{grid-template-columns:1fr}
+    .risk .card.wide{grid-column:span 1}
+    .gantt .lab{width:120px}.lines{left:134px}
+  }
+
+  /* 打印 */
+  @page{size:A4 landscape;margin:11mm}
+  @media print{
+    html{scroll-behavior:auto}
+    body{background:#fff;font-size:12.5px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    nav,.tip{display:none !important}
+    section{min-height:0;padding:6mm 4mm 6mm;border-bottom:none;break-after:page;page-break-after:always}
+    section:last-of-type{break-after:auto;page-break-after:auto}
+    .sh h2{font-size:20px}
+    .card,.gantt,.formula,.rule,.verdict .v{box-shadow:none;break-inside:avoid;page-break-inside:avoid}
+    .bar{cursor:default}
+    #s3 .sh,#s8 .sh{margin-bottom:10px}
+    #s3 .merge{padding:6px 8px 0}#s3 .merge svg{max-height:235px;margin:0 auto}#s3 .card{padding:8px 12px}
+    .gantt{padding:24px 12px 6px}.gantt .r{height:28px}.gantt .r.head{height:30px}.bar{top:4px;height:20px;line-height:20px}.ms{top:5px;width:18px;height:18px}.mslab{top:6px}
+    #s8 table.t{font-size:11px}#s8 table.t th,#s8 table.t td{padding:4px 6px}
+    #s8 .card{padding:8px 12px}
+    .big{font-size:18px}
+    footer{padding:0 4mm}
+  }
+</style>
+</head>
+<body>
+
+<nav aria-label="页面导航">
+  <span class="brand">GEO 评测体系</span>
+  <a href="#s0">0 定位</a>
+  <a href="#s1">1 痛点</a>
+  <a href="#s2">2 三层结构</a>
+  <a href="#s3">3 主线校准</a>
+  <a href="#s4">4 试卷</a>
+  <a href="#s5">5 噪声</a>
+  <a href="#s6">6 Semrush</a>
+  <a href="#s7">7 结论标签</a>
+  <a href="#s8">8 两周计划</a>
+  <a href="#s9">9 风险边界</a>
+  <a href="#s10">10–11 排期与待讨论</a>
+</nav>
+
+<main>
+
+<!-- 0 -->
+<section id="s0">
+  <div class="sh"><span class="n">00</span><h2>一句话定位</h2><p class="sub">GEO 评测体系：规划与两周落地计划 · 团队内部会议 · 2026-09-15</p></div>
+  <div class="hero">
+    <div class="stack">
+      <div class="card" style="padding:22px 24px">
+        <p class="big">我们要搭一套「GEO 评测体系」：让内容评分有<b>外部锚点</b>、让引擎侧数据<b>可信</b>、让每个结论<b>说得清来源和硬度</b>。</p>
+        <p class="muted" style="margin:0">今天讨论：规划，以及未来两周（<b>9.15 – 9.25</b>）的落地分工。受众：产品、运营、技术三人小团队及项目负责人。</p>
+      </div>
+      <div class="grid g3">
+        <div class="card bl1"><h3>外部锚点</h3><div class="small">评分不再只有"评分器自己觉得好"，用引擎真实引用数据校准（第 3 节）。</div></div>
+        <div class="card bl2"><h3>引擎侧数据可信</h3><div class="small">用试卷 + 固定间隔 + 误差范围来读数，不看单次读数（第 4、5 节）。</div></div>
+        <div class="card"><h3>来源与硬度可追溯</h3><div class="small">每个数字、每条结论都带「来源」和 <span class="dot dg"></span><span class="dot dy"></span><span class="dot dr"></span> 硬度标签（第 7 节）。</div></div>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="card soft">
+        <h3>全页图例</h3>
+        <div class="legend" style="margin-bottom:10px">
+          <span><span class="sw" style="background:var(--l1)"></span>第一层 内容侧（发布前）</span>
+          <span><span class="sw" style="background:var(--l2)"></span>第二层 引擎侧（发布后）</span>
+          <span><span class="sw" style="background:var(--l3)"></span>第三层 业务侧（下游）</span>
+        </div>
+        <div class="legend">
+          <span><span class="dot dg"></span>已验证</span>
+          <span><span class="dot dy"></span>有依据未验证</span>
+          <span><span class="dot dr"></span>假设</span>
+          <span><span class="ph">[N]</span> 数字占位，待填</span>
+        </div>
+      </div>
+      <div class="card soft">
+        <h3>今天要拍板的</h3>
+        <ul class="small">
+          <li>三层结构和主线（校准）是否认可</li>
+          <li>两周分工：线 1 / 线 2 / 线 2′ / 线 3 的 owner</li>
+          <li>待讨论项：Semrush 缺口 prompt 能否进试卷（第 10–11 节）</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 1 -->
+<section id="s1">
+  <div class="sh"><span class="n">01</span><h2>为什么要做</h2><p class="sub">三个真实痛点</p></div>
+  <div class="grid g3">
+    <div class="card">
+      <h3>① 评分没有外部锚点</h3>
+      <p class="small">现有 9 维内容评分只有「评分器自己觉得好」一个依据，没有外部锚点。</p>
+      <p class="small">存在 <b>Goodhart 问题</b>：评分惩罚了引擎可能喜欢的结构，例如「关键要点 / FAQ」这类设计性冗余。</p>
+      <div class="note">对应 → <span class="tag t1">第一层</span> 用 <span class="tag t2">第二层</span> 引用数据校准（第 3 节）</div>
+    </div>
+    <div class="card">
+      <h3>② 结论不透明，出过事故</h3>
+      <p class="small">此前分析出现过<b>分母错误导致结论撤回</b>。</p>
+      <p class="small">根因：全靠 AI 自由发挥、无人把关；结论的来源和硬度不透明。</p>
+      <div class="note">对应 → 结论标签 + 判灯规则 + 沉淀手册（第 7 节）</div>
+    </div>
+    <div class="card">
+      <h3>③ 引擎侧数据噪声大</h3>
+      <p class="small">AI 回答本质随机，<b>单次读数没有意义</b>。</p>
+      <p class="small">工具覆盖有盲区（部分引擎测不到）。</p>
+      <div class="note">对应 → <span class="tag t2">第二层</span> 读数规则（第 5 节）+ Semrush 边界（第 6 节）</div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <div class="sh"><span class="n">02</span><h2>三层评测结构</h2><p class="sub">横向贯穿：时间维度 + 统计置信度</p></div>
+  <div class="layers">
+    <div class="card" style="padding:10px 12px 6px">
+      <svg viewBox="0 0 560 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="三层评测结构分层堆叠图">
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#9ca3af"/></marker>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#d64541"/></marker>
+        </defs>
+        <!-- 第一层 -->
+        <rect x="62" y="16" width="360" height="82" rx="10" fill="#e6eefb" stroke="#2f6bd8" stroke-width="1.5"/>
+        <text x="80" y="42" font-size="15" font-weight="600" fill="#2f6bd8">第一层 · 内容侧（发布前）</text>
+        <text x="80" y="64" font-size="12.5" fill="#1f2937">被测：我们的文章 · 数据：每篇的 9 维得分</text>
+        <text x="80" y="84" font-size="12" fill="#6b7280">来源：百炼工作流</text>
+        <path d="M242 98 V118" stroke="#9ca3af" stroke-width="1.5" marker-end="url(#ar)"/>
+        <text x="252" y="113" font-size="11" fill="#6b7280">发布</text>
+        <!-- 第二层 -->
+        <rect x="62" y="122" width="360" height="82" rx="10" fill="#efe8fa" stroke="#7a4fc2" stroke-width="1.5"/>
+        <text x="80" y="148" font-size="15" font-weight="600" fill="#7a4fc2">第二层 · 引擎侧（发布后）</text>
+        <text x="80" y="170" font-size="12.5" fill="#1f2937">被测：AI 引擎的回答 · 仪器：试卷（黄金评测集）</text>
+        <text x="80" y="190" font-size="12" fill="#6b7280">记分员：Semrush Prompt Tracking + 自建补充采集</text>
+        <path d="M242 204 V224" stroke="#9ca3af" stroke-width="1.5" marker-end="url(#ar)"/>
+        <text x="252" y="219" font-size="11" fill="#6b7280">下游（链路天然断裂）</text>
+        <!-- 第三层 -->
+        <rect x="62" y="228" width="360" height="82" rx="10" fill="#e2f3f1" stroke="#13897f" stroke-width="1.5"/>
+        <text x="80" y="254" font-size="15" font-weight="600" fill="#13897f">第三层 · 业务侧（下游）</text>
+        <text x="80" y="276" font-size="12.5" fill="#1f2937">被测：业务 · 数据：埋点流量、搜索量变化</text>
+        <text x="80" y="296" font-size="12" fill="#6b7280">只用代理指标</text>
+        <!-- 跨层禁忌 -->
+        <path d="M44 57 V270" stroke="#d64541" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arr)"/>
+        <circle cx="44" cy="163" r="12" fill="#fff" stroke="#d64541" stroke-width="1.5"/>
+        <text x="44" y="168" font-size="14" text-anchor="middle" fill="#d64541" font-weight="700">✕</text>
+        <text x="20" y="326" font-size="11.5" fill="#d64541">跨层禁忌：第一层评分涨 ≠ GEO 效果变好（那是第二 / 三层的判断）</text>
+        <!-- 横向规则 -->
+        <rect x="438" y="16" width="48" height="294" rx="8" fill="#fff" stroke="#9ca3af" stroke-dasharray="4 3"/>
+        <text transform="translate(462 163) rotate(-90)" text-anchor="middle" font-size="12.5" fill="#374151" font-weight="600">横向规则 1 · 时间：固定间隔重复测</text>
+        <rect x="498" y="16" width="48" height="294" rx="8" fill="#fff" stroke="#9ca3af" stroke-dasharray="4 3"/>
+        <text transform="translate(522 163) rotate(-90)" text-anchor="middle" font-size="12.5" fill="#374151" font-weight="600">横向规则 2 · 置信度：每个数字带误差范围</text>
+      </svg>
+    </div>
+    <div class="stack">
+      <div class="card lc bl1">
+        <h3><span class="tag t1">第一层</span>内容侧 · 发布前</h3>
+        <dl class="kv"><dt>被测对象</dt><dd>我们的文章</dd><dt>数据</dt><dd>每篇的 9 维得分</dd><dt>来源</dt><dd>百炼工作流</dd></dl>
+      </div>
+      <div class="card lc bl2">
+        <h3><span class="tag t2">第二层</span>引擎侧 · 发布后</h3>
+        <dl class="kv"><dt>被测对象</dt><dd>AI 引擎的回答</dd><dt>数据</dt><dd>每条 prompt × 每个引擎 × 每天：淘宝出现没有、排第几、引了哪个 URL</dd><dt>仪器</dt><dd>「试卷」（黄金评测集）</dd><dt>记分员</dt><dd>Semrush Prompt Tracking + 自建补充采集</dd></dl>
+      </div>
+      <div class="card lc bl3">
+        <h3><span class="tag t3">第三层</span>业务侧 · 下游</h3>
+        <dl class="kv"><dt>被测对象</dt><dd>业务</dd><dt>数据</dt><dd>埋点流量、搜索量变化</dd><dt>断裂点</dt><dd>很多 AI 回答无点击；Google AI 点击与普通 SEO 点击无法区分；用户看完直接开 App → <b>只用代理指标</b></dd></dl>
+      </div>
+      <div class="card soft small">
+        <b>说明：</b>三层分的是「测量」，不是「数据」。用户原始问题是试卷的原料，试卷是第二层的仪器。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <div class="sh"><span class="n">03</span><h2>主线：用第二层真实引用数据校准第一层评分</h2><p class="sub">「校准」= 两张表按 URL 合并，分组比均值</p></div>
+  <div class="card merge" style="padding:10px 12px 4px;margin-bottom:14px">
+    <svg viewBox="0 0 1000 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="两张表按 URL 合并的示意图">
+      <defs><marker id="ma" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#6b7280"/></marker></defs>
+      <!-- 表 A：9 维得分 -->
+      <g>
+        <rect x="16" y="24" width="236" height="104" rx="8" fill="#fff" stroke="#2f6bd8" stroke-width="1.5"/>
+        <rect x="16" y="24" width="236" height="26" rx="8" fill="#e6eefb"/>
+        <rect x="16" y="40" width="236" height="10" fill="#e6eefb"/>
+        <text x="28" y="42" font-size="12.5" font-weight="600" fill="#2f6bd8">① 9 维得分表 · 来源：工作流（第一层）</text>
+        <line x1="16" y1="50" x2="252" y2="50" stroke="#2f6bd8" stroke-width="1"/>
+        <text x="28" y="68" font-size="12" font-weight="600" fill="#1f2937">URL</text>
+        <text x="100" y="68" font-size="12" fill="#1f2937">维1  维2  维3  …  维9</text>
+        <line x1="16" y1="76" x2="252" y2="76" stroke="#e5e7eb"/>
+        <text x="28" y="93" font-size="11.5" fill="#6b7280">/a/…</text><text x="100" y="93" font-size="11.5" fill="#6b7280">[N]   [N]   [N]   …   [N]</text>
+        <line x1="16" y1="100" x2="252" y2="100" stroke="#e5e7eb"/>
+        <text x="28" y="117" font-size="11.5" fill="#6b7280">/b/…</text><text x="100" y="117" font-size="11.5" fill="#6b7280">[N]   [N]   [N]   …   [N]</text>
+        <rect x="22" y="56" width="62" height="68" rx="4" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="3 3"/>
+      </g>
+      <!-- 表 B：引用记录 -->
+      <g>
+        <rect x="16" y="172" width="236" height="104" rx="8" fill="#fff" stroke="#7a4fc2" stroke-width="1.5"/>
+        <rect x="16" y="172" width="236" height="26" rx="8" fill="#efe8fa"/>
+        <rect x="16" y="188" width="236" height="10" fill="#efe8fa"/>
+        <text x="28" y="190" font-size="12.5" font-weight="600" fill="#7a4fc2">③ 引用记录 · 来源：Semrush（第二层）</text>
+        <line x1="16" y1="198" x2="252" y2="198" stroke="#7a4fc2" stroke-width="1"/>
+        <text x="28" y="216" font-size="12" font-weight="600" fill="#1f2937">URL</text>
+        <text x="100" y="216" font-size="12" fill="#1f2937">prompt  引擎  日期  位置</text>
+        <line x1="16" y1="224" x2="252" y2="224" stroke="#e5e7eb"/>
+        <text x="28" y="241" font-size="11.5" fill="#6b7280">/a/…</text><text x="100" y="241" font-size="11.5" fill="#6b7280">P-01   GPT   9.[N]   [N]</text>
+        <line x1="16" y1="248" x2="252" y2="248" stroke="#e5e7eb"/>
+        <text x="28" y="265" font-size="11.5" fill="#6b7280">/a/…</text><text x="100" y="265" font-size="11.5" fill="#6b7280">P-07   AIM   9.[N]   [N]</text>
+        <rect x="22" y="204" width="62" height="68" rx="4" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="3 3"/>
+      </g>
+      <!-- 合并键 -->
+      <path d="M252 76 C 280 76, 280 150, 300 150" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+      <path d="M252 224 C 280 224, 280 150, 300 150" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+      <circle cx="326" cy="150" r="27" fill="#fff8e1" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="326" y="147" font-size="12.5" text-anchor="middle" font-weight="700" fill="#92400e">② URL</text>
+      <text x="326" y="162" font-size="11" text-anchor="middle" fill="#92400e">合并键</text>
+      <path d="M353 150 H 378" stroke="#6b7280" stroke-width="1.5" marker-end="url(#ma)"/>
+      <!-- 合并表 -->
+      <g>
+        <rect x="382" y="90" width="250" height="120" rx="8" fill="#fff" stroke="#374151" stroke-width="1.5"/>
+        <rect x="382" y="90" width="250" height="26" rx="8" fill="#f3f4f6"/><rect x="382" y="106" width="250" height="10" fill="#f3f4f6"/>
+        <text x="394" y="108" font-size="12.5" font-weight="600" fill="#1f2937">合并表 · 每篇文章一行</text>
+        <line x1="382" y1="116" x2="632" y2="116" stroke="#374151"/>
+        <text x="394" y="134" font-size="12" font-weight="600" fill="#1f2937">URL</text>
+        <text x="440" y="134" font-size="12" fill="#2f6bd8">维1…维9</text>
+        <text x="520" y="134" font-size="12" fill="#7a4fc2">被引？</text>
+        <text x="575" y="134" font-size="12" fill="#6b7280">意图/家族</text>
+        <line x1="382" y1="142" x2="632" y2="142" stroke="#e5e7eb"/>
+        <text x="394" y="160" font-size="11.5" fill="#6b7280">/a/…</text><text x="440" y="160" font-size="11.5" fill="#6b7280">[N]…[N]</text><text x="520" y="160" font-size="11.5" fill="#7a4fc2">是</text><text x="575" y="160" font-size="11.5" fill="#6b7280">比较</text>
+        <line x1="382" y1="168" x2="632" y2="168" stroke="#e5e7eb"/>
+        <text x="394" y="186" font-size="11.5" fill="#6b7280">/b/…</text><text x="440" y="186" font-size="11.5" fill="#6b7280">[N]…[N]</text><text x="520" y="186" font-size="11.5" fill="#6b7280">否</text><text x="575" y="186" font-size="11.5" fill="#6b7280">怎么做</text>
+        <line x1="382" y1="194" x2="632" y2="194" stroke="#e5e7eb"/>
+        <text x="394" y="206" font-size="11" fill="#9ca3af">…</text>
+      </g>
+      <!-- 分组 -->
+      <path d="M632 130 C 660 130, 660 96, 686 96" fill="none" stroke="#6b7280" stroke-width="1.5" marker-end="url(#ma)"/>
+      <path d="M632 170 C 660 170, 660 204, 686 204" fill="none" stroke="#6b7280" stroke-width="1.5" marker-end="url(#ma)"/>
+      <rect x="690" y="70" width="140" height="52" rx="8" fill="#efe8fa" stroke="#7a4fc2" stroke-width="1.5"/>
+      <text x="760" y="92" font-size="13" text-anchor="middle" font-weight="600" fill="#7a4fc2">被引过</text>
+      <text x="760" y="110" font-size="11.5" text-anchor="middle" fill="#6b7280">n = [N]</text>
+      <rect x="690" y="178" width="140" height="52" rx="8" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1.5"/>
+      <text x="760" y="200" font-size="13" text-anchor="middle" font-weight="600" fill="#374151">没被引过</text>
+      <text x="760" y="218" font-size="11.5" text-anchor="middle" fill="#6b7280">n = [N]</text>
+      <text x="760" y="248" font-size="11" text-anchor="middle" fill="#6b7280">同批次、同意图随机抽样</text>
+      <!-- 比较 -->
+      <path d="M830 96 C 852 96, 852 150, 870 150" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+      <path d="M830 204 C 852 204, 852 150, 870 150" fill="none" stroke="#6b7280" stroke-width="1.5" marker-end="url(#ma)"/>
+      <rect x="874" y="112" width="112" height="76" rx="8" fill="#fff" stroke="#374151" stroke-width="1.5"/>
+      <text x="930" y="138" font-size="13" text-anchor="middle" font-weight="600" fill="#1f2937">逐维比平均分</text>
+      <text x="930" y="156" font-size="11.5" text-anchor="middle" fill="#6b7280">9 个维度</text>
+      <text x="930" y="174" font-size="11.5" text-anchor="middle" fill="#6b7280">带样本数与误差</text>
+      <text x="16" y="294" font-size="11.5" fill="#6b7280">虚线框 = 合并键 URL 列。三样东西：每篇文章的 9 维得分（工作流）+ 每篇文章的 URL（合并键）+ 每个 URL 被引擎引用的记录（Semrush）。</text>
+    </svg>
+  </div>
+  <div class="grid g3">
+    <div class="card">
+      <h3>结论只到这三种</h3>
+      <div class="verdict">
+        <div class="v" style="border-color:var(--g)"><b style="color:var(--g)">有效</b>该维度两组有差异</div>
+        <div class="v"><b class="muted">无效</b>该维度两组没差异</div>
+        <div class="v" style="border-color:var(--r)"><b style="color:var(--r)">有害</b>方向反了：被引的反而得分低 → 最可能就是 Goodhart 矛盾的证据</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>不做的事</h3>
+      <ul class="small">
+        <li>不解释单篇为什么被引</li>
+        <li>不追溯生成过程</li>
+        <li>不谈因果</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>两个版本</h3>
+      <p class="small"><b>校准 v0（本期）</b>：用已有的被引 URL 清单做；<b>未引组必须从同一批次（8 月后）、同意图随机抽样</b>，否则比出来的是生产方式差异。</p>
+      <p class="small" style="margin:0"><b>校准 v1（后续）</b>：等试卷 v1.0 跑满 3–4 周后重做。</p>
+    </div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <div class="sh"><span class="n">04</span><h2>试卷（黄金评测集）设计</h2><p class="sub"><span class="tag t2">第二层</span> 的仪器</p></div>
+  <div class="card" style="margin-bottom:14px;text-align:center;font-size:17px">
+    <span class="chip">意图</span> × <span class="chip">问题家族</span> × <span class="chip">措辞变体</span> × <span class="chip">语言（中 / 英 / 粤）</span> × <span class="chip">引擎</span>
+  </div>
+  <div class="grid g3">
+    <div class="card">
+      <h3>按「意图」不按「措辞」</h3>
+      <p class="small">同一意图的十种问法是<b>十次采样</b>，不是十个覆盖点。</p>
+      <h3 style="margin-top:10px">问题家族</h3>
+      <div>
+        <span class="chip">是什么</span><span class="chip hi">怎么选（比较）</span><span class="chip">怎么做</span><span class="chip">哪里买</span><span class="chip">值不值</span><span class="chip">有什么风险</span>
+      </div>
+      <div class="note">引擎对不同家族处理方式不同；<b>比较类影响力最高</b>。</div>
+    </div>
+    <div class="card">
+      <h3>分两份</h3>
+      <p class="small"><b>优化集</b>：用来校准和看效果。</p>
+      <p class="small"><b>保留集</b>：大家知道存在，单独 campaign；规则是「<b>不用它做任何调整决策</b>」，最终汇报用它。</p>
+      <h3 style="margin-top:10px">版本规则</h3>
+      <ul class="small">
+        <li>冻结、编版本号、<b>只加不删</b></li>
+        <li>加题不影响旧题的时间序列；改措辞和删题才会</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>来源</h3>
+      <p class="small">以<b>港新用户原话</b>为主：客服高频问题、站内搜索词、论坛 / 小红书原话。</p>
+      <p class="small"><span class="tag tw">待定</span> Semrush 缺口 prompt 是否可入试卷：8 月起内容生产已用它做种子，若试卷同源则是「照着答案出题」，需团队讨论。</p>
+      <h3 style="margin-top:10px">第二个下游：存量打标</h3>
+      <p class="small" style="margin:0">同一张「意图 × 家族」分类表还用来给存量文章打标，这是主线合并的前提。<b>本期只打</b> 8 月以来批次 + 被引页面所在批次，不打全量。</p>
+    </div>
+  </div>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <div class="sh"><span class="n">05</span><h2>噪声与样本量</h2><p class="sub">读数规则 · <span class="tag t2">第二层</span></p></div>
+  <div class="grid g2">
+    <div class="stack">
+      <div class="card">
+        <h3>AI 回答是随机的</h3>
+        <p class="small" style="margin:0">同一 prompt 重跑，被引域名重复率很低。单次读数没有意义。</p>
+      </div>
+      <div class="formula">
+        误差 ≈ ±2 × √( p(1−p) / n )
+        <small>n = 30 → 约 ±17 个百分点 · n = 300 → 约 ±5 个百分点 · 误差减半，数据需翻四倍</small>
+      </div>
+      <table class="t">
+        <tr><th>样本量 n</th><th>误差（约）</th><th>含义</th></tr>
+        <tr><td>30</td><td>±17 个百分点</td><td>只能看到很大的变化</td></tr>
+        <tr><td>300</td><td>±5 个百分点</td><td>能分辨中等变化</td></tr>
+        <tr><td>×4</td><td>误差减半</td><td>靠时间和 prompt 数量积累</td></tr>
+      </table>
+    </div>
+    <div class="stack">
+      <div class="card">
+        <h3>因此的读数规则</h3>
+        <ul>
+          <li><b>按周读不按天读</b></li>
+          <li>优化前后对比，<b>至少各积累 3–4 周</b></li>
+          <li><b>多 prompt 优先于多次数</b></li>
+        </ul>
+      </div>
+      <div class="card" style="border-left:4px solid var(--r)">
+        <h3>跨引擎的数字永远不比</h3>
+        <p class="small" style="margin:0">各引擎基础率不同（如每个回答引用的来源数量不同）。<b>只在同引擎内比时间、比竞品。</b></p>
+      </div>
+      <div class="card soft">
+        <h3>周报模板</h3>
+        <p class="small" style="margin:0">把<b>基础率</b>印在数字旁边；每个数字带样本数和误差范围（横向规则 2）。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <div class="sh"><span class="n">06</span><h2>Semrush 定位</h2><p class="sub">能做 / 做不到 · <span class="tag t2">第二层</span> 记分员</p></div>
+  <div class="grid g2" style="margin-bottom:14px">
+    <div class="card bl2"><h3>Prompt Tracking = 跑我们试卷的记分员</h3><div class="small">真实运行，可信度最高。</div></div>
+    <div class="card"><h3>大盘 / Prompt Research = 出题参考书</h3><div class="small">只看格局，<b>绝不当 KPI</b>。</div></div>
+  </div>
+  <div class="vs">
+    <div class="card can">
+      <div class="hd">能做</div>
+      <ul>
+        <li>ChatGPT / Google AI Mode / Gemini 上的<b>提及率、引用、平均位置</b></li>
+        <li>可选<b>香港</b>地区</li>
+        <li><b>每天跑一次</b></li>
+      </ul>
+    </div>
+    <div class="card cant">
+      <div class="hd">做不到</div>
+      <ul>
+        <li>Perplexity、Claude、国内 AI 引擎（未覆盖）</li>
+        <li>「吸收度」（页面对答案的贡献深度，需原始回答全文自算）</li>
+        <li>一天多次采样</li>
+        <li><span class="tag tw">待核实</span> prompt 上限、原始回答能否导出、品牌别名配置、历史保留、API</li>
+      </ul>
+    </div>
+  </div>
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card soft small"><b>报告规则：</b>永远按引擎分开；底部固定一行「本报告未覆盖引擎」。</div>
+    <div class="card soft small"><b>缺口：</b>由自建采集脚本补（独立排期，见第 10 节）。</div>
+  </div>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <div class="sh"><span class="n">07</span><h2>结论标签</h2><p class="sub">每个数字、每条结论都带 · 悬停「判灯规则」查看示例</p></div>
+  <div class="grid g2" style="margin-bottom:14px">
+    <div class="card">
+      <h3>来源（五选一）</h3>
+      <span class="chip">自算</span><span class="chip">文献</span><span class="chip">厂商</span><span class="chip">AI 推理</span><span class="chip">个人判断</span>
+    </div>
+    <div class="card">
+      <h3>硬度（三选一）</h3>
+      <span class="chip"><span class="dot dg"></span>已验证</span><span class="chip"><span class="dot dy"></span>有依据未验证</span><span class="chip"><span class="dot dr"></span>假设</span>
+    </div>
+  </div>
+  <div class="grid g2">
+    <div>
+      <h3 style="margin:0 0 8px;font-size:15px">判灯规则 <span class="hint muted small">写在手册里，供写结论和审结论的人用</span></h3>
+      <div class="rules">
+        <div class="rule" tabindex="0" data-ex="示例：「专门域名索引率 [N]%」→ 分母 = 专门域名全部 [N] 篇；日期 = 截至 9.17；筛选 = Search Console 已索引 → 🟢。缺任何一项 → 只能 🟡。">
+          <span class="k">是个数</span><span>分母、日期、筛选条件写全</span><span class="cap"><span class="dot dg"></span>才 🟢</span>
+        </div>
+        <div class="rule" tabindex="0" data-ex="示例：「被引组比未引组在维度 3 均分高 [N]」→ 两组同分母（同批次、同意图）+ n 各 [N] + 误差 ±[N] → 🟢。若未引组不是同批次随机抽样 → 🟡。">
+          <span class="k">是个比较</span><span>同分母 + 样本够 + 误差范围</span><span class="cap"><span class="dot dg"></span>才 🟢</span>
+        </div>
+        <div class="rule" tabindex="0" data-ex="示例：「因为评分惩罚了 FAQ 冗余，所以被引页面得分偏低」→ 是解释，无论证据多充分，最高 🟡。">
+          <span class="k">是个解释</span><span>「因为…」句式</span><span class="cap"><span class="dot dy"></span>最高 🟡</span>
+        </div>
+        <div class="rule" tabindex="0" data-ex="示例：「给文章加证据块，被引率会提高」→ 是处方；没做 L4 对照实验（第 10 节）之前一律 🔴，不写进结论。">
+          <span class="k">是个处方</span><span>「做 X 得 Y」</span><span class="cap"><span class="dot dr"></span>没对照一律 🔴</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>示例</h3>
+      <p class="small">原句：「8 月引入 Semrush 缺口 prompt 做种子后，内部看板 SEO 指标稳步上涨。」</p>
+      <table class="t">
+        <tr><th style="width:80px">来源</th><td>自算</td></tr>
+        <tr><th>硬度</th><td><span class="dot dy"></span>有依据未验证 —— 无对照组，时间是混杂变量</td></tr>
+        <tr><th>处方半句</th><td>「说明种子策略有效」→ 是处方 → <span class="dot dr"></span>假设，<b>不写</b></td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <div class="sh"><span class="n">08</span><h2>两周落地计划</h2><p class="sub">9.15 – 9.25 · 悬停甘特条查看 owner 与完成标志</p></div>
+  <div class="gantt" style="margin-bottom:12px">
+    <div class="r head">
+      <div class="lab"></div>
+      <div class="tl">
+        <div class="d">9.15<span>二</span></div><div class="d">9.16<span>三</span></div><div class="d">9.17<span>四</span></div><div class="d">9.18<span>五</span></div><div class="d we">9.19<span>六</span></div><div class="d we">9.20<span>日</span></div><div class="d">9.21<span>一</span></div><div class="d">9.22<span>二</span></div><div class="d">9.23<span>三</span></div><div class="d">9.24<span>四</span></div><div class="d">9.25<span>五</span></div>
+      </div>
+    </div>
+    <div class="r">
+      <div class="lab"><b>线 1</b> Semrush 吃透 + 索引率 + 跟踪上线</div>
+      <div class="tl"><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d we"></div><div class="d we"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+        <div class="bar b2" style="left:0%;width:27.27%" data-owner="主做：产品；运营辅助" data-done="9.17 campaign 出第一天数据">9.15–9.17</div>
+      </div>
+    </div>
+    <div class="r">
+      <div class="lab"><b>线 2</b> 分类表 → 试卷 v1.0 + 存量打标</div>
+      <div class="tl"><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d we"></div><div class="d we"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+        <div class="bar b2" style="left:18.18%;width:54.55%" data-owner="设计：产品；执行：运营；数据出口：技术" data-done="v1.0 在跑；标签表能按意图筛文章">9.17–9.22</div>
+      </div>
+    </div>
+    <div class="r">
+      <div class="lab"><b>线 2′</b> 校准 v0（与线 2 并行）</div>
+      <div class="tl"><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d we"></div><div class="d we"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+        <div class="bar b12" style="left:27.27%;width:45.45%" data-owner="分析：产品；出表：技术" data-done="对比表和结论带标签进手册">9.18–9.22</div>
+      </div>
+    </div>
+    <div class="r">
+      <div class="lab"><b>里程碑</b> 第一个周读数 · 周报第一期</div>
+      <div class="tl"><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d we"></div><div class="d we"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+        <div class="ms" style="left:86.36%" data-owner="沉淀线：产品" data-done="campaign 上线满 7 天，周报第一期发出"></div>
+        <span class="mslab" style="left:86.36%">9.24</span>
+      </div>
+    </div>
+    <div class="r">
+      <div class="lab"><b>线 3</b> 9 维评分 v2（定义定稿）</div>
+      <div class="tl"><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d we"></div><div class="d we"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+        <div class="bar b1" style="left:81.82%;width:18.18%" data-owner="方案：产品；实现：技术（可延后）" data-done="v2 定义、工作流节点改动、v2 上线日期记录">9.24–9.25</div>
+      </div>
+    </div>
+    <div class="r">
+      <div class="lab"><b>贯穿</b> 沉淀手册 + 讲解标签规则</div>
+      <div class="tl"><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d we"></div><div class="d we"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+        <div class="bar bn" style="left:0%;width:100%" data-owner="产品" data-done="从「周报 + 可追溯来源的库」起步；库要好用、三人都能查">9.15–9.25</div>
+      </div>
+    </div>
+    <div class="lines">
+      <div class="vl today" style="left:4.545%"><i>今天 9.15</i></div>
+      <div class="vl due" style="left:100%"><i>截止 9.25</i></div>
+    </div>
+  </div>
+
+  <table class="t" style="margin-bottom:12px">
+    <tr><th style="width:90px">线</th><th style="width:200px">分工</th><th>产出</th><th style="width:220px">完成标志</th></tr>
+    <tr><td><span class="tag t2">线 1</span></td><td>主做：产品；运营辅助</td><td>手册第一页「能做 / 做不到」清单；被引 URL 类型分布（GEO 文章页占比 <span class="ph">[N]</span>%）；专门域名索引率 <span class="ph">[N]</span>%（Search Console）；两个 Prompt Tracking campaign（优化集 / 保留集）用 v0.5 试卷跑起来</td><td>9.17 campaign 出第一天数据</td></tr>
+    <tr><td><span class="tag t2">线 2</span></td><td>设计：产品；执行：运营；数据出口：技术</td><td>意图 × 家族分类表；试卷 v1.0（编号、来源、优化 / 保留、冻结日期）；存量文章标签表（URL、意图、家族、生产月份、评分版本）</td><td>v1.0 在跑；标签表能按意图筛文章</td></tr>
+    <tr><td><span class="tag t1">线 2′</span></td><td>分析：产品；出表：技术</td><td>被引 vs 未引 9 维平均分对比表（带两组样本数和误差）+ 一段结论</td><td>表和结论带标签进手册</td></tr>
+    <tr><td><span class="tag t1">线 3</span></td><td>方案：产品；实现：技术（可延后）</td><td>输入：校准 v0 结论 + 已知冗余矛盾。产出：v2 定义、工作流节点改动、v2 上线日期记录（此后文章的分标注 v2，新旧分不直接比）</td><td>9.24–9.25 定义定稿</td></tr>
+    <tr><td><span class="tag tn">贯穿</span></td><td>产品</td><td>沉淀手册 + 团队讲解标签规则；从「周报 + 可追溯来源的库」起步</td><td>库好用，三人都能查</td></tr>
+  </table>
+  <div class="card" style="border-left:4px solid var(--r)">
+    <b>关键约束：</b>周读数必须等 <b>7 天日历时间</b>，campaign 必须 <b>9.17 前上线</b>；线 3 必须等<b>第一个周读数之后</b>再改，否则改动无法评估。
+  </div>
+</section>
+
+<!-- 9 -->
+<section id="s9">
+  <div class="sh"><span class="n">09</span><h2>主要风险与边界</h2></div>
+  <div class="risk">
+    <div class="card"><h3><span class="id">A</span>样本稀疏</h3><p class="small" style="margin:0">被引页面是稀疏事件，校准 v0 <b>只能证伪有害维度</b>，不能重新标定 9 个权重。</p></div>
+    <div class="card"><h3><span class="id">B</span>候选池</h3><p class="small" style="margin:0">页面要先进入引擎候选池（可抓取、已索引）才谈内容质量；专门域名 <span class="ph">[N]</span> 篇文章的<b>索引率是最大杠杆之一</b>，本期必查。</p></div>
+    <div class="card"><h3><span class="id">C</span>顺序</h3><p class="small" style="margin:0">先跑基线再改评分；用引用数据校准评分本身会制造下一轮 Goodhart，解法是<b>优化集 / 保留集分离</b>。</p></div>
+    <div class="card"><h3><span class="id">D</span>时间</h3><p class="small" style="margin:0">校准 v1 在 <b>10.16 前不会有结果</b>；答辩能展示的是：体系 + 基线读数 + 校准 v0 + 「做不到什么」清单。</p></div>
+    <div class="card"><h3><span class="id">E</span>同源</h3><p class="small" style="margin:0">内容生产种子与试卷若同来自 Semrush，测量会<b>自我循环</b>。<span class="tag tw">待团队讨论</span></p></div>
+    <div class="card"><h3><span class="id" style="background:#eef0f4;color:#374151">§</span>数据边界</h3>
+      <ul class="small">
+        <li><b>敏感数据</b> = 公司内部数据看板数据（如 DAU、GMV 变化），只在公司环境处理</li>
+        <li>自产代码 / 数据与 Semrush 数据可在 Claude Code 工作，最终由技术部署到阿里云代码库</li>
+        <li><b>密钥不进任何仓库</b></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 10 + 11 -->
+<section id="s10">
+  <div class="sh"><span class="n">10 – 11</span><h2>独立排期 · 待讨论</h2></div>
+  <div class="grid g2">
+    <div class="stack">
+      <h3 style="margin:0;font-size:15px">独立排期（不在本期）</h3>
+      <div class="card">
+        <h3>L4 干预实验</h3>
+        <p class="small">同一批页面随机改写：原页 / 只加结构 / 只加证据块 / 只做语义对齐 / 全量改写；同一试卷、同一时间窗重复跑。</p>
+        <p class="small" style="margin:0">回答「做 X 是否能提高被引率」——唯一能把处方从 <span class="dot dr"></span> 升到 <span class="dot dg"></span> 的路径。<b>工程量与评测体系同级。</b></p>
+      </div>
+      <div class="card">
+        <h3>自建采集脚本</h3>
+        <p class="small" style="margin:0">补 Perplexity / 国内引擎；导出原始回答全文以计算吸收度。</p>
+      </div>
+    </div>
+    <div class="stack">
+      <h3 style="margin:0;font-size:15px">待讨论</h3>
+      <div class="card" style="border-left:4px solid var(--y)">
+        <h3>1. Semrush 缺口 prompt 能否进试卷</h3>
+        <p class="small" style="margin:0">同源风险（风险 E）：8 月起内容生产已用它做种子。</p>
+      </div>
+      <div class="card" style="border-left:4px solid var(--y)">
+        <h3>2. <span class="tag tw">待核实</span> Semrush 能力边界</h3>
+        <p class="small" style="margin:0">prompt 上限、原始回答导出、别名配置。</p>
+      </div>
+      <div class="card" style="border-left:4px solid var(--y)">
+        <h3>3. 引擎优先级依据</h3>
+        <p class="small" style="margin:0">港新用户实际使用哪些 AI 引擎？目前<b>无数据</b>。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+<footer>GEO 评测体系 · 规划与两周落地计划 · 会议材料 · 2026-09-15 · 所有 <span class="ph">[N]</span> 为待填占位符</footer>
+
+<div id="tip" class="tip" role="tooltip" aria-hidden="true"></div>
+
+<script>
+(function(){
+  var tip = document.getElementById('tip');
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function show(html, x, y){
+    tip.innerHTML = html;
+    tip.classList.add('show');
+    tip.setAttribute('aria-hidden','false');
+    move(x, y);
+  }
+  function move(x, y){
+    var w = tip.offsetWidth, h = tip.offsetHeight;
+    var left = x + 14, top = y + 16;
+    if (left + w > window.innerWidth - 8) left = x - w - 14;
+    if (top + h > window.innerHeight - 8) top = y - h - 12;
+    if (left < 8) left = 8;
+    if (top < 8) top = 8;
+    tip.style.left = left + 'px';
+    tip.style.top = top + 'px';
+  }
+  function hide(){ tip.classList.remove('show'); tip.setAttribute('aria-hidden','true'); }
+
+  // 甘特条 / 里程碑：显示 owner 与完成标志
+  document.querySelectorAll('.bar, .ms').forEach(function(el){
+    var html = '<b>负责</b> ' + esc(el.getAttribute('data-owner') || '—') +
+               '<br><b>完成标志</b> ' + esc(el.getAttribute('data-done') || '—');
+    el.addEventListener('mouseenter', function(e){ show(html, e.clientX, e.clientY); });
+    el.addEventListener('mousemove', function(e){ move(e.clientX, e.clientY); });
+    el.addEventListener('mouseleave', hide);
+    el.addEventListener('click', function(e){ tip.classList.contains('show') ? hide() : show(html, e.clientX, e.clientY); });
+  });
+
+  // 判灯规则：显示示例
+  document.querySelectorAll('.rule').forEach(function(el){
+    var html = esc(el.getAttribute('data-ex') || '');
+    el.addEventListener('mouseenter', function(e){ show(html, e.clientX, e.clientY); });
+    el.addEventListener('mousemove', function(e){ move(e.clientX, e.clientY); });
+    el.addEventListener('mouseleave', hide);
+    el.addEventListener('focus', function(){ var r = el.getBoundingClientRect(); show(html, r.left + 40, r.bottom - 6); });
+    el.addEventListener('blur', hide);
+  });
+
+  // 导航高亮
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav a'));
+  var secs = links.map(function(a){ return document.querySelector(a.getAttribute('href')); });
+  function setOn(id){ links.forEach(function(a){ a.classList.toggle('on', a.getAttribute('href') === '#' + id); }); }
+  if ('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){ if (en.isIntersecting) setOn(en.target.id); });
+    }, { rootMargin: '-45% 0px -50% 0px', threshold: 0 });
+    secs.forEach(function(s){ if (s) io.observe(s); });
+  }
+  setOn('s0');
+})();
+</script>
+</body>
+</html>
