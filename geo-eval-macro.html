@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GEO 评测体系 · 宏观规划</title>
+<style>
+  :root{
+    --qa:#D9772B;   /* 问题 1 */
+    --qb:#2E6FD8;   /* 问题 2 */
+    --qc:#7A4BD6;   /* 问题 3 */
+    --qa-bg:#FBF1E8; --qb-bg:#EAF0FB; --qc-bg:#F1ECFB;
+    --bg:#FAFAF8; --card:#FFFFFF; --ink:#1F2328; --muted:#6B7280; --faint:#9CA3AF;
+    --line:#E3E4E0; --line-strong:#C9CBC6; --gray-bg:#F1F1EF;
+    --nav-h:48px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    background:var(--bg);color:var(--ink);line-height:1.5;font-size:15px;
+    padding-top:var(--nav-h);
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+  }
+
+  /* ---------- 导航 ---------- */
+  nav{
+    position:fixed;top:0;left:0;right:0;height:var(--nav-h);z-index:10;
+    background:rgba(250,250,248,.92);backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;gap:4px;padding:0 16px;
+  }
+  nav .brand{position:absolute;left:20px;font-weight:600;font-size:14px;color:var(--muted)}
+  nav a{color:var(--ink);text-decoration:none;font-size:14px;padding:6px 12px;border-radius:6px}
+  nav a:hover{background:var(--gray-bg)}
+  nav .legend{position:absolute;right:20px;display:flex;gap:12px;font-size:12px;color:var(--muted)}
+  nav .legend span{display:flex;align-items:center;gap:5px}
+
+  /* ---------- 板块通用 ---------- */
+  section{
+    min-height:calc(100vh - var(--nav-h));
+    display:flex;flex-direction:column;justify-content:center;
+    padding:40px 32px;max-width:1180px;margin:0 auto;
+    border-bottom:1px solid var(--line);
+    scroll-margin-top:var(--nav-h);
+  }
+  section:last-of-type{border-bottom:none}
+  .sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:22px}
+  .sec-num{font-size:12px;color:var(--faint);letter-spacing:.1em}
+  .sec-title{font-size:22px;font-weight:600}
+  .sec-sub{font-size:13px;color:var(--muted)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .muted{color:var(--muted)}
+  .small{font-size:13px}
+
+  /* 色点 */
+  .dot{display:inline-block;width:9px;height:9px;border-radius:50%;flex:none;vertical-align:middle}
+  .dot.q1{background:var(--qa)} .dot.q2{background:var(--qb)} .dot.q3{background:var(--qc)}
+  .dots{display:inline-flex;gap:4px;align-items:center}
+
+  /* 高亮 / 变淡 */
+  .q-item{transition:opacity .25s,filter .25s}
+  body[class*="focus-"] .q-item:not(.match){opacity:.18;filter:grayscale(1)}
+  body[class*="focus-"] .q-item.match{opacity:1}
+
+  /* ---------- 板块一 ---------- */
+  .big-q{font-size:26px;font-weight:600;text-align:center;margin-bottom:6px}
+  .hint{text-align:center;font-size:13px;color:var(--muted);margin-bottom:22px}
+  .hint b{font-weight:500;color:var(--ink)}
+  .pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .pillar{
+    background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:0 0 16px;cursor:pointer;user-select:none;
+    border-top:6px solid var(--line);transition:opacity .25s,box-shadow .2s,transform .2s;
+    display:flex;flex-direction:column;
+  }
+  .pillar[data-pick="1"]{border-top-color:var(--qa)}
+  .pillar[data-pick="2"]{border-top-color:var(--qb)}
+  .pillar[data-pick="3"]{border-top-color:var(--qc)}
+  .pillar:hover{box-shadow:0 4px 18px rgba(0,0,0,.06)}
+  .pillar .tag{font-size:12px;font-weight:600;padding:12px 18px 0;display:flex;align-items:center;gap:6px}
+  .pillar[data-pick="1"] .tag{color:var(--qa)}
+  .pillar[data-pick="2"] .tag{color:var(--qb)}
+  .pillar[data-pick="3"] .tag{color:var(--qc)}
+  .pillar .q{font-size:18px;font-weight:600;padding:6px 18px 12px;line-height:1.4}
+  .pillar .row{padding:10px 18px;border-top:1px dashed var(--line)}
+  .pillar .row .lab{font-size:11px;color:var(--faint);letter-spacing:.08em;margin-bottom:3px}
+  .pillar .row .txt{font-size:14px}
+  .pillar .row.solve .txt{font-weight:500}
+  body.focus-1 .pillar:not([data-pick="1"]),
+  body.focus-2 .pillar:not([data-pick="2"]),
+  body.focus-3 .pillar:not([data-pick="3"]){opacity:.3}
+  body.focus-1 .pillar[data-pick="1"]{box-shadow:0 0 0 3px var(--qa-bg),0 0 0 4px var(--qa)}
+  body.focus-2 .pillar[data-pick="2"]{box-shadow:0 0 0 3px var(--qb-bg),0 0 0 4px var(--qb)}
+  body.focus-3 .pillar[data-pick="3"]{box-shadow:0 0 0 3px var(--qc-bg),0 0 0 4px var(--qc)}
+  .foot-line{text-align:center;margin-top:22px;font-size:15px;color:var(--muted)}
+  #focus-status{min-height:20px;text-align:center;font-size:13px;margin-top:12px;color:var(--muted)}
+
+  /* ---------- 板块二 ---------- */
+  .skeleton{display:grid;grid-template-columns:230px 1fr 1fr;gap:18px;align-items:stretch}
+  .layers{display:flex;gap:8px}
+  .layer-col{flex:1;display:flex;flex-direction:column;gap:8px}
+  .layer{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 12px;flex:1;display:flex;flex-direction:column;justify-content:center}
+  .layer b{display:block;font-size:14px;font-weight:600}
+  .layer span{font-size:12px;color:var(--muted)}
+  .vbar{
+    writing-mode:vertical-rl;text-orientation:mixed;
+    border-left:2px solid var(--line-strong);padding:10px 6px 10px 6px;
+    font-size:12px;color:var(--muted);letter-spacing:.08em;display:flex;align-items:center;justify-content:center;
+    border-radius:0;
+  }
+  .block{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column}
+  .block .bt{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);margin-bottom:8px}
+  .block .main{font-size:15px;font-weight:600;line-height:1.5;padding:10px 12px;border-radius:8px;background:var(--gray-bg)}
+  .block[data-q="1"] .main{background:var(--qa-bg)}
+  .block[data-q="2"] .main{background:var(--qb-bg)}
+  .block[data-q="3"] .main{background:var(--qc-bg)}
+  .subs{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-top:12px}
+  .sub{border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13px}
+  .sub b{display:block;font-size:14px;font-weight:600;margin-bottom:2px}
+  .subs .mid{font-size:12px;color:var(--muted);text-align:center;max-width:80px;line-height:1.35}
+  .halves{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+  .half{border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13px}
+  .half b{display:block;font-size:14px;font-weight:600;margin-bottom:2px}
+  .rules{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:18px}
+  .rule{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+  .rule .bt{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .rule .bt b{font-size:14px;font-weight:600}
+  .rule ul{list-style:none;font-size:13px;color:var(--muted)}
+  .rule li{padding-left:12px;position:relative;line-height:1.55}
+  .rule li::before{content:"·";position:absolute;left:2px}
+  .dont{margin-top:18px;background:var(--gray-bg);border-radius:10px;padding:10px 16px;display:flex;gap:18px;align-items:center;font-size:13px;color:var(--muted);flex-wrap:wrap}
+  .dont b{font-weight:600;color:var(--faint);letter-spacing:.05em}
+  .dont span{padding:2px 10px;border:1px solid var(--line-strong);border-radius:20px;text-decoration:line-through;text-decoration-color:var(--line-strong)}
+
+  /* ---------- 板块三 ---------- */
+  .diffs{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .diff{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;position:relative}
+  .diff .n{position:absolute;top:10px;left:14px;font-size:11px;color:var(--faint)}
+  .diff .dots{position:absolute;top:12px;right:14px}
+  .diff .pair{display:grid;grid-template-columns:1fr 18px 1.3fr;gap:8px;align-items:start;margin-top:18px}
+  .diff .was,.diff .now{font-size:13px;line-height:1.5}
+  .diff .lab{display:block;font-size:11px;color:var(--faint);letter-spacing:.08em;margin-bottom:2px}
+  .diff .was{color:var(--muted)}
+  .diff .now{font-weight:500}
+  .diff .arr{color:var(--faint);text-align:center;padding-top:16px;font-size:14px}
+  .diff.new{border-style:dashed}
+  .diff.new .was{display:none}
+  .diff.new .pair{grid-template-columns:1fr}
+  .diff.new .arr{display:none}
+
+  /* ---------- 板块四 ---------- */
+  .flow{display:flex;flex-direction:column;align-items:center}
+  .node{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 16px;text-align:center;font-size:14px;font-weight:600}
+  .node.top{padding:12px 40px;font-size:16px}
+  .node.big{padding:14px 32px;font-size:15px;max-width:560px}
+  .node.big span{display:block;font-weight:400;font-size:13px;color:var(--muted);margin-top:2px}
+  .arrow{color:var(--faint);font-size:16px;line-height:1;height:22px;display:flex;align-items:center}
+  .split{width:60%;height:14px;border-top:2px solid var(--line-strong);border-left:2px solid var(--line-strong);border-right:2px solid var(--line-strong);border-radius:6px 6px 0 0;margin-top:0}
+  .merge{width:60%;height:14px;border-bottom:2px solid var(--line-strong);border-left:2px solid var(--line-strong);border-right:2px solid var(--line-strong);border-radius:0 0 6px 6px}
+  .lanes{display:grid;grid-template-columns:1fr 1fr;gap:40px;width:100%;max-width:960px;margin:0 auto}
+  .lane{display:flex;flex-direction:column;align-items:center}
+  .lane-head{font-size:13px;font-weight:600;padding:5px 14px;border-radius:20px;margin-bottom:10px;display:flex;gap:6px;align-items:center}
+  .lane-head.a{background:var(--qa-bg);color:var(--qa)}
+  .lane-head.b{background:var(--qb-bg);color:var(--qb)}
+  .step{width:100%;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;display:flex;gap:12px;align-items:flex-start;border-left-width:4px}
+  .step[data-q="1"]{border-left-color:var(--qa)}
+  .step[data-q="2"]{border-left-color:var(--qb)}
+  .step .id{font-size:12px;font-weight:600;color:var(--muted);flex:none;padding-top:2px;min-width:22px}
+  .step .t{font-size:14px;font-weight:600}
+  .step .d{font-size:12px;color:var(--muted);margin-top:1px}
+  .park{
+    margin-top:24px;width:100%;max-width:960px;border:1.5px dashed var(--line-strong);border-radius:10px;
+    padding:12px 18px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted)
+  }
+  .park b{font-weight:600;color:var(--faint);letter-spacing:.05em;flex:none}
+  .park span{padding:2px 10px;background:var(--gray-bg);border-radius:20px}
+  .park .ans{margin-left:auto;font-style:normal;color:var(--muted);flex:none}
+
+  /* ---------- 板块五 ---------- */
+  .todos{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .todo{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px 20px;cursor:pointer;display:flex;flex-direction:column;gap:12px;transition:background .2s}
+  .todo .top{display:flex;align-items:center;justify-content:space-between}
+  .todo .idx{font-size:28px;font-weight:600;color:var(--faint);line-height:1}
+  .todo .ref{font-size:12px;color:var(--muted);padding:2px 10px;border:1px solid var(--line);border-radius:20px;display:flex;gap:6px;align-items:center}
+  .todo .txt{font-size:17px;font-weight:600;line-height:1.5;flex:1}
+  .todo label{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);cursor:pointer}
+  .todo input{width:18px;height:18px;accent-color:var(--ink);cursor:pointer}
+  .todo.done{background:var(--gray-bg)}
+  .todo.done .txt{text-decoration:line-through;color:var(--muted)}
+  .todo.done .idx{color:var(--line-strong)}
+
+  /* ---------- 打印 ---------- */
+  @media print{
+    nav{display:none}
+    body{padding-top:0;background:#fff;font-size:12px}
+    section{min-height:auto;break-after:page;page-break-after:always;border-bottom:none;padding:10px 0;max-width:none}
+    .sec-head{margin-bottom:12px}
+    .skeleton{grid-template-columns:170px 1fr 1fr;gap:10px}
+    .layers{gap:5px}
+    .block,.rule{padding:10px 12px}
+    .subs,.halves{margin-top:8px}
+    .rules{gap:10px;margin-top:10px}
+    .dont{margin-top:10px;padding:8px 12px}
+    .diffs{gap:10px}
+    .pillars{gap:12px}
+    .todos{gap:12px}
+    section:last-of-type{break-after:auto;page-break-after:auto}
+    .pillar,.card,.block,.rule,.diff,.node,.step,.todo,.layer,.sub,.half{box-shadow:none;break-inside:avoid}
+    .sec-title{font-size:18px}
+    .big-q{font-size:20px}
+    @page{margin:10mm}
+  }
+  @media (max-width:900px){
+    .pillars,.rules,.diffs,.todos{grid-template-columns:1fr}
+    .skeleton{grid-template-columns:1fr}
+    .lanes{grid-template-columns:1fr;gap:16px}
+    .split,.merge{display:none}
+    nav .legend,nav .brand{display:none}
+    section{min-height:auto}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="brand">GEO 评测体系</span>
+  <a href="#s1">一 · 三个问题</a>
+  <a href="#s2">二 · 方案骨架</a>
+  <a href="#s3">三 · Semrush 之后</a>
+  <a href="#s4">四 · 当前路线</a>
+  <a href="#s5">五 · 下一步</a>
+  <span class="legend">
+    <span><i class="dot q1"></i>问题 1</span>
+    <span><i class="dot q2"></i>问题 2</span>
+    <span><i class="dot q3"></i>问题 3</span>
+  </span>
+</nav>
+
+<!-- ============ 板块一 ============ -->
+<section id="s1">
+  <div class="sec-head"><span class="sec-num">01</span><span class="sec-title">第一性原理——三个不变的问题</span></div>
+  <div class="big-q">我们怎么知道 GEO 做得好不好？</div>
+  <div class="hint">点击任一问题，全页只高亮服务于它的项，<b>再点一次恢复</b>。</div>
+
+  <div class="pillars">
+    <div class="pillar" data-pick="1">
+      <div class="tag"><i class="dot q1"></i>问题 1</div>
+      <div class="q">评分说好，AI 真的会用吗？</div>
+      <div class="row"><div class="lab">现状</div><div class="txt">9 维评分只有评分器自己的判断，没有外部锚点，还惩罚 FAQ 冗余、商品数据这类设计性元素。</div></div>
+      <div class="row solve"><div class="lab">要解决</div><div class="txt">给评分找一个它控制不了的外部标准——真实被引用记录。</div></div>
+    </div>
+    <div class="pillar" data-pick="2">
+      <div class="tag"><i class="dot q2"></i>问题 2</div>
+      <div class="q">淘宝在 AI 里出现了没有，怎么测得可信？</div>
+      <div class="row"><div class="lab">现状</div><div class="txt">AI 回答随机，单次读数是噪声；工具有盲区；工具的题不是我们用户的题。</div></div>
+      <div class="row solve"><div class="lab">要解决</div><div class="txt">固定的尺子（试卷）+ 足够重复 + 按周读 + 按引擎分开报。</div></div>
+    </div>
+    <div class="pillar" data-pick="3">
+      <div class="tag"><i class="dot q3"></i>问题 3</div>
+      <div class="q">每个数字说得清来源和硬度吗？</div>
+      <div class="row"><div class="lab">现状</div><div class="txt">撤回过结论，分母错过，AI 推理和事实混在一起。</div></div>
+      <div class="row solve"><div class="lab">要解决</div><div class="txt">每个数带"来源 + 硬度"标签，没做实验的处方一律红灯。</div></div>
+    </div>
+  </div>
+
+  <div id="focus-status"></div>
+  <div class="foot-line">工具和方法可以变，这三个问题不变。</div>
+</section>
+
+<!-- ============ 板块二 ============ -->
+<section id="s2">
+  <div class="sec-head"><span class="sec-num">02</span><span class="sec-title">方案骨架</span><span class="sec-sub">已敲定，Semrush 之后没变</span></div>
+
+  <div class="skeleton">
+    <!-- 左：三层 + 两条竖向标注 -->
+    <div class="layers">
+      <div class="layer-col">
+        <div class="layer"><b>内容侧</b><span>文章好不好</span></div>
+        <div class="layer"><b>引擎侧</b><span>AI 用没用</span></div>
+        <div class="layer"><b>业务侧</b><span>有没有效果</span></div>
+      </div>
+      <div class="vbar">时间维度</div>
+      <div class="vbar">置信度</div>
+    </div>
+
+    <!-- 中：主线 -->
+    <div class="block q-item" data-q="1">
+      <div class="bt"><span>主线</span><span class="dots"><i class="dot q1"></i>问题 1</span></div>
+      <div class="main">把文章分成被引过 / 没被引过两堆，比 9 个维度平均分</div>
+      <div class="subs">
+        <div class="sub"><b>校准 v0</b>用现有引用记录，现在做</div>
+        <div class="mid">方法一样，只是引用记录来源不同</div>
+        <div class="sub"><b>校准 v1</b>用港区试卷的引用记录，四周后做</div>
+      </div>
+    </div>
+
+    <!-- 右：试卷 -->
+    <div class="block q-item" data-q="2">
+      <div class="bt"><span>试卷</span><span class="dots"><i class="dot q2"></i>问题 2</span></div>
+      <div class="main">用户意图 × 问题类型 网格，每格出题，编号、冻结、只加不删</div>
+      <div class="halves">
+        <div class="half"><b>优化集</b>用来改</div>
+        <div class="half"><b>保留集</b>只用来打分</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rules">
+    <div class="rule q-item" data-q="2">
+      <div class="bt"><b>读数规则</b><span class="dots"><i class="dot q2"></i></span></div>
+      <ul>
+        <li>按周不按天</li>
+        <li>跨引擎不比</li>
+        <li>每个率带误差</li>
+        <li>用 Brand Visibility / Source Visibility，不用 Share of Voice</li>
+      </ul>
+    </div>
+    <div class="rule q-item" data-q="3">
+      <div class="bt"><b>结论标签</b><span class="dots"><i class="dot q3"></i></span></div>
+      <ul>
+        <li>来源五选一</li>
+        <li>硬度 🟢🟡🔴</li>
+      </ul>
+    </div>
+    <div class="rule q-item" data-q="1">
+      <div class="bt"><b>选题两道门</b><span class="dots"><i class="dot q1"></i></span></div>
+      <ul>
+        <li>意图有否决权</li>
+        <li>商品有加分权</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="dont">
+    <b>不做的事</b>
+    <span>不追单篇因果</span>
+    <span>不重新标定权重</span>
+    <span>不改试卷题目</span>
+    <span>不把大盘指数当 KPI</span>
+  </div>
+</section>
+
+<!-- ============ 板块三 ============ -->
+<section id="s3">
+  <div class="sec-head"><span class="sec-num">03</span><span class="sec-title">Semrush 之后改了什么</span><span class="sec-sub">只改方法，不改问题</span></div>
+
+  <div class="diffs">
+    <div class="diff q-item" data-q="2">
+      <span class="n">1</span><span class="dots"><i class="dot q2"></i></span>
+      <div class="pair">
+        <div class="was"><span class="lab">以为</span>prompt 上限 25 条</div>
+        <div class="arr">→</div>
+        <div class="now"><span class="lab">现在</span>工作区每天 2,500 条，但已用 2,418，新建项目要先腾配额。</div>
+      </div>
+    </div>
+    <div class="diff q-item" data-q="2">
+      <span class="n">2</span><span class="dots"><i class="dot q2"></i></span>
+      <div class="pair">
+        <div class="was"><span class="lab">以为</span>港区已有跟踪数据</div>
+        <div class="arr">→</div>
+        <div class="now"><span class="lab">现在</span>港区只有一个 AI Overview 项目，AI Mode 和 ChatGPT 在港区是空的。</div>
+      </div>
+    </div>
+    <div class="diff q-item" data-q="2">
+      <span class="n">3</span><span class="dots"><i class="dot q2"></i></span>
+      <div class="pair">
+        <div class="was"><span class="lab">以为</span>Perplexity 不可见</div>
+        <div class="arr">→</div>
+        <div class="now"><span class="lab">现在</span>可跟踪，DeepSeek 也可以；Gemini 反而不能跟踪只在大盘。自建脚本必要性下降。</div>
+      </div>
+    </div>
+    <div class="diff q-item" data-q="2">
+      <span class="n">4</span><span class="dots"><i class="dot q2"></i></span>
+      <div class="pair">
+        <div class="was"><span class="lab">以为</span>优化集 / 保留集要分两个项目</div>
+        <div class="arr">→</div>
+        <div class="now"><span class="lab">现在</span>用 tag 分；热力表 Tag Analysis 页面现成。</div>
+      </div>
+    </div>
+    <div class="diff q-item" data-q="1 3">
+      <span class="n">5</span><span class="dots"><i class="dot q1"></i><i class="dot q3"></i></span>
+      <div class="pair">
+        <div class="was"><span class="lab">以为</span>引用记录用技术导的旧 csv</div>
+        <div class="arr">→</div>
+        <div class="now"><span class="lab">现在</span>自己从 Citations 导，来源地区清楚；旧结论全部作废。</div>
+      </div>
+    </div>
+    <div class="diff q-item" data-q="2">
+      <span class="n">6</span><span class="dots"><i class="dot q2"></i></span>
+      <div class="pair">
+        <div class="was"><span class="lab">以为</span>出题原料要靠客服和运营收集</div>
+        <div class="arr">→</div>
+        <div class="now"><span class="lab">现在</span>Prompt Research 港区池 1.9 万条自带五类意图 + 现有 263 条港区 prompt 已够出分类表。</div>
+      </div>
+    </div>
+    <div class="diff q-item" data-q="2 3">
+      <span class="n">7</span><span class="dots"><i class="dot q2"></i><i class="dot q3"></i></span>
+      <div class="pair">
+        <div class="was"><span class="lab">以为</span>回答原文拿不到</div>
+        <div class="arr">→</div>
+        <div class="now"><span class="lab">现在</span>可看、可导出、可 API；吸收度和松散匹配都能做。</div>
+      </div>
+    </div>
+    <div class="diff new q-item" data-q="2">
+      <span class="n">8</span><span class="dots"><i class="dot q2"></i></span>
+      <div class="pair">
+        <div class="now"><span class="lab">新增外部依赖</span>配额要和共用工作区的其他方协调；订阅 11 月 24 日到期。</div>
+      </div>
+    </div>
+    <div class="diff new q-item" data-q="3">
+      <span class="n">9</span><span class="dots"><i class="dot q3"></i></span>
+      <div class="pair">
+        <div class="now"><span class="lab">新增纪律</span>从截图看到的一律标"截图观察，n=几"，不当结论。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 板块四 ============ -->
+<section id="s4">
+  <div class="sec-head"><span class="sec-num">04</span><span class="sec-title">当前路线</span></div>
+
+  <div class="flow">
+    <div class="node top">主线</div>
+    <div class="arrow">↓</div>
+    <div class="split"></div>
+
+    <div class="lanes">
+      <div class="lane">
+        <div class="lane-head a"><i class="dot q1"></i>A 线 · 现在做</div>
+        <div class="step q-item" data-q="1"><span class="id">A1</span><div><div class="t">技术给评分表</div><div class="d">URL 对得上 9 维分</div></div></div>
+        <div class="arrow">↓</div>
+        <div class="step q-item" data-q="1"><span class="id">A2</span><div><div class="t">我从 Semrush 导港区被引 URL</div></div></div>
+        <div class="arrow">↓</div>
+        <div class="step q-item" data-q="1"><span class="id">A3</span><div><div class="t">对比表</div><div class="d">被引 vs 未引，逐维度，标灯</div></div></div>
+      </div>
+      <div class="lane">
+        <div class="lane-head b"><i class="dot q2"></i>B 线 · 四周后才有用</div>
+        <div class="step q-item" data-q="2"><span class="id">B1</span><div><div class="t">分类表</div><div class="d">港区意图，从 Semrush 长出来</div></div></div>
+        <div class="arrow">↓</div>
+        <div class="step q-item" data-q="2"><span class="id">B2</span><div><div class="t">试卷 v1.0 + 打 tag</div><div class="d">优化集 / 保留集</div></div></div>
+        <div class="arrow">↓</div>
+        <div class="step q-item" data-q="2"><span class="id">B3</span><div><div class="t">港区项目跑起来</div><div class="d">先腾配额，再开 AI Mode + ChatGPT</div></div></div>
+      </div>
+    </div>
+
+    <div class="merge"></div>
+    <div class="arrow">↓</div>
+    <div class="node big q-item" data-q="1 2">四周后：校准 v1<span>用 B 的引用记录把 A 重做一遍</span></div>
+
+    <div class="park">
+      <b>停车场 · 不在本期</b>
+      <span>候选池检查</span><span>AI vs SEO</span><span>自建脚本</span><span>Content Audit</span><span>沉淀系统</span><span>评分 v2</span>
+      <em class="ans">默认答案：等 A 线出结果再说</em>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 板块五 ============ -->
+<section id="s5">
+  <div class="sec-head"><span class="sec-num">05</span><span class="sec-title">下一步只有三件事</span></div>
+
+  <div class="todos">
+    <div class="todo" data-i="0">
+      <div class="top"><span class="idx">1</span><span class="ref"><i class="dot q1"></i>A1</span></div>
+      <div class="txt">把消息发给技术，要评分表。</div>
+      <label><input type="checkbox"> 已完成</label>
+    </div>
+    <div class="todo" data-i="1">
+      <div class="top"><span class="idx">2</span><span class="ref"><i class="dot q2"></i>B3 的前提</span></div>
+      <div class="txt">去交涉 Semrush 配额。</div>
+      <label><input type="checkbox"> 已完成</label>
+    </div>
+    <div class="todo" data-i="2">
+      <div class="top"><span class="idx">3</span><span class="ref"><i class="dot q1"></i>A2</span></div>
+      <div class="txt">和 Claude 一起学 Semrush 第一个功能：Citations 导出。一次只学一个。</div>
+      <label><input type="checkbox"> 已完成</label>
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+  // ---- 第一性原理问题：点击聚焦 / 再点恢复 ----
+  var state = { focus: null };
+  var names = { '1':'问题 1', '2':'问题 2', '3':'问题 3' };
+  var status = document.getElementById('focus-status');
+
+  function apply(){
+    document.body.classList.remove('focus-1','focus-2','focus-3');
+    if (state.focus) document.body.classList.add('focus-' + state.focus);
+    var items = document.querySelectorAll('.q-item');
+    for (var i = 0; i < items.length; i++){
+      var qs = (items[i].getAttribute('data-q') || '').split(/\s+/);
+      var match = state.focus ? qs.indexOf(state.focus) !== -1 : false;
+      items[i].classList.toggle('match', match);
+    }
+    status.textContent = state.focus ? '当前只看：' + names[state.focus] + '（再点一次恢复，或按 Esc）' : '';
+  }
+
+  var pillars = document.querySelectorAll('.pillar[data-pick]');
+  for (var p = 0; p < pillars.length; p++){
+    pillars[p].addEventListener('click', function(){
+      var q = this.getAttribute('data-pick');
+      state.focus = (state.focus === q) ? null : q;
+      apply();
+    });
+  }
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && state.focus){ state.focus = null; apply(); }
+  });
+
+  // ---- 下一步：勾选状态保存在页面内存 ----
+  var todos = [false, false, false];
+  var cards = document.querySelectorAll('.todo');
+  for (var c = 0; c < cards.length; c++){
+    (function(card){
+      var idx = parseInt(card.getAttribute('data-i'), 10);
+      var box = card.querySelector('input[type=checkbox]');
+      function render(){ box.checked = todos[idx]; card.classList.toggle('done', todos[idx]); }
+      box.addEventListener('change', function(){ todos[idx] = box.checked; render(); });
+      card.addEventListener('click', function(e){
+        if (e.target === box || e.target.tagName === 'LABEL') return;
+        todos[idx] = !todos[idx]; render();
+      });
+      render();
+    })(cards[c]);
+  }
+})();
+</script>
+</body>
+</html>
