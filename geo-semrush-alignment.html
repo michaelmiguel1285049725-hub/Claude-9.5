@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GEO 评测体系 · Semrush 配额对齐</title>
+<style>
+:root{
+  --bg:#f6f7f9;
+  --card:#ffffff;
+  --ink:#1d2129;
+  --ink2:#4e5969;
+  --ink3:#86909c;
+  --line:#e5e6eb;
+  --accent:#2f6fd0;
+  --accent-soft:#eaf1fb;
+  --warn:#d98c2b;
+  --warn-soft:#fdf3e6;
+  --ok:#2f9e6d;
+  --ok-soft:#e9f6f0;
+  --gray-soft:#f2f3f5;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:15px;
+  line-height:1.7;
+  -webkit-font-smoothing:antialiased;
+}
+/* ---------- 顶部导航 ---------- */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:50;
+  background:rgba(255,255,255,.95);
+  border-bottom:1px solid var(--line);
+  backdrop-filter:saturate(180%) blur(8px);
+}
+.nav-inner{
+  max-width:1120px;margin:0 auto;padding:8px 20px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+}
+.nav-title{font-weight:600;font-size:14px;color:var(--ink);white-space:nowrap;}
+.nav-links{display:flex;gap:2px;flex-wrap:wrap;}
+.nav-links a{
+  font-size:12.5px;color:var(--ink2);text-decoration:none;
+  padding:4px 8px;border-radius:5px;white-space:nowrap;
+}
+.nav-links a:hover{background:var(--accent-soft);color:var(--accent);}
+/* ---------- 布局 ---------- */
+main{max-width:1120px;margin:0 auto;padding:78px 20px 80px;}
+section{
+  scroll-margin-top:70px;
+  margin-bottom:46px;
+  padding-bottom:36px;
+  border-bottom:1px dashed var(--line);
+}
+section:last-of-type{border-bottom:none;}
+.kicker{
+  font-size:12px;letter-spacing:.14em;color:var(--ink3);
+  text-transform:uppercase;margin:0 0 6px;
+}
+h1{font-size:26px;line-height:1.45;margin:0 0 6px;font-weight:600;letter-spacing:-.01em;}
+h2{font-size:21px;line-height:1.5;margin:0 0 6px;font-weight:600;letter-spacing:-.01em;}
+.sub{color:var(--ink2);font-size:14.5px;margin:0 0 20px;max-width:760px;}
+.grid{display:grid;gap:14px;}
+.g2{grid-template-columns:repeat(2,1fr);}
+.g3{grid-template-columns:repeat(3,1fr);}
+.g4{grid-template-columns:repeat(4,1fr);}
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:10px;
+  padding:18px 18px 16px;
+}
+.card h3{margin:0 0 8px;font-size:15.5px;font-weight:600;}
+.card p{margin:0;color:var(--ink2);font-size:14px;}
+.num-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:24px;height:24px;border-radius:6px;
+  background:var(--accent-soft);color:var(--accent);
+  font-size:13px;font-weight:600;margin-bottom:10px;
+}
+.hl{color:var(--ink);font-weight:600;}
+.note{font-size:12.5px;color:var(--ink3);margin-top:10px;}
+.callout{
+  background:var(--accent-soft);border:1px solid #d3e2f7;border-radius:8px;
+  padding:12px 16px;font-size:14.5px;color:#1f4c94;margin-top:16px;
+}
+.callout.neutral{background:var(--gray-soft);border-color:var(--line);color:var(--ink2);}
+/* ---------- 板块 0 封面 ---------- */
+.cover{
+  background:var(--card);border:1px solid var(--line);border-radius:12px;
+  padding:26px 26px 22px;margin-bottom:22px;
+}
+.cover .meta{font-size:13px;color:var(--ink3);margin-top:8px;}
+/* ---------- 三根柱子 ---------- */
+.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:stretch;}
+.pillar{
+  background:var(--card);border:1px solid var(--line);border-top:3px solid var(--accent);
+  border-radius:10px;padding:18px;display:flex;flex-direction:column;
+}
+.pillar .q{font-weight:600;font-size:15px;margin:8px 0 10px;}
+.pillar .a{color:var(--ink2);font-size:14px;margin:0;}
+.pillar .tag{
+  font-size:11.5px;color:var(--accent);background:var(--accent-soft);
+  border-radius:4px;padding:2px 7px;align-self:flex-start;
+}
+/* ---------- 板块 2 考试比喻 ---------- */
+.exam{display:grid;grid-template-columns:repeat(4,1fr);gap:0;align-items:stretch;}
+.role{
+  background:var(--card);border:1px solid var(--line);
+  padding:18px 16px;position:relative;
+}
+.role:first-child{border-radius:10px 0 0 10px;}
+.role:last-child{border-radius:0 10px 10px 0;}
+.role + .role{border-left:none;}
+.role.focus{background:#fbfcfe;border-color:#c9dcf6;box-shadow:inset 0 3px 0 var(--accent);}
+.role .icon{font-size:20px;line-height:1;margin-bottom:8px;}
+.role .name{font-weight:600;font-size:15px;margin-bottom:2px;}
+.role .eq{font-size:12.5px;color:var(--ink3);margin-bottom:8px;}
+.role .desc{font-size:13.5px;color:var(--ink2);}
+.role .arrow{
+  position:absolute;right:-9px;top:50%;transform:translateY(-50%);
+  width:18px;height:18px;background:var(--bg);border:1px solid var(--line);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:10px;color:var(--ink3);z-index:2;
+}
+/* ---------- 表格通用 ---------- */
+table{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--card);}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:middle;}
+th{background:#fafbfc;font-weight:600;color:var(--ink2);font-size:12.5px;white-space:nowrap;}
+td.n{text-align:right;font-variant-numeric:tabular-nums;}
+.table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--line);}
+.table-wrap table{border:none;}
+.table-wrap th,.table-wrap td{border-left:none;border-right:none;}
+.table-wrap tr td:first-child,.table-wrap tr th:first-child{padding-left:14px;}
+/* ---------- 条形图 ---------- */
+.bars{margin-top:6px;}
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.bar-label{width:130px;font-size:13.5px;color:var(--ink2);text-align:right;flex:none;}
+.bar-track{flex:1;background:var(--gray-soft);border-radius:4px;height:20px;position:relative;}
+.bar-fill{height:100%;border-radius:4px;background:var(--accent);}
+.bar-fill.muted{background:#b9c4d4;}
+.bar-val{width:56px;font-size:13px;color:var(--ink);text-align:right;font-variant-numeric:tabular-nums;flex:none;}
+.bar-note{font-size:11.5px;color:var(--ink3);margin-left:6px;}
+/* ---------- 配额进度 ---------- */
+.meter{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;}
+.meter .top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;}
+.meter .label{font-weight:600;font-size:15px;}
+.meter .figure{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;}
+.meter .track{background:var(--gray-soft);border-radius:5px;height:14px;overflow:hidden;}
+.meter .fill{height:100%;background:var(--warn);}
+.meter .fill.full{background:#c94f4f;}
+.meter .foot{font-size:12.5px;color:var(--ink3);margin-top:8px;}
+/* ---------- 盘点表 ---------- */
+input[type=text],input[type=number],select{
+  font-family:inherit;font-size:13px;color:var(--ink);
+  border:1px solid var(--line);border-radius:5px;padding:4px 6px;
+  background:#fff;width:100%;min-width:0;
+}
+input:focus,select:focus{outline:2px solid var(--accent-soft);border-color:var(--accent);}
+.keep-wrap{display:none;margin-top:5px;}
+.keep-wrap.show{display:block;}
+.keep-wrap input{width:78px;}
+.keep-wrap span{font-size:11.5px;color:var(--ink3);margin-right:4px;}
+.summary{
+  margin-top:14px;background:var(--card);border:1px solid var(--line);
+  border-radius:10px;padding:14px 18px;display:flex;gap:28px;flex-wrap:wrap;align-items:center;
+}
+.summary .item{display:flex;flex-direction:column;gap:2px;min-width:190px;}
+.summary .item .k{font-size:12.5px;color:var(--ink3);}
+.summary .item .v{font-size:19px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--ink);}
+.summary .item.met .v{color:var(--ok);}
+.summary .item .mini{height:6px;border-radius:3px;background:var(--gray-soft);margin-top:4px;}
+.summary .item .mini i{display:block;height:100%;border-radius:3px;background:var(--accent);}
+.summary .item.met .mini i{background:var(--ok);}
+.summary.met{background:var(--ok-soft);border-color:#c3e6d5;}
+.summary .status{font-size:13.5px;color:var(--ink2);margin-left:auto;}
+.summary.met .status{color:var(--ok);font-weight:600;}
+/* ---------- 流程 ---------- */
+.flow{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.step{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;position:relative;}
+.step .s{font-size:12px;color:var(--accent);font-weight:600;margin-bottom:6px;}
+/* ---------- 时间线 ---------- */
+.timeline{position:relative;margin-top:26px;padding-top:26px;}
+.timeline:before{
+  content:"";position:absolute;top:0;left:6%;right:6%;height:2px;background:var(--line);
+}
+.tl-items{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.tl{text-align:center;position:relative;}
+.tl:before{
+  content:"";position:absolute;top:-31px;left:50%;transform:translateX(-50%);
+  width:11px;height:11px;border-radius:50%;background:var(--accent);border:2px solid var(--bg);
+}
+.tl .when{font-weight:600;font-size:14px;margin-bottom:4px;}
+.tl .what{font-size:13.5px;color:var(--ink2);}
+/* ---------- 热力示意 ---------- */
+.heat{border-collapse:separate;border-spacing:3px;font-size:12px;}
+.heat th{background:none;border:none;color:var(--ink3);font-weight:400;padding:2px 4px;text-align:center;}
+.heat td{border:none;border-radius:4px;height:26px;text-align:center;color:#fff;font-size:11px;}
+.heat td.rowhead{background:none;color:var(--ink2);text-align:right;padding-right:6px;font-size:12px;}
+.h0{background:#e9edf3;}
+.h1{background:#c3d5ee;}
+.h2{background:#8db3e2;}
+.h3{background:#5a8fd4;}
+.h4{background:#2f6fd0;}
+.legend{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink3);margin-top:10px;}
+.legend i{width:16px;height:10px;border-radius:2px;display:inline-block;}
+/* ---------- 两道门 ---------- */
+.gate{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:13.5px;}
+.gate .box{
+  border:1px solid var(--line);border-radius:7px;padding:8px 12px;background:#fafbfc;flex:1;
+}
+.gate .box b{display:block;font-size:13.5px;margin-bottom:2px;}
+.gate .box span{font-size:12.5px;color:var(--ink3);}
+.gate .arr{color:var(--ink3);font-size:14px;}
+/* ---------- 优先级卡 ---------- */
+.prio{display:flex;align-items:flex-start;gap:12px;}
+.prio .rank{
+  flex:none;width:26px;height:26px;border-radius:50%;
+  background:var(--ink);color:#fff;font-size:13px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;
+}
+.prio .rank.r2{background:#5a6a80;}
+.prio .rank.r3{background:#8b98a9;}
+.prio .rank.r4{background:#b4bdc9;}
+/* ---------- 打印 ---------- */
+@media print{
+  @page{size:A4;margin:12mm;}
+  html,body{background:#fff;font-size:11.5px;}
+  nav{display:none;}
+  main{max-width:none;padding:0;}
+  section{
+    break-inside:avoid;page-break-inside:avoid;
+    break-after:page;page-break-after:always;
+    border-bottom:none;margin-bottom:0;padding-bottom:0;
+  }
+  section:last-of-type{break-after:auto;page-break-after:auto;}
+  .card,.pillar,.role,.meter,.step,.summary,.cover,.table-wrap{box-shadow:none;}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  input,select{border:none;background:none;padding:0;-webkit-appearance:none;appearance:none;}
+  .print-hint{display:none;}
+}
+@media (max-width:900px){
+  .g2,.g3,.g4,.pillars,.exam,.flow,.tl-items{grid-template-columns:1fr;}
+  .role{border-radius:10px;border-left:1px solid var(--line);margin-bottom:8px;}
+  .role .arrow{display:none;}
+  .timeline:before{display:none;}
+  .tl:before{display:none;}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <span class="nav-title">GEO 评测 × Semrush 配额</span>
+    <div class="nav-links">
+      <a href="#s0">0 今天要定的三件事</a>
+      <a href="#s1">1 我在做什么</a>
+      <a href="#s2">2 Semrush 的角色</a>
+      <a href="#s3">3 为什么是港区</a>
+      <a href="#s4">4 配额现状</a>
+      <a href="#s5">5 项目盘点</a>
+      <a href="#s6">6 怎么判断</a>
+      <a href="#s7">7 删除前保护</a>
+      <a href="#s8">8 备选方案</a>
+      <a href="#s9">9 对运营的用处</a>
+      <a href="#s10">10 时间线</a>
+    </div>
+  </div>
+</nav>
+
+<main>
+
+<!-- ================= 板块 0 ================= -->
+<section id="s0">
+  <div class="cover">
+    <p class="kicker">运营对齐会</p>
+    <h1>一起盘一盘 Semrush：谁还在用、能腾出多少、港区怎么起步</h1>
+    <p class="sub" style="margin-bottom:0">这份材料不是来收东西的。我在搭一套"怎么知道 GEO 做得好不好"的评测，其中一块要用 Semrush 的每日跟踪功能，而账号配额已经满了。所以今天想和大家一起看看现有项目的实际使用情况，一起决定哪些留、哪些缩、哪些导出后再处理。</p>
+    <p class="meta">所有判断今天当场一起做，表格可以直接在这页上填。</p>
+  </div>
+
+  <p class="kicker">板块 0</p>
+  <h2>今天要一起定的三件事</h2>
+  <p class="sub">议程就这三件，定完就散会。</p>
+  <div class="grid g3">
+    <div class="card">
+      <span class="num-badge">1</span>
+      <h3>现有 10 个 Semrush 项目，哪些还在用</h3>
+      <p>一个一个过：谁建的、还在看吗、最近一次看是什么时候。还在用的就留着，没人看的可以处理。</p>
+    </div>
+    <div class="card">
+      <span class="num-badge">2</span>
+      <h3>给港区新项目腾出位置</h3>
+      <p>需要 <span class="hl">2 个项目位</span>和<span class="hl">约 150 条每日 prompt</span>。今天定出从哪里腾。</p>
+    </div>
+    <div class="card">
+      <span class="num-badge">3</span>
+      <h3>港区现有项目里的 263 条 prompt</h3>
+      <p>AI Overview-HK 里已经有 263 条 prompt，想搞清楚它们是怎么来的、由谁定的，能不能直接复用到新项目上。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 板块 1 ================= -->
+<section id="s1">
+  <p class="kicker">板块 1 · 我在做什么</p>
+  <h2>GEO 评测体系 = 回答一个问题：我们怎么知道 GEO 做得好不好？</h2>
+  <p class="sub">GEO 指的是"让我们的内容更容易被 AI 回答引用"。这套评测就干一件事：把"做得好不好"变成看得见、能复查的数字。拆下来是三个问题。</p>
+
+  <div class="pillars">
+    <div class="pillar">
+      <span class="tag">问题 1</span>
+      <p class="q">文章评分高，AI 真的会引用吗？</p>
+      <p class="a">现在的评分只是评分器自己觉得好，还没有和"AI 有没有真的引用这篇文章"对过。分数高不代表有用，得先把两边对上。</p>
+    </div>
+    <div class="pillar">
+      <span class="tag">问题 2</span>
+      <p class="q">淘宝在 AI 回答里出现了没有，怎么测得可信？</p>
+      <p class="a">AI 每次回答都不一样，问一次不算数。要固定一批题目、每天都问一遍、按周来看，这样的数字才站得住。</p>
+    </div>
+    <div class="pillar">
+      <span class="tag">问题 3</span>
+      <p class="q">每个数字说得清来源和可信度吗？</p>
+      <p class="a">每个数都带上"从哪来、有多硬"的标签。别人问起来，能立刻答出这个数是怎么算的、可不可以拿去做决定。</p>
+    </div>
+  </div>
+
+  <div class="callout">Semrush 主要帮我解决问题 2，顺带给问题 1 提供数据。</div>
+</section>
+
+<!-- ================= 板块 2 ================= -->
+<section id="s2">
+  <p class="kicker">板块 2 · Semrush 在这套体系里是什么角色</p>
+  <h2>用一场考试来打比方</h2>
+  <p class="sub">考的是"淘宝在 AI 回答里露不露脸"。这场考试有四个角色。</p>
+
+  <div class="exam">
+    <div class="role">
+      <div class="icon">📄</div>
+      <div class="name">试卷</div>
+      <div class="eq">= 我们自己出的一批固定问题</div>
+      <div class="desc">比如"香港怎么买淘宝护肤品"。一旦定了就不改——题目一换，前后的分数就没法比了。</div>
+      <div class="arrow">›</div>
+    </div>
+    <div class="role">
+      <div class="icon">🏫</div>
+      <div class="name">考场</div>
+      <div class="eq">= AI 引擎</div>
+      <div class="desc">Google AI Mode、ChatGPT 等。题目送进去，看它怎么答、答案里提没提我们。</div>
+      <div class="arrow">›</div>
+    </div>
+    <div class="role focus">
+      <div class="icon">📋</div>
+      <div class="name">记分员</div>
+      <div class="eq">= Semrush 的 Prompt Tracking</div>
+      <div class="desc">每天把试卷送进考场，记录淘宝有没有出现、排第几、引了哪个页面。这是我要用的功能。</div>
+      <div class="arrow">›</div>
+    </div>
+    <div class="role">
+      <div class="icon">📚</div>
+      <div class="name">参考书</div>
+      <div class="eq">= Semrush 的大盘数据</div>
+      <div class="desc">Prompt Research / Visibility Overview：看别人常问什么。出题时拿来参考，但不能照抄当试卷。</div>
+    </div>
+  </div>
+
+  <div class="callout">我要用的是<strong>记分员</strong>这个功能，它按"项目"算配额。</div>
+  <p class="note">Prompt Tracking：Semrush 里"每天替你去问 AI 一遍并记录结果"的功能。</p>
+</section>
+
+<!-- ================= 板块 3 ================= -->
+<section id="s3">
+  <p class="kicker">板块 3 · 为什么必须是港区的 AI Mode 和 ChatGPT</p>
+  <h2>港区现在只有一个考场开着</h2>
+  <p class="sub">香港这边目前只有 1 个项目在跑，跟的是 Google AI Overview 这一个模型。要测 AI Mode 和 ChatGPT，只能新建。</p>
+
+  <div class="grid g2" style="align-items:start">
+    <div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>港区 · 模型</th><th>现在有项目吗</th><th>状态</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Google AI Overview</td><td>有（1 个）</td><td>在跑</td></tr>
+            <tr><td>Google AI Mode</td><td>没有</td><td>需要新建</td></tr>
+            <tr><td>ChatGPT</td><td>没有</td><td>需要新建</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">AI Overview 和 AI Mode 是 Google 的两个不同产品，在 Semrush 里算两个模型，要分别建项目。</p>
+    </div>
+    <div class="card">
+      <h3>为什么要建两个，不能合成一个</h3>
+      <p>Semrush 的项目是按"<span class="hl">一个模型 × 一个地区</span>"来切的——一个项目只能盯一个模型、一个地区。所以港区要测 AI Mode 和 ChatGPT，必须各建一个项目，没有合并的办法。</p>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>AI 平台带来的访问量（Semrush 估算，台湾项目数据）</h3>
+    <div class="bars" style="margin-top:14px">
+      <div class="bar-row">
+        <span class="bar-label">Google AI Mode</span>
+        <span class="bar-track"><span class="bar-fill" style="width:100%"></span></span>
+        <span class="bar-val">2,785</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">Gemini</span>
+        <span class="bar-track"><span class="bar-fill muted" style="width:76.8%"></span></span>
+        <span class="bar-val">2,138</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">ChatGPT</span>
+        <span class="bar-track"><span class="bar-fill" style="width:27.5%"></span></span>
+        <span class="bar-val">767</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">Perplexity</span>
+        <span class="bar-track"><span class="bar-fill" style="width:6.5%"></span></span>
+        <span class="bar-val">180</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">DeepSeek</span>
+        <span class="bar-track"><span class="bar-fill" style="width:3.8%"></span></span>
+        <span class="bar-val">105</span>
+      </div>
+    </div>
+    <p class="note">Google 系和 ChatGPT 是大头；Gemini（灰色那条）不能被 Prompt Tracking 跟踪，所以量再大也测不了，只能先放一边。</p>
+  </div>
+</section>
+
+<!-- ================= 板块 4 ================= -->
+<section id="s4">
+  <p class="kicker">板块 4 · 配额现状和需要多少</p>
+  <h2>现在两头都快见底了</h2>
+  <p class="sub">Semrush 账号有两个上限：能建多少个项目、每天能问多少条题目。</p>
+
+  <div class="grid g2">
+    <div class="meter">
+      <div class="top"><span class="label">项目位</span><span class="figure">10 / 10</span></div>
+      <div class="track"><div class="fill full" style="width:100%"></div></div>
+      <div class="foot">已满。不腾出位置就建不了新项目。</div>
+    </div>
+    <div class="meter">
+      <div class="top"><span class="label">每日 prompt</span><span class="figure">2,418 / 2,500</span></div>
+      <div class="track"><div class="fill" style="width:96.7%"></div></div>
+      <div class="foot">只剩 82 条，不够一个新项目用。</div>
+    </div>
+  </div>
+
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card">
+      <h3>我需要</h3>
+      <p><span class="hl">2 个项目位</span>：AI Mode-HK、ChatGPT-HK<br>
+      <span class="hl">每个约 100 条 prompt</span>，合计约 <span class="hl">200 条每日 prompt</span>。</p>
+    </div>
+    <div class="card" style="background:var(--warn-soft);border-color:#f0dcc0">
+      <h3>所以今天的目标</h3>
+      <p>至少要腾出 <span class="hl">2 个项目位</span>、<span class="hl">约 120–150 条每日 prompt</span>。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 板块 5 ================= -->
+<section id="s5">
+  <p class="kicker">板块 5 · 10 个项目盘点</p>
+  <h2>会上一起填这张表</h2>
+  <p class="sub">左边四列是我已经查到的，右边四列今天一起填。填的时候底部汇总会自动算，够了就变绿。</p>
+
+  <div class="table-wrap">
+    <table id="inv">
+      <thead>
+        <tr>
+          <th style="min-width:180px">项目名</th>
+          <th style="width:88px">prompt 数</th>
+          <th style="min-width:130px">域名</th>
+          <th style="min-width:130px">模型</th>
+          <th style="min-width:110px">负责人</th>
+          <th style="width:100px">还在看吗</th>
+          <th style="min-width:110px">最近一次查看</th>
+          <th style="min-width:150px">建议处理</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- 行由 JS 生成 -->
+      </tbody>
+    </table>
+  </div>
+
+  <div class="summary" id="sum">
+    <div class="item" id="sumSlot">
+      <span class="k">腾出的项目位</span>
+      <span class="v"><span id="slotNow">0</span> / 2</span>
+      <span class="mini"><i id="slotBar" style="width:0%"></i></span>
+    </div>
+    <div class="item" id="sumPrompt">
+      <span class="k">腾出的每日 prompt</span>
+      <span class="v"><span id="promptNow">0</span> / 150</span>
+      <span class="mini"><i id="promptBar" style="width:0%"></i></span>
+    </div>
+    <div class="status" id="sumStatus">还差一些，继续往下过</div>
+  </div>
+
+  <p class="note print-hint">怎么算的：选「导出后删除」＝ 释放 1 个项目位 + 这个项目的全部 prompt；选「缩减到 N 条」＝ 释放（原数 − 保留数）条 prompt，项目位不释放；选「保留」＝ 不释放。填完可以 Ctrl+P 打印或存成 PDF 留档；刷新页面会清空。</p>
+</section>
+
+<!-- ================= 板块 6 ================= -->
+<section id="s6">
+  <p class="kicker">板块 6 · 怎么公平地判断一个旧项目还要不要</p>
+  <h2>不看资历，就问三个问题</h2>
+  <p class="sub">避免"谁声音大谁留下"。每个项目都过同样这三关。</p>
+
+  <div class="grid g3">
+    <div class="card">
+      <span class="num-badge">1</span>
+      <h3>它在回答什么问题？</h3>
+      <p>比如"台湾市场淘宝在 AI 里的可见度趋势"。答得出来，就说明它有具体用途，是有价值的。</p>
+    </div>
+    <div class="card">
+      <span class="num-badge">2</span>
+      <h3>最近一个月有人看过它的数据吗？</h3>
+      <p>有人看过吗？看的人有没有根据它做过什么决定？没人看、也没影响过任何决定，它就只是在消耗配额。</p>
+    </div>
+    <div class="card">
+      <span class="num-badge">3</span>
+      <h3>它的数据能不能导出保存？</h3>
+      <p>能。所以"删除"不等于"数据没了"——历史数据可以整份导出留档，随时能翻。</p>
+    </div>
+  </div>
+
+  <div class="callout">答不出问题 1 或 2 的项目，导出后删除；答得出的，保留或缩减。</div>
+</section>
+
+<!-- ================= 板块 7 ================= -->
+<section id="s7">
+  <p class="kicker">板块 7 · 删除前的保护措施</p>
+  <h2>数据不会丢，删之前先落袋</h2>
+  <p class="sub">任何一个项目要处理，都先走完这三步，负责人确认了才动手。</p>
+
+  <div class="flow">
+    <div class="step">
+      <div class="s">第 1 步</div>
+      <h3>导出历史数据</h3>
+      <p>把该项目的 Citations（URLs、Prompts &amp; URLs 两个视图）、Rankings、Response Search 都导成 CSV。</p>
+    </div>
+    <div class="step">
+      <div class="s">第 2 步</div>
+      <h3>导出题目清单</h3>
+      <p>把 prompt 列表和 tag 一起导出来。这批题目本身就是资产，将来还能复用。</p>
+    </div>
+    <div class="step">
+      <div class="s">第 3 步</div>
+      <h3>发给负责人存档</h3>
+      <p>文件发给项目负责人，等对方确认收到、确认可以处理，再执行删除。</p>
+    </div>
+  </div>
+
+  <p class="note">Semrush 每个报表右上角有导出图标，直接点就能下 CSV。</p>
+</section>
+
+<!-- ================= 板块 8 ================= -->
+<section id="s8">
+  <p class="kicker">板块 8 · 如果腾不出来</p>
+  <h2>备选方案，按优先级排</h2>
+  <p class="sub">万一今天腾不够，也不至于停摆。下面从上到下依次退。</p>
+
+  <div class="grid g2">
+    <div class="card">
+      <div class="prio">
+        <span class="rank">1</span>
+        <div>
+          <h3>缩减而不是删除</h3>
+          <p>每个旧项目缩到 50 条，也能腾出几百条 prompt。趋势还能接着看，只是题目少一些。（项目位仍需另想办法）</p>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="prio">
+        <span class="rank r2">2</span>
+        <div>
+          <h3>分阶段来</h3>
+          <p>先只建 AI Mode-HK 一个项目（1 个位 + 100 条），ChatGPT-HK 等下一批配额再说。</p>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="prio">
+        <span class="rank r3">3</span>
+        <div>
+          <h3>复用现有 AI Overview-HK 项目</h3>
+          <p>先在它上面打 tag、看数据，港区 AI Overview 的读数立刻就有，不用等配额。</p>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="prio">
+        <span class="rank r4">4</span>
+        <div>
+          <h3>向 Semrush 要配额</h3>
+          <p>申请加配额，或者提前谈续约（订阅 2026 年 11 月 24 日到期）。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 板块 9 ================= -->
+<section id="s9">
+  <p class="kicker">板块 9 · 这套体系对运营有什么用</p>
+  <h2>跑起来之后，你们能直接拿去用的两样东西</h2>
+  <p class="sub">不只是给我自己看的指标，最后是要落到"这周该写什么"上。</p>
+
+  <div class="grid g2">
+    <div class="card">
+      <h3>一、热力表：哪类问题我们缺席</h3>
+      <p>按"用户意图 × 问题类型"排开，看淘宝在每种问题上出现的比例。颜色浅的格子就是我们没露脸的地方，直接告诉内容团队该补什么。</p>
+      <table class="heat" style="margin-top:12px;width:auto">
+        <tr><th></th><th>问题类型 A</th><th>问题类型 B</th><th>问题类型 C</th><th>问题类型 D</th></tr>
+        <tr><td class="rowhead">意图 ①</td><td class="h4"></td><td class="h2"></td><td class="h1"></td><td class="h3"></td></tr>
+        <tr><td class="rowhead">意图 ②</td><td class="h2"></td><td class="h3"></td><td class="h0"></td><td class="h1"></td></tr>
+        <tr><td class="rowhead">意图 ③</td><td class="h1"></td><td class="h0"></td><td class="h2"></td><td class="h0"></td></tr>
+      </table>
+      <div class="legend"><span>出现少</span><i class="h0"></i><i class="h1"></i><i class="h2"></i><i class="h3"></i><i class="h4"></i><span>出现多</span></div>
+      <p class="note">上图只是结构示意，格子里还没有真实数据——要等项目跑起来才有。</p>
+    </div>
+
+    <div class="card">
+      <h3>二、两道门选题：先过意图，再看商品</h3>
+      <p>一个选题要不要写，过两道门就有答案，不用靠感觉吵。</p>
+      <div class="gate">
+        <div class="box"><b>第一道门 · 意图</b><span>有否决权：没人问的，不写</span></div>
+        <span class="arr">›</span>
+        <div class="box"><b>第二道门 · 商品</b><span>有加分权：有独有信息的才值得写</span></div>
+      </div>
+      <p class="note" style="margin-top:14px">意图那道门只能否决、不能加分：没人问的题目，商品再好也不写；商品那道门只加分：同样有人问的题目里，我们有别人没有的信息（价格、库存、真实评价等），优先写。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 板块 10 ================= -->
+<section id="s10">
+  <p class="kicker">板块 10 · 时间线</p>
+  <h2>配额定了之后的节奏</h2>
+  <p class="sub">最快的路径：本周把位置腾出来，下周就能开始每天跑，一周后有第一个能看的读数。</p>
+
+  <div class="timeline">
+    <div class="tl-items">
+      <div class="tl">
+        <div class="when">本周</div>
+        <div class="what">腾配额 + 建项目</div>
+      </div>
+      <div class="tl">
+        <div class="when">下周</div>
+        <div class="what">试卷录入、开始每天跑</div>
+      </div>
+      <div class="tl">
+        <div class="when">跑满一周</div>
+        <div class="what">第一个周读数</div>
+      </div>
+      <div class="tl">
+        <div class="when">10 月中</div>
+        <div class="what">阶段汇报</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout neutral">今天只要把板块 0 的三件事定下来，后面这条线就能走通。</div>
+</section>
+
+</main>
+
+<script>
+(function(){
+  var TARGET_SLOT = 2, TARGET_PROMPT = 150;
+
+  var rows = [
+    {name:"AI mode-TW",               prompts:206, domain:"taobao.com",       model:"Google AI Mode"},
+    {name:"AI Mode-TW-PET",           prompts:209, domain:"world.taobao.com", model:"Google AI Mode"},
+    {name:"AI Overview-HK",           prompts:263, domain:"taobao.com",       model:"Google AI Overview"},
+    {name:"AI Overview-MY",           prompts:257, domain:"taobao.com",       model:"Google AI Overview"},
+    {name:"AI Overview-TW-PET",       prompts:209, domain:"world.taobao.com", model:"Google AI Overview"},
+    {name:"Chatgpt-TW",               prompts:223, domain:"taobao.com",       model:"ChatGPT"},
+    {name:"Chatgpt-TW-PET",           prompts:209, domain:"world.taobao.com", model:"ChatGPT"},
+    {name:"jp.tao.co-ChatGPT-2026.8", prompts:310, domain:"jp.tao.co",        model:"ChatGPT"},
+    {name:"（未知 1）",                prompts:null, domain:"",                model:""},
+    {name:"（未知 2）",                prompts:null, domain:"",                model:""}
+  ];
+
+  var tbody = document.querySelector("#inv tbody");
+
+  function cell(html){ var td = document.createElement("td"); td.innerHTML = html; return td; }
+
+  rows.forEach(function(r, i){
+    var tr = document.createElement("tr");
+    var unknown = (r.prompts === null);
+
+    tr.appendChild(cell(unknown
+      ? '<input type="text" value="" placeholder="'+r.name+'">'
+      : r.name));
+
+    var tdN = document.createElement("td");
+    tdN.className = "n";
+    tdN.innerHTML = '<input type="number" class="p-count" min="0" step="1" value="'+(unknown?"":r.prompts)+'" placeholder="—" style="text-align:right">';
+    tr.appendChild(tdN);
+
+    tr.appendChild(cell(unknown ? '<input type="text" placeholder="待填">' : r.domain));
+    tr.appendChild(cell(unknown ? '<input type="text" placeholder="待填">' : r.model));
+    tr.appendChild(cell('<input type="text" class="p-owner" placeholder="待填">'));
+
+    tr.appendChild(cell(
+      '<select class="p-used">' +
+        '<option value="">—</option>' +
+        '<option value="yes">是</option>' +
+        '<option value="no">否</option>' +
+        '<option value="maybe">不确定</option>' +
+      '</select>'));
+
+    tr.appendChild(cell('<input type="text" class="p-last" placeholder="如：8 月">'));
+
+    tr.appendChild(cell(
+      '<select class="p-action">' +
+        '<option value="">—</option>' +
+        '<option value="keep">保留</option>' +
+        '<option value="shrink">缩减到 N 条</option>' +
+        '<option value="delete">导出后删除</option>' +
+      '</select>' +
+      '<span class="keep-wrap"><span>保留</span><input type="number" class="p-keep" min="0" step="1" placeholder="条数"></span>'));
+
+    tbody.appendChild(tr);
+  });
+
+  function recalc(){
+    var slots = 0, freed = 0;
+    Array.prototype.forEach.call(tbody.rows, function(tr){
+      var action = tr.querySelector(".p-action").value;
+      var total  = parseInt(tr.querySelector(".p-count").value, 10);
+      if (isNaN(total) || total < 0) total = 0;
+
+      var wrap = tr.querySelector(".keep-wrap");
+      if (action === "shrink") wrap.classList.add("show"); else wrap.classList.remove("show");
+
+      if (action === "delete"){
+        slots += 1;
+        freed += total;
+      } else if (action === "shrink"){
+        var keep = parseInt(tr.querySelector(".p-keep").value, 10);
+        if (isNaN(keep) || keep < 0) keep = 0;
+        if (keep > total) keep = total;
+        freed += (total - keep);
+      }
+    });
+
+    document.getElementById("slotNow").textContent = slots;
+    document.getElementById("promptNow").textContent = freed.toLocaleString("en-US");
+    document.getElementById("slotBar").style.width   = Math.min(100, slots / TARGET_SLOT * 100) + "%";
+    document.getElementById("promptBar").style.width = Math.min(100, freed / TARGET_PROMPT * 100) + "%";
+
+    var slotMet = slots >= TARGET_SLOT, promptMet = freed >= TARGET_PROMPT;
+    document.getElementById("sumSlot").classList.toggle("met", slotMet);
+    document.getElementById("sumPrompt").classList.toggle("met", promptMet);
+
+    var sum = document.getElementById("sum");
+    sum.classList.toggle("met", slotMet && promptMet);
+    document.getElementById("sumStatus").textContent =
+      (slotMet && promptMet) ? "达标：港区两个项目可以建了" :
+      (slotMet && !promptMet) ? "项目位够了，prompt 还差 " + (TARGET_PROMPT - freed) + " 条" :
+      (!slotMet && promptMet) ? "prompt 够了，还差 " + (TARGET_SLOT - slots) + " 个项目位" :
+      "还差一些，继续往下过";
+  }
+
+  tbody.addEventListener("change", recalc);
+  tbody.addEventListener("input", recalc);
+  recalc();
+})();
+</script>
+
+</body>
+</html>
