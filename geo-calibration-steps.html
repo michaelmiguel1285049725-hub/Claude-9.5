@@ -534,7 +534,7 @@
     next.disabled = cur === N - 1;
     pos.textContent = names[cur] + '　' + (cur + 1) + ' / ' + N;
     window.scrollTo(0, 0);
-    if (history.replaceState) history.replaceState(null, '', '#' + cur);
+    try { history.replaceState(null, '', '#' + cur); } catch (e) { /* 沙箱 iframe 里不允许改网址，忽略 */ }
   }
 
   for (var i = 0; i < nodes.length; i++){
