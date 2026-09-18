@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>校准 v0 · 交叉分析步骤</title>
+<style>
+  :root{
+    --bg:#FAFAF8; --card:#FFFFFF; --ink:#1F2328; --muted:#6B7280; --faint:#9CA3AF;
+    --line:#E3E4E0; --line-strong:#C9CBC6; --gray-bg:#F1F1EF;
+    --accent:#2E6FD8; --accent-bg:#EAF0FB;
+    --ok:#2E9E5B; --ok-bg:#E7F5EC;
+    --none:#8A8F98; --none-bg:#EEEFF1;
+    --bad:#D64545; --bad-bg:#FBEAEA;
+    --head-h:96px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    background:var(--bg);color:var(--ink);line-height:1.5;font-size:14px;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+  }
+  code,.mono{font-family:Menlo,Consolas,"PingFang SC","Microsoft YaHei",monospace;font-size:.92em}
+
+  /* ---------- 顶部步进条 ---------- */
+  header{
+    position:fixed;top:0;left:0;right:0;height:var(--head-h);z-index:10;
+    background:rgba(250,250,248,.95);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;padding:0 24px;
+  }
+  .stepper{display:flex;align-items:flex-start;width:100%;max-width:1100px;position:relative}
+  .stepper::before{content:"";position:absolute;left:24px;right:24px;top:15px;height:2px;background:var(--line-strong)}
+  .stepper .fill{position:absolute;left:24px;top:15px;height:2px;background:var(--ink);transition:width .25s}
+  .snode{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;position:relative;user-select:none}
+  .snode .c{width:32px;height:32px;border-radius:50%;background:var(--card);border:2px solid var(--line-strong);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--muted);transition:all .2s}
+  .snode .l{font-size:12px;color:var(--muted)}
+  .snode.done .c{border-color:var(--ink);color:var(--ink)}
+  .snode.cur .c{background:var(--ink);border-color:var(--ink);color:#fff}
+  .snode.cur .l{color:var(--ink);font-weight:600}
+  .snode:hover .c{border-color:var(--ink)}
+
+  /* ---------- 面板 ---------- */
+  main{padding-top:var(--head-h)}
+  .panel{display:none;min-height:calc(100vh - var(--head-h));padding:28px 32px 84px;max-width:1180px;margin:0 auto;flex-direction:column}
+  .panel.active{display:flex}
+  .ptitle{display:flex;align-items:baseline;gap:12px;margin-bottom:18px}
+  .ptitle .k{font-size:12px;color:var(--faint);letter-spacing:.1em}
+  .ptitle h2{font-size:22px;font-weight:600}
+  .ptitle .sub{font-size:13px;color:var(--muted)}
+
+  .grid4{display:grid;grid-template-columns:repeat(6,1fr);grid-template-rows:auto 1fr;gap:14px;flex:1}
+  .cell{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column}
+  .cell .lab{font-size:11px;color:var(--faint);letter-spacing:.12em;margin-bottom:8px}
+  .cell .body{font-size:15px;line-height:1.6}
+  .cell.what{grid-column:span 3}
+  .cell.why{grid-column:span 3}
+  .cell.out{grid-column:span 4}
+  .cell.stuck{grid-column:span 2}
+  .cell.stuck .body{font-size:14px}
+  .cell.stuck.none .body{color:var(--faint)}
+  .note{font-size:12px;color:var(--muted);margin-top:8px}
+  .note b{font-weight:500;color:var(--ink)}
+
+  /* 表格 */
+  .tbl{border-collapse:collapse;width:100%;font-size:12px;background:var(--card)}
+  .tbl th,.tbl td{border:1px solid var(--line);padding:5px 7px;text-align:left;white-space:nowrap}
+  .tbl th{background:var(--gray-bg);font-weight:600;color:var(--muted);font-size:11px}
+  .tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
+  .tbl .ph{color:var(--faint)}
+  .tbl .hl{background:var(--accent-bg)}
+  .tbl th.hl{color:var(--accent)}
+  .tbl .ell{color:var(--faint);text-align:center}
+  .tbl-cap{font-size:12px;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px 10px}
+  .tbl-cap b{font-weight:600;color:var(--ink);font-size:13px}
+  .tbl-wrap{overflow:auto}
+
+  /* 读法色 */
+  .r-ok{color:var(--ok);background:var(--ok-bg);font-weight:600}
+  .r-none{color:var(--none);background:var(--none-bg);font-weight:600}
+  .r-bad{color:var(--bad);background:var(--bad-bg);font-weight:600}
+
+  /* ---------- 准备页 ---------- */
+  .prep{display:grid;grid-template-columns:1fr auto 1fr;gap:18px;align-items:center;flex:1}
+  .prep .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .key{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;font-size:13px;color:var(--muted);width:150px}
+  .key svg{width:56px;height:56px}
+  .key b{color:var(--ink);font-weight:600}
+  .rowtag{display:inline-block;font-size:11px;color:var(--accent);background:var(--accent-bg);padding:1px 8px;border-radius:20px}
+
+  /* ---------- 第 1 步：归一示意 ---------- */
+  .norm{display:flex;flex-direction:column;gap:5px;margin-top:10px}
+  .norm .v{font-size:12px;padding:5px 10px;border:1px solid var(--line);border-radius:6px;background:var(--gray-bg);color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+  .norm .v .why{color:var(--faint);font-size:11px;white-space:nowrap}
+  .norm .v s{color:var(--bad);text-decoration-color:var(--bad)}
+  .norm .down{color:var(--faint);text-align:center;font-size:12px;line-height:1.2}
+  .norm .one{font-size:12px;padding:6px 10px;border:1.5px solid var(--accent);border-radius:6px;color:var(--accent);background:var(--accent-bg);font-weight:600;text-align:center}
+
+  /* ---------- 第 2 步：直方图 ---------- */
+  .hist{display:flex;gap:18px;align-items:flex-start}
+  .hist svg{width:380px;height:210px;flex:none}
+  .hist .txt{font-size:14px;line-height:1.6}
+  .hist .txt .ex{margin-top:6px;padding:10px 12px;background:var(--accent-bg);border-radius:8px;font-weight:500}
+  .legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:8px}
+  .legend i{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-2px;margin-right:5px}
+
+  /* ---------- 第 3 步：筛子 ---------- */
+  .sieve{display:flex;align-items:center;gap:14px;justify-content:center;margin:8px 0 18px}
+  .box{border:1.5px solid var(--line-strong);border-radius:8px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:13px;padding:10px;line-height:1.45;background:var(--card)}
+  .box.big{width:210px;height:130px;background:var(--gray-bg);color:var(--muted)}
+  .box.small{width:110px;height:76px;font-weight:600;border-color:var(--accent);color:var(--accent);background:var(--accent-bg)}
+  .box.mesh{
+    width:120px;height:90px;border-style:dashed;
+    background-image:repeating-linear-gradient(0deg,transparent 0 7px,var(--line) 7px 8px),repeating-linear-gradient(90deg,transparent 0 7px,var(--line) 7px 8px);
+  }
+  .box.mesh span{background:var(--card);padding:2px 6px;border-radius:4px;font-weight:600}
+  .arr{color:var(--faint);font-size:22px}
+  .pair{display:flex;gap:14px;justify-content:center}
+  .pair .box{width:170px;height:62px;font-weight:600;font-size:15px}
+  .pair .box.yes{border-color:var(--ok);color:var(--ok);background:var(--ok-bg)}
+  .pair .box.no{border-color:var(--line-strong);color:var(--muted)}
+
+  /* ---------- 第 4/5 步：读法图例 + 标签卡 ---------- */
+  .calib{display:grid;grid-template-columns:1fr 200px;gap:14px;align-items:start}
+  .rule-legend{display:flex;flex-direction:column;gap:8px}
+  .rule-legend .lab2{font-size:11px;color:var(--faint);letter-spacing:.12em}
+  .rl{border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.45;border:1px solid transparent}
+  .rl b{display:block;font-size:13px;margin-bottom:1px}
+  .rl.none{background:var(--none-bg);color:var(--none);border-color:#DADCE0}
+  .rl.ok{background:var(--ok-bg);color:var(--ok);border-color:#BFE3CC}
+  .rl.bad{background:var(--bad-bg);color:var(--bad);border-color:#F1C4C4}
+  .out-wrap{position:relative}
+  .tagcard{
+    border:1.5px solid #E5B800;background:#FFF8DC;border-radius:8px;padding:8px 12px;font-size:12px;line-height:1.55;
+    box-shadow:0 2px 8px rgba(0,0,0,.06);
+  }
+  .tagcard .t{font-size:11px;color:#8A6D00;letter-spacing:.1em;margin-bottom:2px}
+  .tagcard b{font-weight:600}
+  .tagcard .big{font-size:20px;line-height:1.2}
+
+  /* ---------- 第 6 步 ---------- */
+  .concl{border:1px solid var(--line);border-radius:10px;padding:18px 20px;background:var(--card)}
+  .concl .row{display:grid;grid-template-columns:60px 1fr;gap:10px;align-items:center;padding:10px 0;border-bottom:1px dashed var(--line);font-size:16px}
+  .concl .row:last-of-type{border-bottom:none}
+  .concl .row .k{font-weight:600;padding:2px 8px;border-radius:6px;text-align:center;font-size:14px}
+  .concl .row .k.ok{color:var(--ok);background:var(--ok-bg)}
+  .concl .row .k.none{color:var(--none);background:var(--none-bg)}
+  .concl .row .k.bad{color:var(--bad);background:var(--bad-bg)}
+  .concl .blank{border-bottom:1.5px solid var(--line-strong);height:24px;width:100%}
+  .concl .dont{margin-top:12px;font-size:13px;color:var(--faint)}
+  .branch{display:grid;grid-template-columns:auto 16px 1fr;gap:6px 8px;align-items:center;margin-top:10px;font-size:12px}
+  .branch .root{grid-row:span 2;padding:8px 10px;border:1px solid var(--line-strong);border-radius:8px;background:var(--gray-bg);text-align:center;font-weight:600}
+  .branch .arrow{color:var(--faint);text-align:center}
+  .branch .leaf{padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);line-height:1.45}
+  .branch .leaf b{display:block;font-size:12px}
+  .branch .leaf.good{border-color:#BFE3CC}
+  .branch .leaf.thin{border-color:#F1C4C4}
+
+  /* ---------- 结尾 ---------- */
+  .roles{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:12px;align-items:center;margin-bottom:28px}
+  .role{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 18px;text-align:center}
+  .role .who{font-size:12px;color:var(--faint);letter-spacing:.1em;margin-bottom:6px}
+  .role .do{font-size:18px;font-weight:600}
+  .roles .arr{font-size:26px}
+  .timeline{display:flex;align-items:center;gap:0;justify-content:center;position:relative}
+  .timeline .t{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 18px;font-size:14px;text-align:center;flex:1;max-width:320px}
+  .timeline .t .n{display:block;font-size:11px;color:var(--faint);letter-spacing:.1em;margin-bottom:4px}
+  .timeline .ln{width:40px;height:2px;background:var(--line-strong);flex:none;position:relative}
+  .timeline .ln::after{content:"";position:absolute;right:-1px;top:-4px;border:5px solid transparent;border-left-color:var(--line-strong)}
+
+  /* ---------- 底部按钮 ---------- */
+  .ctrl{position:fixed;bottom:0;left:0;right:0;height:60px;background:rgba(250,250,248,.95);border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 32px;z-index:10}
+  .ctrl .pos{font-size:12px;color:var(--muted)}
+  .ctrl .btns{display:flex;gap:10px}
+  .btn{padding:8px 18px;border-radius:8px;border:1px solid var(--line-strong);background:var(--card);cursor:pointer;font-size:14px;font-family:inherit;color:var(--ink)}
+  .btn:hover{background:var(--gray-bg)}
+  .btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .btn:disabled{opacity:.35;cursor:default}
+  .ctrl .hint{font-size:12px;color:var(--faint)}
+
+  /* ---------- 打印 ---------- */
+  @media print{
+    header,.ctrl{display:none}
+    main{padding-top:0}
+    body{background:#fff;font-size:12px}
+    .panel{display:flex !important;min-height:auto;padding:8px 0 0;break-after:page;page-break-after:always;max-width:none}
+    .panel:last-of-type{break-after:auto;page-break-after:auto}
+    .ptitle{margin-bottom:12px}
+    .ptitle h2{font-size:18px}
+    .grid4{gap:10px;flex:none}
+    .cell{break-inside:avoid;padding:10px 12px}
+    .cell .body{font-size:13px}
+    .hist svg{width:320px;height:180px}
+    .prep{gap:12px}
+    @page{margin:10mm}
+  }
+  @media (max-width:900px){
+    .grid4{grid-template-columns:1fr}
+    .cell.what,.cell.why,.cell.out,.cell.stuck{grid-column:span 1}
+    .prep{grid-template-columns:1fr}
+    .key{width:auto}
+    .roles{grid-template-columns:1fr}
+    .roles .arr{display:none}
+    .timeline{flex-direction:column}
+    .timeline .ln{display:none}
+    .hist{flex-direction:column}
+    .calib{grid-template-columns:1fr}
+    .snode .l{display:none}
+    :root{--head-h:64px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="stepper" id="stepper">
+    <div class="fill" id="fill"></div>
+    <div class="snode" data-i="0"><div class="c">备</div><div class="l">准备</div></div>
+    <div class="snode" data-i="1"><div class="c">1</div><div class="l">第 1 步</div></div>
+    <div class="snode" data-i="2"><div class="c">2</div><div class="l">第 2 步</div></div>
+    <div class="snode" data-i="3"><div class="c">3</div><div class="l">第 3 步</div></div>
+    <div class="snode" data-i="4"><div class="c">4</div><div class="l">第 4 步</div></div>
+    <div class="snode" data-i="5"><div class="c">5</div><div class="l">第 5 步</div></div>
+    <div class="snode" data-i="6"><div class="c">6</div><div class="l">第 6 步</div></div>
+    <div class="snode" data-i="7"><div class="c">结</div><div class="l">结论</div></div>
+  </div>
+</header>
+
+<main>
+
+<!-- ================= 准备 ================= -->
+<section class="panel" data-i="0">
+  <div class="ptitle"><span class="k">准备</span><h2>手里有两张表</h2></div>
+  <div class="prep">
+    <div class="card">
+      <div class="tbl-cap"><b>表①（技术给的）</b><span class="rowtag">每篇文章一行</span></div>
+      <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>URL</th><th>标题</th><th>生产日期</th><th>批次</th><th>是否接商品数据</th><th>维1</th><th>维2</th><th class="ell">⋯</th><th>维9</th><th>评分版本</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">taobao.com/…/p1</td><td class="ph">（标题）</td><td class="ph">2025-08-12</td><td class="ph">B-03</td><td>是</td><td class="num">7.5</td><td class="num">8.0</td><td class="ell">⋯</td><td class="num">6.0</td><td class="ph">v1</td></tr>
+          <tr><td class="mono">taobao.com/…/p2</td><td class="ph">（标题）</td><td class="ph">2025-07-03</td><td class="ph">A-11</td><td>否</td><td class="num">6.0</td><td class="num">7.0</td><td class="ell">⋯</td><td class="num">8.5</td><td class="ph">v1</td></tr>
+          <tr><td class="mono">taobao.com/…/p3</td><td class="ph">（标题）</td><td class="ph">2025-09-01</td><td class="ph">B-07</td><td>是</td><td class="num">9.0</td><td class="num">6.5</td><td class="ell">⋯</td><td class="num">7.0</td><td class="ph">v1</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="note">分数为 0–10 的示意数字。</div>
+    </div>
+
+    <div class="key">
+      <svg viewBox="0 0 64 64" fill="none" stroke="#1F2328" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="22" cy="24" r="12"/>
+        <circle cx="22" cy="24" r="4" fill="#1F2328" stroke="none"/>
+        <path d="M31 33 L52 54"/>
+        <path d="M44 46 L49 41"/>
+        <path d="M49 51 L54 46"/>
+      </svg>
+      <div><b>URL</b><br>两张表唯一的连接是 URL</div>
+    </div>
+
+    <div class="card">
+      <div class="tbl-cap"><b>表②（我从 Semrush 导的）</b><span class="rowtag">每个被引过的淘宝页面一行</span></div>
+      <table class="tbl">
+        <thead><tr><th>URL</th><th>被引次数</th><th>被引天数</th><th>总天数</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">taobao.com/…/p1</td><td class="num ph">·</td><td class="num ph">·</td><td class="num ph">·</td></tr>
+          <tr><td class="mono">taobao.com/…/p3</td><td class="num ph">·</td><td class="num ph">·</td><td class="num ph">·</td></tr>
+          <tr><td class="mono">taobao.com/…/p9</td><td class="num ph">·</td><td class="num ph">·</td><td class="num ph">·</td></tr>
+        </tbody>
+      </table>
+      <div class="note">数值以导出为准，这里不填。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 第 1 步 ================= -->
+<section class="panel" data-i="1">
+  <div class="ptitle"><span class="k">第 1 步</span><h2>把表②贴到表①上，多一列"被引没有"</h2></div>
+  <div class="grid4">
+    <div class="cell what"><div class="lab">做什么</div><div class="body">拿表②的每个 URL 去表①里找，找到的标"是"，其余标"否"。</div></div>
+    <div class="cell why"><div class="lab">为什么</div><div class="body">主线就是比"是"和"否"两堆。</div></div>
+    <div class="cell out">
+      <div class="lab">产出</div>
+      <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>URL</th><th>标题</th><th>生产日期</th><th>批次</th><th>维1</th><th class="ell">⋯</th><th>维9</th><th>评分版本</th><th class="hl">被引</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">taobao.com/…/p1</td><td class="ph">（标题）</td><td class="ph">2025-08-12</td><td class="ph">B-03</td><td class="num">7.5</td><td class="ell">⋯</td><td class="num">6.0</td><td class="ph">v1</td><td class="hl">是</td></tr>
+          <tr><td class="mono">taobao.com/…/p2</td><td class="ph">（标题）</td><td class="ph">2025-07-03</td><td class="ph">A-11</td><td class="num">6.0</td><td class="ell">⋯</td><td class="num">8.5</td><td class="ph">v1</td><td class="hl">否</td></tr>
+          <tr><td class="mono">taobao.com/…/p3</td><td class="ph">（标题）</td><td class="ph">2025-09-01</td><td class="ph">B-07</td><td class="num">9.0</td><td class="ell">⋯</td><td class="num">7.0</td><td class="ph">v1</td><td class="hl">是</td></tr>
+          <tr><td class="ell" colspan="9">⋯</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="note"><b>比如：30 篇是，其余全是否。</b></div>
+    </div>
+    <div class="cell stuck">
+      <div class="lab">会卡的地方</div>
+      <div class="body">URL 格式不一致（有没有 https、结尾参数、繁简域名）。对不上时先统一格式再找。</div>
+      <div class="norm">
+        <div class="v"><span class="mono">taobao.com/…/p1</span><span class="why">无 https</span></div>
+        <div class="v"><span class="mono">https://taobao.com/…/p1<s>?spm=…</s></span><span class="why">结尾参数</span></div>
+        <div class="v"><span class="mono">https://繁体域名/…/p1</span><span class="why">繁简域名</span></div>
+        <div class="down">↓ 统一格式</div>
+        <div class="one">https://taobao.com/…/p1</div>
+      </div>
+      <div class="note">同一页面的三种写法，归一成一个。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 第 2 步 ================= -->
+<section class="panel" data-i="2">
+  <div class="ptitle"><span class="k">第 2 步</span><h2>看被引的那堆长什么样</h2></div>
+  <div class="grid4">
+    <div class="cell what"><div class="lab">做什么</div><div class="body">看这 30 篇集中在什么日期、什么批次。</div></div>
+    <div class="cell why"><div class="lab">为什么</div><div class="body">决定下一步从哪个范围抽"否"的——两堆必须是同一时期、同一批次的文章，否则比出来的是生产方式差异。</div></div>
+    <div class="cell out">
+      <div class="lab">产出</div>
+      <div class="hist">
+        <svg viewBox="0 0 380 210" aria-label="被引文章按月份分布示意">
+          <!-- 轴 -->
+          <line x1="44" y1="170" x2="360" y2="170" stroke="#C9CBC6" stroke-width="1.5"/>
+          <line x1="44" y1="20" x2="44" y2="170" stroke="#C9CBC6" stroke-width="1.5"/>
+          <text x="14" y="26" font-size="11" fill="#6B7280">篇数</text>
+          <!-- 8 月后高亮区 -->
+          <rect x="196" y="18" width="164" height="152" fill="#EAF0FB" rx="6"/>
+          <text x="278" y="34" font-size="11" fill="#2E6FD8" text-anchor="middle" font-weight="600">8 月后 · 版本 B 占多数</text>
+          <!-- 6 月 -->
+          <rect x="66" y="160" width="48" height="10" fill="#C9CBC6"/>
+          <!-- 7 月 -->
+          <rect x="140" y="150" width="48" height="20" fill="#C9CBC6"/>
+          <!-- 8 月 -->
+          <rect x="214" y="80" width="48" height="90" fill="#2E6FD8"/>
+          <rect x="214" y="72" width="48" height="8" fill="#C9CBC6"/>
+          <!-- 9 月 -->
+          <rect x="288" y="92" width="48" height="78" fill="#2E6FD8"/>
+          <!-- 月份 -->
+          <text x="90" y="188" font-size="12" fill="#6B7280" text-anchor="middle">6 月</text>
+          <text x="164" y="188" font-size="12" fill="#6B7280" text-anchor="middle">7 月</text>
+          <text x="238" y="188" font-size="12" fill="#6B7280" text-anchor="middle">8 月</text>
+          <text x="312" y="188" font-size="12" fill="#6B7280" text-anchor="middle">9 月</text>
+          <text x="200" y="206" font-size="11" fill="#9CA3AF" text-anchor="middle">生产月份（示意）</text>
+        </svg>
+        <div class="txt">
+          <div class="legend"><span><i style="background:#C9CBC6"></i>版本 A</span><span><i style="background:#2E6FD8"></i>版本 B</span></div>
+          <div class="ex">结论示例：<br>"被引的 30 篇里 26 篇是 8 月后版本 B"</div>
+          <div class="note">柱高为示意，不代表实际篇数。</div>
+        </div>
+      </div>
+    </div>
+    <div class="cell stuck none"><div class="lab">会卡的地方</div><div class="body">无</div></div>
+  </div>
+</section>
+
+<!-- ================= 第 3 步 ================= -->
+<section class="panel" data-i="3">
+  <div class="ptitle"><span class="k">第 3 步</span><h2>从同一范围里随机抽 200–300 篇"否"的</h2></div>
+  <div class="grid4">
+    <div class="cell what"><div class="lab">做什么</div><div class="body">只在第 2 步定下的时期和批次里，随机抽。</div></div>
+    <div class="cell why"><div class="lab">为什么</div><div class="body">不能拿全部几百万篇当对照——数量悬殊，而且混进了各种版本。</div></div>
+    <div class="cell out">
+      <div class="lab">产出</div>
+      <div class="sieve">
+        <div class="box big">全部未被引<br>（几百万篇，各版本混杂）</div>
+        <div class="arr">→</div>
+        <div class="box mesh"><span>同时期 + 同批次</span></div>
+        <div class="arr">→</div>
+        <div class="box small">随机 300 篇</div>
+      </div>
+      <div class="pair">
+        <div class="box yes">是 30 篇</div>
+        <div class="box no">否 300 篇</div>
+      </div>
+    </div>
+    <div class="cell stuck"><div class="lab">会卡的地方</div><div class="body">如果同范围里"否"的不足 200 篇，就全取，不用抽。</div></div>
+  </div>
+</section>
+
+<!-- ================= 第 4 步 ================= -->
+<section class="panel" data-i="4">
+  <div class="ptitle"><span class="k">第 4 步</span><h2>九个维度各算一次</h2></div>
+  <div class="grid4">
+    <div class="cell what"><div class="lab">做什么</div><div class="body">每个维度算"是"堆的平均分、"否"堆的平均分、两者的差、误差范围。</div></div>
+    <div class="cell why"><div class="lab">为什么</div><div class="body">这就是校准。</div></div>
+    <div class="cell out">
+      <div class="lab">产出</div>
+      <div class="calib">
+        <table class="tbl" id="calib-table">
+          <thead><tr><th>维度</th><th>被引均分</th><th>未引均分</th><th>差</th><th>误差</th><th>读法</th></tr></thead>
+          <tbody>
+            <tr><td>逻辑性</td><td class="num">7.1</td><td class="num">7.0</td><td class="num">+0.1</td><td class="num">±0.6</td><td class="r-none">无效</td></tr>
+            <tr><td>相关性</td><td class="num">8.2</td><td class="num">6.9</td><td class="num">+1.3</td><td class="num">±0.6</td><td class="r-ok">有效</td></tr>
+            <tr><td>创造性</td><td class="num">5.8</td><td class="num">7.2</td><td class="num">−1.4</td><td class="num">±0.6</td><td class="r-bad">有害</td></tr>
+            <tr><td class="ph">维 4</td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td></tr>
+            <tr><td class="ph">维 5</td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td></tr>
+            <tr><td class="ph">维 6</td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td></tr>
+            <tr><td class="ph">维 7</td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td></tr>
+            <tr><td class="ph">维 8</td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td></tr>
+            <tr><td class="ph">维 9</td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td></tr>
+          </tbody>
+        </table>
+        <div class="rule-legend">
+          <div class="lab2">读法 · 只有三种</div>
+          <div class="rl none"><b>无效</b>差在误差内<br>→ 和被引无关</div>
+          <div class="rl ok"><b>有效</b>差超出误差，方向正</div>
+          <div class="rl bad"><b>有害</b>差超出误差，方向反<br>→ 被引的反而低</div>
+        </div>
+      </div>
+      <div class="note">示例数字是编的。</div>
+    </div>
+    <div class="cell stuck none"><div class="lab">会卡的地方</div><div class="body">无</div></div>
+  </div>
+</section>
+
+<!-- ================= 第 5 步 ================= -->
+<section class="panel" data-i="5">
+  <div class="ptitle"><span class="k">第 5 步</span><h2>给每一行标灯</h2></div>
+  <div class="grid4">
+    <div class="cell what"><div class="lab">做什么</div><div class="body">整张表最高 🟡，来源写"自算（引用记录来自 Semrush [报表名]，[地区]，[日期范围]）"。</div></div>
+    <div class="cell why"><div class="lab">为什么</div><div class="body">这次数据来自 Semrush 大盘或 AI Overview、题不是我们出的、样本只有 30。答辩上有人问"这个数可信吗"，标签就是答案。</div></div>
+    <div class="cell out">
+      <div class="lab">产出</div>
+      <div class="calib">
+        <table class="tbl">
+          <thead><tr><th>维度</th><th>被引均分</th><th>未引均分</th><th>差</th><th>误差</th><th>读法</th></tr></thead>
+          <tbody>
+            <tr><td>逻辑性</td><td class="num">7.1</td><td class="num">7.0</td><td class="num">+0.1</td><td class="num">±0.6</td><td class="r-none">无效</td></tr>
+            <tr><td>相关性</td><td class="num">8.2</td><td class="num">6.9</td><td class="num">+1.3</td><td class="num">±0.6</td><td class="r-ok">有效</td></tr>
+            <tr><td>创造性</td><td class="num">5.8</td><td class="num">7.2</td><td class="num">−1.4</td><td class="num">±0.6</td><td class="r-bad">有害</td></tr>
+            <tr><td class="ph">维 4</td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td></tr>
+            <tr><td class="ph">维 5</td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td></tr>
+            <tr><td class="ph">维 6</td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td></tr>
+            <tr><td class="ph">维 7</td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td></tr>
+            <tr><td class="ph">维 8</td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td></tr>
+            <tr><td class="ph">维 9</td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td><td class="ph"> </td></tr>
+          </tbody>
+        </table>
+        <div class="tagcard">
+          <div class="t">标签卡 · 整张表</div>
+          <div><b>来源</b> = 自算<br><span class="mono">（引用记录来自 Semrush [报表名]，[地区]，[日期范围]）</span></div>
+          <div style="margin-top:6px"><b>硬度</b> = <span class="big">🟡</span></div>
+        </div>
+      </div>
+      <div class="note">标签卡贴在表的右上角，对整张表生效。</div>
+    </div>
+    <div class="cell stuck none"><div class="lab">会卡的地方</div><div class="body">无</div></div>
+  </div>
+</section>
+
+<!-- ================= 第 6 步 ================= -->
+<section class="panel" data-i="6">
+  <div class="ptitle"><span class="k">第 6 步</span><h2>结论只写三句</h2></div>
+  <div class="grid4">
+    <div class="cell what"><div class="lab">做什么</div><div class="body">哪些维度有效、哪些无效、哪些有害。</div></div>
+    <div class="cell why"><div class="lab">为什么</div><div class="body">"有害"的维度就是评分 v2 要改的对象——这是它和"评分 v2"的接口。</div></div>
+    <div class="cell out">
+      <div class="lab">产出</div>
+      <div class="concl">
+        <div class="row"><span class="k ok">有效</span><div class="blank"></div></div>
+        <div class="row"><span class="k none">无效</span><div class="blank"></div></div>
+        <div class="row"><span class="k bad">有害</span><div class="blank"></div></div>
+        <div class="dont">不写：为什么、怎么改、加什么能提高被引率</div>
+      </div>
+    </div>
+    <div class="cell stuck">
+      <div class="lab">会卡的地方</div>
+      <div class="body">如果被引的只有十几篇，误差会很大，多数维度会落进"无效"。结论就一句："样本不够，只能看方向，等校准 v1。"</div>
+      <div class="branch">
+        <div class="root">被引篇数 n</div>
+        <div class="arrow">→</div>
+        <div class="leaf good"><b>n 够</b>三句结论</div>
+        <div class="arrow">→</div>
+        <div class="leaf thin"><b>n 太少</b>一句话结论："样本不够，只能看方向，等校准 v1。"</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 结尾 ================= -->
+<section class="panel" data-i="7">
+  <div class="ptitle"><span class="k">结论</span><h2>分工与顺序</h2></div>
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+    <div class="roles">
+      <div class="role"><div class="who">技术</div><div class="do">只给表①</div></div>
+      <div class="arr">→</div>
+      <div class="role"><div class="who">我</div><div class="do">从 Semrush 导表②</div></div>
+      <div class="arr">→</div>
+      <div class="role"><div class="who">我 + Claude Code</div><div class="do">第 1 到 6 步</div></div>
+    </div>
+    <div class="timeline">
+      <div class="t"><span class="n">先</span>发消息要表①</div>
+      <div class="ln"></div>
+      <div class="t"><span class="n">等表期间</span>学 Citations 导出拿表②</div>
+      <div class="ln"></div>
+      <div class="t"><span class="n">两表到手</span>做第 1 步</div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<div class="ctrl">
+  <span class="pos" id="pos"></span>
+  <span class="hint">← → 键盘切换 · 点击顶部任意步跳转 · Ctrl+P 打印全部</span>
+  <div class="btns">
+    <button class="btn" id="prev">上一步</button>
+    <button class="btn primary" id="next">下一步</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var panels = document.querySelectorAll('.panel');
+  var nodes  = document.querySelectorAll('.snode');
+  var fill   = document.getElementById('fill');
+  var prev   = document.getElementById('prev');
+  var next   = document.getElementById('next');
+  var pos    = document.getElementById('pos');
+  var names  = ['准备','第 1 步','第 2 步','第 3 步','第 4 步','第 5 步','第 6 步','结论'];
+  var N = panels.length, cur = 0;
+
+  function show(i){
+    cur = Math.max(0, Math.min(N - 1, i));
+    for (var k = 0; k < N; k++){
+      panels[k].classList.toggle('active', k === cur);
+      nodes[k].classList.toggle('cur', k === cur);
+      nodes[k].classList.toggle('done', k < cur);
+    }
+    // 进度线：从第一个圆心到当前圆心
+    var first = nodes[0].getBoundingClientRect(), now = nodes[cur].getBoundingClientRect();
+    fill.style.width = Math.max(0, (now.left + now.width/2) - (first.left + first.width/2)) + 'px';
+    fill.style.left  = (first.left + first.width/2 - nodes[0].parentNode.getBoundingClientRect().left) + 'px';
+    prev.disabled = cur === 0;
+    next.disabled = cur === N - 1;
+    pos.textContent = names[cur] + '　' + (cur + 1) + ' / ' + N;
+    window.scrollTo(0, 0);
+    if (history.replaceState) history.replaceState(null, '', '#' + cur);
+  }
+
+  for (var i = 0; i < nodes.length; i++){
+    nodes[i].addEventListener('click', function(){ show(parseInt(this.getAttribute('data-i'), 10)); });
+  }
+  prev.addEventListener('click', function(){ show(cur - 1); });
+  next.addEventListener('click', function(){ show(cur + 1); });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'PageDown'){ e.preventDefault(); show(cur + 1); }
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp'   || e.key === 'PageUp')  { e.preventDefault(); show(cur - 1); }
+    if (e.key === 'Home'){ show(0); } if (e.key === 'End'){ show(N - 1); }
+  });
+  window.addEventListener('resize', function(){ show(cur); });
+
+  var h = parseInt((location.hash || '').replace('#',''), 10);
+  show(isNaN(h) ? 0 : h);
+})();
+</script>
+</body>
+</html>
