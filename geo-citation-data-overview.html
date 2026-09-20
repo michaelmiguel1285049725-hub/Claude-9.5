@@ -45,6 +45,7 @@ h2{font-size:24px;margin:0 0 6px;font-weight:600;letter-spacing:-.01em}
 .src{font-size:12px;color:var(--ink-3);margin-top:10px}
 .src b{font-weight:600;color:var(--ink-2)}
 .note{font-size:12.5px;color:var(--ink-2);margin-top:12px}
+.defn{font-size:12.5px;color:var(--ink-3);margin:-18px 0 26px;max-width:860px;line-height:1.55}
 .conclusion{margin-top:24px;padding:14px 18px;background:var(--surface);border-left:3px solid var(--ink);
   border-radius:0 8px 8px 0;font-size:16px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
@@ -93,9 +94,10 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .hbar{display:flex;height:34px;border-radius:6px;overflow:hidden;gap:2px;background:transparent}
 .hbar i{display:block;height:100%;position:relative}
 .hbar i span{position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:12px;color:#fff;font-weight:600;white-space:nowrap}
-.hlegend{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 20px;margin-top:14px;font-size:13.5px}
+.hlegend{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 24px;margin-top:14px;font-size:13.5px}
 .hlegend div{display:flex;align-items:baseline;gap:8px}
 .hlegend .sw{width:12px;height:12px;border-radius:3px;flex:none;align-self:center}
+.hlegend .lb{min-width:0}
 .hlegend .n{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--ink-2);white-space:nowrap}
 .vbars{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:12px;align-items:end;height:200px;padding-top:24px;border-bottom:1px solid var(--line)}
 .vbar{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;position:relative}
@@ -302,12 +304,13 @@ footer{text-align:center;color:var(--ink-3);font-size:12px;padding:24px}
   <p class="kicker">第 3 节 · 全量版</p>
   <h2>被引的到底是什么页面</h2>
   <p class="lead">卫星照片里，所有被引的淘宝页面按类型拆开。分母是 57,550 个被引页面。</p>
+  <p class="defn">shopping-guide 文章 = 主机 world.taobao.com、路径形如 /lang/{语言}/shopping-guide/{数字}.htm 的页面，即我们这条链路生产的内容。是否与其他团队共用该路径，待技术确认。</p>
   <div class="grid2" style="grid-template-columns:2fr 1fr">
     <div class="card">
       <p class="chart-title"><span class="tag f">全量版</span>被引页面类型构成</p>
       <p class="chart-sub">分母：57,550 个被引页面（按页面数）· 来源：全量版</p>
       <div class="hbar" role="img" aria-label="被引页面类型构成堆叠条">
-        <i style="width:61.7%;background:var(--full)" title="我们的导购文章 35,516（61.7%）"><span>我们的导购文章 61.7%</span></i>
+        <i style="width:61.7%;background:var(--full)" title="shopping-guide 路径下的文章 35,516（61.7%）"><span>shopping-guide 文章 61.7%</span></i>
         <i style="width:19.0%;background:var(--n1)" title="商品相关页 10,943（19.0%）"><span>商品相关页 19.0%</span></i>
         <i style="width:12.8%;background:var(--n2)" title="其他内容页 7,386（12.8%）"><span>其他 12.8%</span></i>
         <i style="width:3.9%;background:var(--n3)" title="列表分类页 2,258（3.9%）"></i>
@@ -315,11 +318,11 @@ footer{text-align:center;color:var(--ink-3);font-size:12px;padding:24px}
         <i style="width:0.7%;background:var(--n5)" title="其余 392（0.7%）"></i>
       </div>
       <div class="hlegend">
-        <div><i class="sw" style="background:var(--full)"></i>我们的导购文章<span class="n">35,516 · 61.7%</span></div>
+        <div><i class="sw" style="background:var(--full)"></i><span class="lb">shopping-guide 文章</span><span class="n">35,516 · 61.7%</span></div>
         <div><i class="sw" style="background:var(--n1)"></i>商品相关页<span class="n">10,943 · 19.0%</span></div>
         <div><i class="sw" style="background:var(--n2)"></i>其他内容页<span class="n">7,386 · 12.8%</span></div>
         <div><i class="sw" style="background:var(--n3)"></i>列表分类页<span class="n">2,258 · 3.9%</span></div>
-        <div><i class="sw" style="background:var(--n4)"></i>shopping-guide/t 路径<span class="n">1,055 · 1.8%</span></div>
+        <div><i class="sw" style="background:var(--n4)"></i><span class="lb">shopping-guide/t 路径</span><span class="n">1,055 · 1.8%</span></div>
         <div><i class="sw" style="background:var(--n5)"></i>其余<span class="n">392 · 0.7%</span></div>
       </div>
       <p class="note">shopping-guide/t 路径是什么，待技术确认。</p>
@@ -327,14 +330,14 @@ footer{text-align:center;color:var(--ink-3);font-size:12px;padding:24px}
     <div class="stat">
       <span class="tag f">全量版</span>
       <div class="v" style="margin-top:10px;color:var(--full-ink)">79.9%</div>
-      <div class="l">按<b>引用记录数</b>算，我们的文章所占比例</div>
+      <div class="l">按<b>引用记录数</b>算，shopping-guide 路径下的文章所占比例</div>
       <div class="l" style="color:var(--ink-3);margin-top:8px">113,077 / 141,514 条引用记录 · 来源：全量版</div>
       <div class="langbar" style="height:12px;margin-top:14px" title="113,077 / 141,514">
         <i style="width:79.9%;background:var(--full)"></i><i style="width:20.1%;background:var(--n4)"></i>
       </div>
     </div>
   </div>
-  <div class="conclusion">AI 引用淘宝时，主要引的就是我们生产的文章。</div>
+  <div class="conclusion">AI 引用淘宝时，主要引的是 shopping-guide 路径下的页面。</div>
 </section>
 
 <!-- ================= 4 ================= -->
@@ -455,7 +458,7 @@ footer{text-align:center;color:var(--ink-3);font-size:12px;padding:24px}
     <table class="qa">
       <thead><tr><th>问题</th><th class="t"><span class="tag t">跟踪版</span> 定点摄像头</th><th class="f"><span class="tag f">全量版</span> 卫星照片</th></tr></thead>
       <tbody>
-        <tr><td>AI 有没有引用我们的文章</td><td><span class="mark">✅</span></td><td><span class="mark">✅</span></td></tr>
+        <tr><td>AI 有没有引用 shopping-guide 文章</td><td><span class="mark">✅</span></td><td><span class="mark">✅</span></td></tr>
         <tr><td>引用有多浅</td><td><span class="mark">✅</span></td><td><span class="mark">✅</span></td></tr>
         <tr><td>是被哪条题引的</td><td><span class="mark">✅</span></td><td><span class="mark">❌</span></td></tr>
         <tr><td>某一天的变化</td><td><span class="mark">✅</span></td><td><span class="mark">❌</span></td></tr>
