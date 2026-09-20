@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>下一批 10 万篇押哪个品类</title>
+<style>
+  :root{
+    color-scheme:light;
+    --bg:#f7f7f5; --surface:#fff; --surface-2:#fbfbfa;
+    --border:#e6e4df; --border-strong:#d6d3cc;
+    --ink:#14161a; --ink-2:#4b5158; --ink-3:#7c828a;
+    --guess-bg:#fdf6e6; --guess-line:#e8d5a6; --guess-ink:#8a6212;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased;
+  }
+  @media (prefers-reduced-motion:reduce){*{transition-duration:.01ms !important;}}
+  .wrap{max-width:1080px;margin:0 auto;padding-block:32px 40px;padding-inline:24px;}
+  header{margin-bottom:22px;}
+  h1{font-size:25px;line-height:1.45;margin:0 0 6px;font-weight:600;text-wrap:balance;}
+  .sub{font-size:14px;color:var(--ink-2);margin:0;}
+  .grid{display:grid;grid-template-columns:1.25fr 1fr;gap:18px;align-items:start;}
+  figure{margin:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px 12px;}
+  figcaption{font-size:13px;color:var(--ink-2);font-weight:600;margin:0 0 12px;}
+  svg{display:block;width:100%;height:auto;}
+  .bar rect{transition:opacity .12s ease;}
+  .bar:hover rect{opacity:.75;}
+  .bl{font-size:12.5px;fill:var(--ink-2);}
+  .bv{font-size:12px;fill:var(--ink-3);}
+  .bl.hi,.bv.hi{fill:var(--ink);font-weight:600;}
+  .src{font-size:11.5px;color:var(--ink-3);line-height:1.6;margin:10px 0 0;}
+  .col{display:flex;flex-direction:column;gap:14px;}
+  .tag{
+    display:inline-block;font-size:11.5px;line-height:1.5;padding:1px 7px;border-radius:999px;
+    background:#fff;border:1px solid var(--guess-line);color:var(--guess-ink);font-weight:600;
+    margin-right:6px;vertical-align:1px;white-space:nowrap;
+  }
+  .guess{background:var(--guess-bg);border:1px solid var(--guess-line);border-left-width:3px;border-radius:9px;padding:14px 15px;}
+  .guess h2{font-size:14.5px;margin:0 0 8px;font-weight:600;color:var(--guess-ink);}
+  .guess ul{margin:0;padding-left:18px;}
+  .guess li{font-size:13px;color:var(--guess-ink);margin-bottom:5px;}
+  .guess li:last-child{margin-bottom:0;}
+  .q{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:13px 15px;}
+  .q h3{font-size:13.5px;margin:0 0 3px;font-weight:600;line-height:1.55;}
+  .q .who{font-size:11px;color:#1c5cab;background:#e7eefa;border-radius:999px;padding:1px 8px;margin-right:6px;}
+  .q .hint{font-size:12px;color:var(--ink-3);margin:0 0 9px;}
+  textarea{
+    width:100%;min-height:62px;resize:vertical;
+    border:1px solid var(--border-strong);border-radius:7px;background:var(--surface-2);
+    padding:8px 10px;font-family:inherit;font-size:13px;line-height:1.7;color:var(--ink);
+  }
+  textarea:focus{outline:2px solid #86b6ef;outline-offset:1px;background:#fff;}
+  .print-mirror{display:none;}
+  footer{margin-top:20px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;}
+  footer .note{font-size:11.5px;color:var(--ink-3);margin:0;}
+  footer button{
+    font-family:inherit;font-size:12px;color:var(--ink-2);background:var(--surface);
+    border:1px solid var(--border-strong);border-radius:6px;padding:4px 10px;cursor:pointer;
+  }
+  footer button:hover{background:#f1efea;}
+  @media (max-width:820px){
+    .grid{grid-template-columns:1fr;}
+    .wrap{padding-inline:16px;}
+  }
+  @page{margin:12mm;}
+  @media print{
+    body{background:#fff;font-size:11pt;}
+    .wrap{max-width:none;padding:0;}
+    .grid{grid-template-columns:1fr;}
+    figure,.guess,.q{break-inside:avoid;}
+    textarea{display:none;}
+    .print-mirror{display:block;white-space:pre-wrap;min-height:20mm;border:1px solid #bbb;border-radius:6px;padding:8px 10px;font-size:10pt;}
+    footer button{display:none;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>下一批 10 万篇文章，押哪个品类？</h1>
+    <p class="sub">待决策，不是结论。看完下面这张图，回答右边三个问题就行。　<span class="tag">🟡 推断</span>标记的是我的判断，不是数据。</p>
+  </header>
+
+  <div class="grid">
+    <figure>
+      <figcaption>港区各品类 AI Volume（单位：M，降序）</figcaption>
+      <p class="src" style="margin:-6px 0 12px"><span class="tag">🟡 推断</span>加粗的家電与廚具，是下面提出的合并候选，不是数据本身的分组。</p>
+      <svg viewBox="0 0 620 374" role="img" aria-label="港区 12 个品类的 AI Volume 横向条形图，按降序排列，家電与廚具被标注为合并候选">
+        <g class="bar">
+          <title>手機　AI Volume 5.9M</title>
+          <text x="70" y="25" text-anchor="end" class="bl">手機</text>
+          <rect x="82" y="12" width="480.0" height="17" rx="4" fill="#2a78d6"></rect>
+          <rect x="82" y="12" width="6" height="17" fill="#2a78d6"></rect>
+          <text x="571.0" y="25" class="bv">5.9M</text>
+        </g>
+        <g class="bar">
+          <title>家電　AI Volume 3.5M</title>
+          <text x="70" y="55" text-anchor="end" class="bl hi">家電</text>
+          <rect x="82" y="42" width="284.7" height="17" rx="4" fill="#2a78d6"></rect>
+          <rect x="82" y="42" width="6" height="17" fill="#2a78d6"></rect>
+          <text x="375.7" y="55" class="bv hi">3.5M</text>
+        </g>
+        <g class="bar">
+          <title>廚具　AI Volume 2.9M</title>
+          <text x="70" y="85" text-anchor="end" class="bl hi">廚具</text>
+          <rect x="82" y="72" width="235.9" height="17" rx="4" fill="#2a78d6"></rect>
+          <rect x="82" y="72" width="6" height="17" fill="#2a78d6"></rect>
+          <text x="326.9" y="85" class="bv hi">2.9M</text>
+        </g>
+        <g class="bar">
+          <title>保健品　AI Volume 2.9M</title>
+          <text x="70" y="115" text-anchor="end" class="bl">保健品</text>
+          <rect x="82" y="102" width="235.9" height="17" rx="4" fill="#2a78d6"></rect>
+          <rect x="82" y="102" width="6" height="17" fill="#2a78d6"></rect>
+          <text x="326.9" y="115" class="bv">2.9M</text>
+        </g>
+        <g class="bar">
+          <title>傢俬　AI Volume 2.5M</title>
+          <text x="70" y="145" text-anchor="end" class="bl">傢俬</text>
+          <rect x="82" y="132" width="203.4" height="17" rx="4" fill="#2a78d6"></rect>
+          <rect x="82" y="132" width="6" height="17" fill="#2a78d6"></rect>
+          <text x="294.4" y="145" class="bv">2.5M</text>
+        </g>
+        <g class="bar">
+          <title>寵物用品　AI Volume 2.5M</title>
+          <text x="70" y="175" text-anchor="end" class="bl">寵物用品</text>
+          <rect x="82" y="162" width="203.4" height="17" rx="4" fill="#2a78d6"></rect>
+          <rect x="82" y="162" width="6" height="17" fill="#2a78d6"></rect>
+          <text x="294.4" y="175" class="bv">2.5M</text>
+        </g>
+        <g class="bar">
+          <title>服飾　AI Volume 2.4M</title>
+          <text x="70" y="205" text-anchor="end" class="bl">服飾</text>
+          <rect x="82" y="192" width="195.3" height="17" rx="4" fill="#2a78d6"></rect>
+          <rect x="82" y="192" width="6" height="17" fill="#2a78d6"></rect>
+          <text x="286.3" y="205" class="bv">2.4M</text>
+        </g>
+        <g class="bar">
+          <title>運動用品　AI Volume 2.4M</title>
+          <text x="70" y="235" text-anchor="end" class="bl">運動用品</text>
+          <rect x="82" y="222" width="195.3" height="17" rx="4" fill="#2a78d6"></rect>
+          <rect x="82" y="222" width="6" height="17" fill="#2a78d6"></rect>
+          <text x="286.3" y="235" class="bv">2.4M</text>
+        </g>
+        <g class="bar">
+          <title>護膚品　AI Volume 2.2M</title>
+          <text x="70" y="265" text-anchor="end" class="bl">護膚品</text>
+          <rect x="82" y="252" width="179.0" height="17" rx="4" fill="#2a78d6"></rect>
+          <rect x="82" y="252" width="6" height="17" fill="#2a78d6"></rect>
+          <text x="270.0" y="265" class="bv">2.2M</text>
+        </g>
+        <g class="bar">
+          <title>鞋　AI Volume 2.2M</title>
+          <text x="70" y="295" text-anchor="end" class="bl">鞋</text>
+          <rect x="82" y="282" width="179.0" height="17" rx="4" fill="#2a78d6"></rect>
+          <rect x="82" y="282" width="6" height="17" fill="#2a78d6"></rect>
+          <text x="270.0" y="295" class="bv">2.2M</text>
+        </g>
+        <g class="bar">
+          <title>嬰兒用品　AI Volume 2.2M</title>
+          <text x="70" y="325" text-anchor="end" class="bl">嬰兒用品</text>
+          <rect x="82" y="312" width="179.0" height="17" rx="4" fill="#2a78d6"></rect>
+          <rect x="82" y="312" width="6" height="17" fill="#2a78d6"></rect>
+          <text x="270.0" y="325" class="bv">2.2M</text>
+        </g>
+        <g class="bar">
+          <title>化妝品　AI Volume 2.0M</title>
+          <text x="70" y="355" text-anchor="end" class="bl">化妝品</text>
+          <rect x="82" y="342" width="162.7" height="17" rx="4" fill="#2a78d6"></rect>
+          <rect x="82" y="342" width="6" height="17" fill="#2a78d6"></rect>
+          <text x="253.7" y="355" class="bv">2.0M</text>
+        </g>
+      </svg>
+      <p class="src"><b>来源：</b>Semrush Prompt Research，地区香港，2026-09-20。"AI Volume"是该关键词相关话题的 AI 搜索量合计，Semrush 的估算值，口径未向厂商确认。</p>
+    </figure>
+
+    <div class="col">
+      <div class="guess">
+        <h2><span class="tag">🟡 推断</span>我目前的倾向，请大家推翻</h2>
+        <ul>
+          <li><b>押 家電 ＋ 廚具</b>（合计 6.4M，超过手機的 5.9M）。家電最大话题是"微波爐購買指引 15,802"，是购买决策型问题；这个品类最吃参数和价格对比。</li>
+          <li><b>不选手機</b>：最大话题是"香港手機資訊 73,727"，从标题看不是购买意图；水货保修也是个问题。</li>
+          <li><b>不选護膚品 / 嬰兒用品</b>："真假货"是用户第一关切，跨境平台在这点上处于劣势。</li>
+        </ul>
+      </div>
+
+      <div class="q">
+        <h3><span class="who">技术 / 产品</span>① 我们的商品数据，哪些品类最强？</h3>
+        <p class="hint">最丰富、价差最大、长尾 SKU 最多、中文评价最全——这是最关键的一个输入，我现在完全没有。</p>
+        <textarea id="q1" placeholder="按品类写，能给个大致排序最好……"></textarea>
+        <div class="print-mirror" id="q1-print"></div>
+      </div>
+
+      <div class="q">
+        <h3><span class="who">所有人</span>② 上面那两条排除理由，你们同意吗？</h3>
+        <p class="hint">有没有我没考虑到的因素？</p>
+        <textarea id="q2" placeholder="同意 / 不同意，以及理由……"></textarea>
+        <div class="print-mirror" id="q2-print"></div>
+      </div>
+
+      <div class="q">
+        <h3><span class="who">所有人</span>③ 全押一个品类，还是留一部分做对照？</h3>
+        <p class="hint">如果留，留多少？</p>
+        <textarea id="q3" placeholder="全押 / 留对照，留多少……"></textarea>
+        <div class="print-mirror" id="q3-print"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p class="note">这是第一批，后面还有，所以可以单押一个品类看结果。定下品类后约三到四周才能看出被引效果。｜填写内容只存在你自己的浏览器里，不上传。</p>
+    <button type="button" id="clearBtn">清空填写</button>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var ids=['q1','q2','q3'];
+  function mirror(id){
+    var t=document.getElementById(id), m=document.getElementById(id+'-print');
+    if(t&&m) m.textContent=t.value;
+  }
+  ids.forEach(function(id){
+    var t=document.getElementById(id);
+    if(!t) return;
+    try{ var v=window.localStorage.getItem('geo-brief-'+id); if(v) t.value=v; }catch(e){}
+    mirror(id);
+    t.addEventListener('input',function(){
+      mirror(id);
+      try{ window.localStorage.setItem('geo-brief-'+id,t.value); }catch(e){}
+    });
+  });
+  window.addEventListener('beforeprint',function(){ ids.forEach(mirror); });
+  var btn=document.getElementById('clearBtn');
+  if(btn) btn.addEventListener('click',function(){
+    ids.forEach(function(id){
+      var t=document.getElementById(id);
+      if(t) t.value='';
+      mirror(id);
+      try{ window.localStorage.removeItem('geo-brief-'+id); }catch(e){}
+    });
+  });
+})();
+</script>
+</body>
+</html>
