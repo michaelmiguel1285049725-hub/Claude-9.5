@@ -3,9 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>下一批 10 万篇：品类选择</title>
+<title>下一批 10 万篇押哪个品类</title>
 <style>
   :root{
+    color-scheme:light;
     --bg:#f7f7f5;
     --surface:#ffffff;
     --surface-2:#fbfbfa;
@@ -16,7 +17,6 @@
     --ink-3:#7c828a;
     --series:#2a78d6;
     --series-soft:#86b6ef;
-    --series-faint:#cde2fb;
     --track:#eceae5;
     --guess-bg:#fdf6e6;
     --guess-line:#e8d5a6;
@@ -25,99 +25,90 @@
   }
   *{box-sizing:border-box;}
   html{scroll-behavior:smooth;}
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto;}
+    *{transition-duration:.01ms !important;}
+  }
   body{
     margin:0;
     background:var(--bg);
     color:var(--ink);
     font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
     font-size:15px;
-    line-height:1.7;
+    line-height:1.75;
     -webkit-font-smoothing:antialiased;
   }
 
   /* ---------- 顶部导航 ---------- */
   .nav{
-    position:fixed;top:0;left:0;right:0;height:var(--nav-h);z-index:50;
-    background:rgba(247,247,245,.92);
+    position:fixed;top:0;left:0;right:0;z-index:50;
+    min-height:var(--nav-h);
+    padding-top:env(safe-area-inset-top,0px);
+    background:rgba(247,247,245,.93);
     backdrop-filter:saturate(1.2) blur(8px);
     border-bottom:1px solid var(--border);
-    display:flex;align-items:center;gap:20px;padding:0 24px;
+    display:flex;align-items:center;gap:18px;
+    padding-left:24px;padding-right:24px;padding-bottom:0;
   }
-  .nav .brand{font-size:13.5px;font-weight:600;letter-spacing:.01em;white-space:nowrap;}
+  .nav .brand{font-size:13.5px;font-weight:600;white-space:nowrap;}
   .nav .brand span{color:var(--ink-3);font-weight:400;}
-  .nav ul{list-style:none;display:flex;gap:2px;margin:0;padding:0;overflow-x:auto;}
-  .nav a{
-    display:block;padding:5px 10px;border-radius:6px;
-    font-size:13px;color:var(--ink-2);text-decoration:none;white-space:nowrap;
-  }
+  .nav ul{list-style:none;display:flex;gap:1px;margin:0;padding:0;overflow-x:auto;}
+  .nav a{display:block;padding:5px 9px;border-radius:6px;font-size:12.5px;color:var(--ink-2);text-decoration:none;white-space:nowrap;}
   .nav a:hover{background:#eeece7;color:var(--ink);}
   .nav a.on{background:#e7eefa;color:#1c5cab;}
+  .nav a:focus-visible{outline:2px solid var(--series);outline-offset:1px;}
   .nav .stamp{margin-left:auto;font-size:12px;color:var(--ink-3);white-space:nowrap;}
 
   /* ---------- 章节骨架 ---------- */
   section{
-    min-height:100vh;
-    padding:calc(var(--nav-h) + 34px) 24px 44px;
+    min-height:100svh;
+    padding-block:calc(var(--nav-h) + env(safe-area-inset-top,0px) + 34px) 44px;
+    padding-inline:24px;
     max-width:1120px;margin:0 auto;
     display:flex;flex-direction:column;justify-content:center;
     scroll-margin-top:var(--nav-h);
     border-bottom:1px solid var(--border);
   }
   section:last-of-type{border-bottom:none;}
-  .eyebrow{font-size:12px;letter-spacing:.14em;color:var(--ink-3);margin:0 0 10px;}
-  h1{font-size:27px;line-height:1.45;margin:0 0 6px;font-weight:600;letter-spacing:.01em;}
-  h2{font-size:23px;line-height:1.45;margin:0 0 6px;font-weight:600;letter-spacing:.01em;}
-  .lead{font-size:16px;color:var(--ink-2);margin:0 0 22px;max-width:62ch;}
-  .note{font-size:12px;color:var(--ink-3);line-height:1.6;margin:10px 0 0;}
+  .eyebrow{font-size:12px;color:var(--ink-3);margin:0 0 8px;letter-spacing:.02em;}
+  .eyebrow b{color:var(--ink-2);font-weight:600;}
+  h1{font-size:27px;line-height:1.45;margin:0 0 8px;font-weight:600;text-wrap:balance;}
+  h2{font-size:23px;line-height:1.45;margin:0 0 8px;font-weight:600;text-wrap:balance;}
+  .lead{font-size:15.5px;color:var(--ink-2);margin:0 0 22px;max-width:60ch;}
+  .note{font-size:12px;color:var(--ink-3);line-height:1.65;margin:10px 0 0;}
   .note b{font-weight:600;color:var(--ink-2);}
+  .kicker{font-size:14px;color:var(--ink);margin:16px 0 0;font-weight:600;}
 
   /* ---------- 卡片 ---------- */
   .cards{display:grid;gap:14px;}
-  .c3{grid-template-columns:repeat(3,1fr);}
-  .c2{grid-template-columns:repeat(2,1fr);}
-  .card{
-    background:var(--surface);border:1px solid var(--border);border-radius:10px;
-    padding:18px 18px 16px;
-  }
-  .card .idx{
-    font-size:12px;color:var(--ink-3);font-weight:600;letter-spacing:.06em;
-    display:block;margin-bottom:8px;
-  }
-  .card h3{font-size:15.5px;margin:0 0 8px;font-weight:600;line-height:1.5;}
-  .card p{margin:0 0 8px;font-size:13.5px;color:var(--ink-2);}
+  .c3{grid-template-columns:repeat(3,minmax(0,1fr));}
+  .c2{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;}
+  .card .idx{font-size:11.5px;color:var(--ink-3);letter-spacing:.06em;display:block;margin-bottom:7px;}
+  .card h3{font-size:16px;margin:0 0 10px;font-weight:600;line-height:1.5;}
+  .card p{margin:0 0 9px;font-size:13.5px;color:var(--ink-2);}
   .card p:last-child{margin-bottom:0;}
 
   /* ---------- 推断标记 ---------- */
-  .guess{
-    background:var(--guess-bg);
-    border:1px solid var(--guess-line);
-    border-left-width:3px;
-    border-radius:8px;
-    padding:12px 14px;
-  }
+  .guess{background:var(--guess-bg);border:1px solid var(--guess-line);border-left-width:3px;border-radius:8px;padding:12px 14px;}
+  .guess p{color:var(--guess-ink);margin:0;font-size:13.5px;}
+  .guess p + p{margin-top:7px;}
   .tag{
-    display:inline-block;font-size:11.5px;line-height:1.5;
-    padding:1px 7px;border-radius:999px;
-    background:var(--guess-bg);border:1px solid var(--guess-line);
-    color:var(--guess-ink);white-space:nowrap;font-weight:600;
-    margin-right:6px;vertical-align:1px;
+    display:inline-block;font-size:11.5px;line-height:1.5;padding:1px 7px;border-radius:999px;
+    background:var(--guess-bg);border:1px solid var(--guess-line);color:var(--guess-ink);
+    white-space:nowrap;font-weight:600;margin-right:6px;vertical-align:1px;
   }
   .guess .tag{background:#fff;}
-  .guess p{color:var(--guess-ink);}
-  .legend-strip{
-    display:flex;gap:18px;flex-wrap:wrap;align-items:center;
+  .legend{
+    display:flex;gap:20px;flex-wrap:wrap;align-items:center;
     font-size:12.5px;color:var(--ink-3);
     border:1px dashed var(--border-strong);border-radius:8px;
-    padding:9px 14px;margin:0 0 22px;background:var(--surface-2);
+    padding:9px 14px;margin:0 0 20px;background:var(--surface-2);
   }
-  .legend-strip b{color:var(--ink-2);font-weight:600;}
+  .legend b{color:var(--ink-2);font-weight:600;}
 
-  /* ---------- 图表容器 ---------- */
+  /* ---------- 图表 ---------- */
   figure{margin:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px 12px;}
-  .split{display:grid;grid-template-columns:1.8fr 1fr;gap:16px;align-items:start;}
-  .s5grid{display:grid;grid-template-columns:minmax(280px,340px) minmax(0,1fr);gap:14px;align-items:start;}
-  .split .side{display:flex;flex-direction:column;gap:14px;}
-  .split .side .note{margin:0;}
   figcaption{font-size:13px;color:var(--ink-2);font-weight:600;margin:0 0 14px;}
   svg{display:block;width:100%;height:auto;}
   .bar rect{transition:opacity .12s ease;}
@@ -125,38 +116,38 @@
   .bar-label{font-size:13px;fill:var(--ink-2);}
   .bar-value{font-size:12.5px;fill:var(--ink-3);}
   .bar-label.hi,.bar-value.hi{fill:var(--ink);font-weight:600;}
+  .split{display:grid;grid-template-columns:1.8fr minmax(0,1fr);gap:16px;align-items:start;}
+  .split .side{display:flex;flex-direction:column;gap:14px;}
+  .split .side .note{margin:0;}
+  .s6grid{display:grid;grid-template-columns:minmax(280px,340px) minmax(0,1fr);gap:14px;align-items:start;}
 
   /* ---------- 细条（CSS 画） ---------- */
   .minibar{margin:12px 0 0;}
-  .minibar .mb-top{display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink-2);margin-bottom:5px;}
-  .minibar .mb-top b{color:var(--ink);font-weight:600;}
-  .mb-track{height:10px;background:var(--track);border-radius:5px;overflow:hidden;display:flex;}
+  .minibar .mb-top{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--ink-2);margin-bottom:5px;}
+  .minibar .mb-top b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums;}
+  .mb-track{height:10px;background:var(--track);border-radius:5px;overflow:hidden;}
   .mb-fill{height:100%;background:var(--series);border-radius:5px;}
-  .stat{font-size:30px;font-weight:600;letter-spacing:-.01em;line-height:1.2;}
-  .stat small{font-size:13px;font-weight:400;color:var(--ink-3);margin-left:6px;letter-spacing:0;}
+  .stat{font-size:30px;font-weight:600;line-height:1.2;font-variant-numeric:tabular-nums;}
+  .stat small{font-size:13px;font-weight:400;color:var(--ink-3);margin-left:6px;}
 
   /* ---------- 表格 ---------- */
-  table{width:100%;border-collapse:collapse;font-size:13px;background:var(--surface);}
-  th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:middle;line-height:1.55;}
-  thead th{
-    font-size:12px;color:var(--ink-3);font-weight:600;letter-spacing:.04em;
-    background:var(--surface-2);border-bottom:1px solid var(--border-strong);
-  }
-  tbody tr:last-child td{border-bottom:none;}
   .tbl-wrap{border:1px solid var(--border);border-radius:10px;overflow:hidden;}
-  td.num{font-variant-numeric:tabular-nums;white-space:nowrap;}
+  table{width:100%;border-collapse:collapse;font-size:13px;background:var(--surface);}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle;line-height:1.55;}
+  thead th{font-size:12px;color:var(--ink-3);font-weight:600;background:var(--surface-2);border-bottom:1px solid var(--border-strong);}
+  tbody tr:last-child td{border-bottom:none;}
+  td.dim{font-weight:600;white-space:nowrap;}
   .cellbar{display:flex;align-items:center;gap:9px;}
-  .cellbar .cb-track{flex:1;height:8px;background:var(--track);border-radius:4px;min-width:60px;}
+  .cellbar .cb-track{flex:1;height:8px;background:var(--track);border-radius:4px;min-width:50px;}
   .cellbar .cb-fill{height:8px;border-radius:4px;}
-  .cellbar .cb-num{width:42px;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink-2);}
-  .status-yes{color:#1c5cab;font-weight:600;}
-  .status-no{color:#b3261e;font-weight:600;}
+  .cellbar .cb-num{width:40px;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink-2);}
+  .have{color:#1c5cab;font-weight:600;}
+  .gap{color:#b3261e;font-weight:600;}
 
   /* ---------- 对照卡 ---------- */
-  .vs{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-  .vs .card{display:flex;flex-direction:column;}
+  .vs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;}
   .vs .cat{font-size:19px;font-weight:600;margin:0 0 2px;}
-  .vs .vol{font-size:13px;color:var(--ink-3);margin:0 0 16px;}
+  .vs .vol{font-size:12.5px;color:var(--ink-3);margin:0 0 16px;}
   .topic{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:12px;}
   .topic .t-k{font-size:11.5px;color:var(--ink-3);margin-bottom:4px;}
   .topic .t-v{font-size:15.5px;font-weight:600;}
@@ -168,45 +159,46 @@
   .qcard h3{font-size:15px;margin:0 0 6px;font-weight:600;line-height:1.55;}
   .qcard .hint{font-size:12.5px;color:var(--ink-3);margin:0 0 12px;}
   textarea{
-    width:100%;min-height:150px;resize:vertical;
+    width:100%;min-height:140px;resize:vertical;
     border:1px solid var(--border-strong);border-radius:8px;
     background:var(--surface-2);padding:10px 12px;
     font-family:inherit;font-size:13.5px;line-height:1.7;color:var(--ink);
   }
   textarea:focus{outline:2px solid var(--series-soft);outline-offset:1px;background:#fff;}
   .print-mirror{display:none;}
-  .saveline{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:12px;color:var(--ink-3);}
+  .saveline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--ink-3);}
   .saveline button{
-    font-family:inherit;font-size:12px;color:var(--ink-2);
-    background:var(--surface);border:1px solid var(--border-strong);border-radius:6px;
-    padding:4px 10px;cursor:pointer;
+    font-family:inherit;font-size:12px;color:var(--ink-2);background:var(--surface);
+    border:1px solid var(--border-strong);border-radius:6px;padding:4px 10px;cursor:pointer;
   }
   .saveline button:hover{background:#f1efea;}
+  .saveline button:focus-visible{outline:2px solid var(--series);outline-offset:1px;}
 
   /* ---------- 时间线 ---------- */
-  .timeline{display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin-top:8px;}
-  .step{position:relative;padding:0 14px 0 0;}
+  .timeline{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));}
+  .step{position:relative;padding-right:14px;}
   .step .dot{width:11px;height:11px;border-radius:50%;background:var(--series);margin-bottom:14px;position:relative;z-index:2;}
   .step .line{position:absolute;top:5px;left:11px;right:0;height:1px;background:var(--border-strong);z-index:1;}
   .step:last-child .line{display:none;}
   .step .k{font-size:11.5px;color:var(--ink-3);margin-bottom:4px;}
-  .step .v{font-size:14px;font-weight:600;line-height:1.5;margin-bottom:6px;}
+  .step .v{font-size:14.5px;font-weight:600;line-height:1.45;margin-bottom:6px;}
   .step .d{font-size:12.5px;color:var(--ink-2);line-height:1.6;}
 
   .obs{list-style:none;padding:0;margin:14px 0 0;display:grid;gap:8px;}
   .obs li{
     font-size:13.5px;color:var(--ink-2);
     background:var(--surface);border:1px solid var(--border);border-radius:8px;
-    padding:11px 14px;position:relative;padding-left:30px;
+    padding:11px 14px 11px 30px;position:relative;
   }
   .obs li::before{content:"";position:absolute;left:14px;top:19px;width:6px;height:6px;border-radius:50%;background:var(--series-soft);}
 
   @media (max-width:900px){
-    .c3,.c2,.vs,.split,.s5grid{grid-template-columns:minmax(0,1fr);}
-    .timeline{grid-template-columns:1fr;gap:14px;}
+    .c3,.c2,.vs,.split,.s6grid{grid-template-columns:minmax(0,1fr);}
+    .timeline{grid-template-columns:minmax(0,1fr);gap:14px;}
     .step .line{display:none;}
     .nav .brand span,.nav .stamp{display:none;}
-    section{padding-left:16px;padding-right:16px;}
+    .nav{padding-left:16px;padding-right:16px;}
+    section{padding-inline:16px;}
   }
 
   /* ---------- 打印 ---------- */
@@ -214,93 +206,89 @@
   @media print{
     :root{--nav-h:0px;}
     body{background:#fff;font-size:11pt;}
-    .nav{position:static;height:auto;background:#fff;backdrop-filter:none;padding:0 0 8px;margin-bottom:10px;}
+    .nav{position:static;background:#fff;backdrop-filter:none;padding:0 0 8px;margin-bottom:10px;min-height:0;}
     .nav ul,.nav .stamp{display:none;}
     section{
-      min-height:0;padding:0 0 10mm;margin:0;max-width:none;
-      display:block;border-bottom:none;
+      min-height:0;margin:0;max-width:none;display:block;border-bottom:none;
+      padding:0 0 10mm;
       page-break-after:always;break-after:page;
     }
     section:last-of-type{page-break-after:auto;break-after:auto;}
     .card,figure,.tbl-wrap,.qcard,.guess{break-inside:avoid;page-break-inside:avoid;}
     textarea{display:none;}
-    .print-mirror{
-      display:block;white-space:pre-wrap;min-height:26mm;
-      border:1px solid #bbb;border-radius:6px;padding:8px 10px;font-size:10pt;
-    }
+    .print-mirror{display:block;white-space:pre-wrap;min-height:24mm;border:1px solid #bbb;border-radius:6px;padding:8px 10px;font-size:10pt;}
     .saveline{display:none;}
     a{text-decoration:none;color:inherit;}
     h1{font-size:18pt;}h2{font-size:16pt;}
-    /* 第 5 节内容较多，打印时收紧到一页 */
-    .s5grid{grid-template-columns:225px minmax(0,1fr);gap:10px;}
-    #s5 .guess{padding:9px 11px;}
-    #s5 .cards{gap:9px;}
-    #s5 .lead{margin-bottom:14px;}
-    #s5 h3{margin:14px 0 9px;}
-    #s5 figure{padding:12px 14px 10px;}
+    .s6grid{grid-template-columns:225px minmax(0,1fr);gap:10px;}
+    #s6 .guess{padding:9px 11px;}
+    #s6 .cards{gap:9px;}
+    #s6 .lead{margin-bottom:14px;}
+    #s6 h3{margin:14px 0 9px;}
+    #s6 figure{padding:12px 14px 10px;}
   }
 </style>
 </head>
 <body>
-
 <nav class="nav">
-  <div class="brand">下一批 10 万篇：品类选择 <span>· 待决策，征求意见</span></div>
+  <div class="brand">下一批 10 万篇押哪个品类 <span>· 待决策，征求意见</span></div>
   <ul>
     <li><a href="#s1">1 决定什么</a></li>
-    <li><a href="#s2">2 需求规模</a></li>
-    <li><a href="#s3">3 两个反例</a></li>
-    <li><a href="#s4">4 三个维度</a></li>
-    <li><a href="#s5">5 待议倾向</a></li>
-    <li><a href="#s6">6 三个问题</a></li>
-    <li><a href="#s7">7 后续</a></li>
+    <li><a href="#s2">2 怎么选</a></li>
+    <li><a href="#s3">3 需求量</a></li>
+    <li><a href="#s4">4 问题类型</a></li>
+    <li><a href="#s5">5 我们的表现</a></li>
+    <li><a href="#s6">6 我的倾向</a></li>
+    <li><a href="#s7">7 请你回答</a></li>
+    <li><a href="#s8">8 之后</a></li>
   </ul>
   <div class="stamp">2026-09-20</div>
 </nav>
 
 <!-- ============ 1 ============ -->
 <section id="s1">
-  <p class="eyebrow">第 1 节</p>
+  <p class="eyebrow">第 1 节 · <b>要决定什么</b></p>
   <h1>下一批 10 万篇文章，要不要限定品类？如果限定，押哪个？</h1>
-  <p class="lead">这份材料是拿来讨论的，不是结论。下面每一处属于个人判断的内容都单独标了记号。</p>
+  <p class="lead">今天就定这一件事。这份材料是拿来讨论的，不是结论——我的判断都单独标了记号，请重点质疑那些地方。</p>
 
-  <div class="legend-strip">
+  <div class="legend">
     <span><b>无标记</b>　＝　导出数据，附来源与日期</span>
-    <span><span class="tag">🟡 推断</span>＝　个人判断，尚未被数据验证，请重点质疑</span>
+    <span><span class="tag">🟡 推断</span>＝　我的判断，还没有数据验证</span>
   </div>
 
   <div class="cards c3">
     <div class="card">
       <span class="idx">① 现状</span>
-      <h3>广而浅</h3>
+      <h3>写得广，但没写深</h3>
       <div class="stat">35,516<small>篇被引</small></div>
       <div class="minibar">
         <div class="mb-top"><span>只有 1 条引用记录的文章</span><b>62.5%</b></div>
         <div class="mb-track"><div class="mb-fill" style="width:62.5%"></div></div>
       </div>
       <div class="minibar">
-        <div class="mb-top"><span>前 10% 文章占到的引用记录</span><b>56.7%</b></div>
+        <div class="mb-top"><span>前 10% 的文章拿走的引用记录</span><b>56.7%</b></div>
         <div class="mb-track"><div class="mb-fill" style="width:56.7%"></div></div>
       </div>
       <div class="guess" style="margin-top:14px">
-        <p style="margin:0;font-size:13px"><span class="tag">🟡 推断</span>再摊一次 10 万篇，大概率复制同一个形态。</p>
+        <p><span class="tag">🟡 推断</span>照现在的做法再铺 10 万篇，结果大概率还是这个样子。</p>
       </div>
     </div>
 
     <div class="card">
-      <span class="idx">② 为什么是"集中"</span>
-      <h3>集中在一个品类，是唯一可能改变这个形态的做法</h3>
+      <span class="idx">② 能改的变量</span>
+      <h3>目前能换的只有一件事：把篇幅集中起来</h3>
       <div class="guess">
-        <p style="margin:0;font-size:13px"><span class="tag">🟡 推断</span>赌的是密度：同一品类内部的题目互相支撑，而不是再铺一层覆盖面。这一条目前没有数据支持，是我的判断。</p>
+        <p><span class="tag">🟡 推断</span>把 10 万篇压在一个品类里，赌的是密度——同品类的题目互相支撑，而不是再铺一层覆盖面。</p>
       </div>
-      <p class="note">上面的分布（62.5% / 56.7%）说明的是现状形态，不说明集中投放会改变它。</p>
+      <p class="note">卡片 ① 里那两个比例只说明现状是什么形态。它们不说明集中投放会改变这个形态——这一步是我的判断，没有数据。</p>
     </div>
 
     <div class="card">
-      <span class="idx">③ 为什么现在可以押</span>
-      <h3>这是第一批，后面还有</h3>
-      <p>10 万篇是第一批，不是全部预算。</p>
+      <span class="idx">③ 时机</span>
+      <h3>这是第一批，可以拿来试</h3>
+      <p>10 万篇是第一批，不是全部预算，后面还有。</p>
       <div class="guess">
-        <p style="margin:0;font-size:13px"><span class="tag">🟡 推断</span>所以可以单押一个品类看结果，不必一次分散；分散会让这一批读不出信号。</p>
+        <p><span class="tag">🟡 推断</span>所以这一批可以整批押一个品类，看结果再定下一批。分散投，这一批就读不出信号。</p>
       </div>
     </div>
   </div>
@@ -310,117 +298,160 @@
 
 <!-- ============ 2 ============ -->
 <section id="s2">
-  <p class="eyebrow">第 2 节</p>
-  <h2>港区各品类的需求有多大</h2>
-  <p class="lead">按 AI Volume 降序，共 12 个品类。</p>
+  <p class="eyebrow">第 2 节 · <b>怎么选</b></p>
+  <h2>选品类看三个维度，第三个现在是空的</h2>
+  <p class="lead">后面几节就按这三个维度一个一个看。前两个我已经有数据；第三个只有技术和产品能回答，这也是今天请大家来的原因。</p>
 
-  <div class="split">
-  <figure>
-    <figcaption>港区品类 AI Volume（单位：M）</figcaption>
-    <svg viewBox="0 0 760 412" role="img" aria-label="港区 12 个品类的 AI Volume 横向条形图，按降序排列">
-      <g class="bar">
-        <title>手機　AI Volume 5.9M</title>
-        <text x="78" y="28" text-anchor="end" class="bar-label">手機</text>
-        <rect x="90" y="14" width="600.0" height="18" rx="4" fill="#2a78d6"></rect>
-        <rect x="90" y="14" width="6" height="18" fill="#2a78d6"></rect>
-        <text x="703.0" y="28" class="bar-value">5.9M</text>
-      </g>
-      <g class="bar">
-        <title>家電　AI Volume 3.5M</title>
-        <text x="78" y="61" text-anchor="end" class="bar-label">家電</text>
-        <rect x="90" y="47" width="355.9" height="18" rx="4" fill="#2a78d6"></rect>
-        <rect x="90" y="47" width="6" height="18" fill="#2a78d6"></rect>
-        <text x="458.9" y="61" class="bar-value">3.5M</text>
-      </g>
-      <g class="bar">
-        <title>廚具　AI Volume 2.9M</title>
-        <text x="78" y="94" text-anchor="end" class="bar-label">廚具</text>
-        <rect x="90" y="80" width="294.9" height="18" rx="4" fill="#2a78d6"></rect>
-        <rect x="90" y="80" width="6" height="18" fill="#2a78d6"></rect>
-        <text x="397.9" y="94" class="bar-value">2.9M</text>
-      </g>
-      <g class="bar">
-        <title>保健品　AI Volume 2.9M</title>
-        <text x="78" y="127" text-anchor="end" class="bar-label">保健品</text>
-        <rect x="90" y="113" width="294.9" height="18" rx="4" fill="#2a78d6"></rect>
-        <rect x="90" y="113" width="6" height="18" fill="#2a78d6"></rect>
-        <text x="397.9" y="127" class="bar-value">2.9M</text>
-      </g>
-      <g class="bar">
-        <title>傢俬　AI Volume 2.5M</title>
-        <text x="78" y="160" text-anchor="end" class="bar-label">傢俬</text>
-        <rect x="90" y="146" width="254.2" height="18" rx="4" fill="#2a78d6"></rect>
-        <rect x="90" y="146" width="6" height="18" fill="#2a78d6"></rect>
-        <text x="357.2" y="160" class="bar-value">2.5M</text>
-      </g>
-      <g class="bar">
-        <title>寵物用品　AI Volume 2.5M</title>
-        <text x="78" y="193" text-anchor="end" class="bar-label">寵物用品</text>
-        <rect x="90" y="179" width="254.2" height="18" rx="4" fill="#2a78d6"></rect>
-        <rect x="90" y="179" width="6" height="18" fill="#2a78d6"></rect>
-        <text x="357.2" y="193" class="bar-value">2.5M</text>
-      </g>
-      <g class="bar">
-        <title>服飾　AI Volume 2.4M</title>
-        <text x="78" y="226" text-anchor="end" class="bar-label">服飾</text>
-        <rect x="90" y="212" width="244.1" height="18" rx="4" fill="#2a78d6"></rect>
-        <rect x="90" y="212" width="6" height="18" fill="#2a78d6"></rect>
-        <text x="347.1" y="226" class="bar-value">2.4M</text>
-      </g>
-      <g class="bar">
-        <title>運動用品　AI Volume 2.4M</title>
-        <text x="78" y="259" text-anchor="end" class="bar-label">運動用品</text>
-        <rect x="90" y="245" width="244.1" height="18" rx="4" fill="#2a78d6"></rect>
-        <rect x="90" y="245" width="6" height="18" fill="#2a78d6"></rect>
-        <text x="347.1" y="259" class="bar-value">2.4M</text>
-      </g>
-      <g class="bar">
-        <title>護膚品　AI Volume 2.2M</title>
-        <text x="78" y="292" text-anchor="end" class="bar-label">護膚品</text>
-        <rect x="90" y="278" width="223.7" height="18" rx="4" fill="#2a78d6"></rect>
-        <rect x="90" y="278" width="6" height="18" fill="#2a78d6"></rect>
-        <text x="326.7" y="292" class="bar-value">2.2M</text>
-      </g>
-      <g class="bar">
-        <title>鞋　AI Volume 2.2M</title>
-        <text x="78" y="325" text-anchor="end" class="bar-label">鞋</text>
-        <rect x="90" y="311" width="223.7" height="18" rx="4" fill="#2a78d6"></rect>
-        <rect x="90" y="311" width="6" height="18" fill="#2a78d6"></rect>
-        <text x="326.7" y="325" class="bar-value">2.2M</text>
-      </g>
-      <g class="bar">
-        <title>嬰兒用品　AI Volume 2.2M</title>
-        <text x="78" y="358" text-anchor="end" class="bar-label">嬰兒用品</text>
-        <rect x="90" y="344" width="223.7" height="18" rx="4" fill="#2a78d6"></rect>
-        <rect x="90" y="344" width="6" height="18" fill="#2a78d6"></rect>
-        <text x="326.7" y="358" class="bar-value">2.2M</text>
-      </g>
-      <g class="bar">
-        <title>化妝品　AI Volume 2.0M</title>
-        <text x="78" y="391" text-anchor="end" class="bar-label">化妝品</text>
-        <rect x="90" y="377" width="203.4" height="18" rx="4" fill="#2a78d6"></rect>
-        <rect x="90" y="377" width="6" height="18" fill="#2a78d6"></rect>
-        <text x="306.4" y="391" class="bar-value">2.0M</text>
-      </g>
-    </svg>
-  </figure>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:12%">维度</th>
+          <th style="width:30%">要回答的问题</th>
+          <th style="width:26%">数据来源</th>
+          <th>现在的状态</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="dim">维度一</td>
+          <td>有没有人问？</td>
+          <td>Semrush Prompt Research</td>
+          <td><span class="have">已有</span>　→ 第 3 节看量，第 4 节看问题类型</td>
+        </tr>
+        <tr>
+          <td class="dim">维度二</td>
+          <td>我们现在做得怎么样？</td>
+          <td>港区跟踪 262 题</td>
+          <td><span class="have">已有</span>，但样本窄　→ 第 5 节</td>
+        </tr>
+        <tr>
+          <td class="dim">维度三</td>
+          <td>哪些品类我们有别人没有的商品数据？</td>
+          <td>我们自己的商品库</td>
+          <td><span class="gap">❌ 空白</span>　→ 第 7 节问题 ①，需要你们回答</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
-  <div class="side">
-    <p class="note"><b>来源：</b>Semrush Prompt Research，地区香港，2026-09-20。<br><br>
-    <b>口径：</b>"AI Volume"是该关键词相关话题的 AI 搜索量合计，Semrush 的估算值，口径未向厂商确认。</p>
-    <ul class="obs" style="margin:0">
-      <li>除手機和家電外，其余九个品类挤在 2.0–2.9M，差距不大。</li>
-      <li>商业＋交易意图占比各品类都在 17–25%，这个维度区分不出品类，不作为决策依据。</li>
-    </ul>
-  </div>
-  </div>
+  <p class="kicker">三个维度里，前两个决定"值不值得做"，第三个决定"我们做有没有优势"。</p>
+  <p class="note">第 6 节我会给一个倾向，但那个倾向是在维度三空着的情况下做的，所以标了 🟡 推断。</p>
 </section>
 
 <!-- ============ 3 ============ -->
 <section id="s3">
-  <p class="eyebrow">第 3 节</p>
-  <h2>光看量不够——两个反例</h2>
-  <p class="lead">同样取各自品类里最大的那个话题，放在一起看。</p>
+  <p class="eyebrow">第 3 节 · <b>维度一：有没有人问</b></p>
+  <h2>港区各品类，谁的需求量最大</h2>
+  <p class="lead">12 个品类，按 AI Volume 降序排。</p>
+
+  <div class="split">
+    <figure>
+      <figcaption>港区品类 AI Volume（单位：M）</figcaption>
+      <svg viewBox="0 0 760 412" role="img" aria-label="港区 12 个品类的 AI Volume 横向条形图，按降序排列">
+        <g class="bar">
+          <title>手機　AI Volume 5.9M</title>
+          <text x="78" y="28" text-anchor="end" class="bar-label">手機</text>
+          <rect x="90" y="14" width="600.0" height="18" rx="4" fill="#2a78d6"></rect>
+          <rect x="90" y="14" width="6" height="18" fill="#2a78d6"></rect>
+          <text x="703.0" y="28" class="bar-value">5.9M</text>
+        </g>
+        <g class="bar">
+          <title>家電　AI Volume 3.5M</title>
+          <text x="78" y="61" text-anchor="end" class="bar-label">家電</text>
+          <rect x="90" y="47" width="355.9" height="18" rx="4" fill="#2a78d6"></rect>
+          <rect x="90" y="47" width="6" height="18" fill="#2a78d6"></rect>
+          <text x="458.9" y="61" class="bar-value">3.5M</text>
+        </g>
+        <g class="bar">
+          <title>廚具　AI Volume 2.9M</title>
+          <text x="78" y="94" text-anchor="end" class="bar-label">廚具</text>
+          <rect x="90" y="80" width="294.9" height="18" rx="4" fill="#2a78d6"></rect>
+          <rect x="90" y="80" width="6" height="18" fill="#2a78d6"></rect>
+          <text x="397.9" y="94" class="bar-value">2.9M</text>
+        </g>
+        <g class="bar">
+          <title>保健品　AI Volume 2.9M</title>
+          <text x="78" y="127" text-anchor="end" class="bar-label">保健品</text>
+          <rect x="90" y="113" width="294.9" height="18" rx="4" fill="#2a78d6"></rect>
+          <rect x="90" y="113" width="6" height="18" fill="#2a78d6"></rect>
+          <text x="397.9" y="127" class="bar-value">2.9M</text>
+        </g>
+        <g class="bar">
+          <title>傢俬　AI Volume 2.5M</title>
+          <text x="78" y="160" text-anchor="end" class="bar-label">傢俬</text>
+          <rect x="90" y="146" width="254.2" height="18" rx="4" fill="#2a78d6"></rect>
+          <rect x="90" y="146" width="6" height="18" fill="#2a78d6"></rect>
+          <text x="357.2" y="160" class="bar-value">2.5M</text>
+        </g>
+        <g class="bar">
+          <title>寵物用品　AI Volume 2.5M</title>
+          <text x="78" y="193" text-anchor="end" class="bar-label">寵物用品</text>
+          <rect x="90" y="179" width="254.2" height="18" rx="4" fill="#2a78d6"></rect>
+          <rect x="90" y="179" width="6" height="18" fill="#2a78d6"></rect>
+          <text x="357.2" y="193" class="bar-value">2.5M</text>
+        </g>
+        <g class="bar">
+          <title>服飾　AI Volume 2.4M</title>
+          <text x="78" y="226" text-anchor="end" class="bar-label">服飾</text>
+          <rect x="90" y="212" width="244.1" height="18" rx="4" fill="#2a78d6"></rect>
+          <rect x="90" y="212" width="6" height="18" fill="#2a78d6"></rect>
+          <text x="347.1" y="226" class="bar-value">2.4M</text>
+        </g>
+        <g class="bar">
+          <title>運動用品　AI Volume 2.4M</title>
+          <text x="78" y="259" text-anchor="end" class="bar-label">運動用品</text>
+          <rect x="90" y="245" width="244.1" height="18" rx="4" fill="#2a78d6"></rect>
+          <rect x="90" y="245" width="6" height="18" fill="#2a78d6"></rect>
+          <text x="347.1" y="259" class="bar-value">2.4M</text>
+        </g>
+        <g class="bar">
+          <title>護膚品　AI Volume 2.2M</title>
+          <text x="78" y="292" text-anchor="end" class="bar-label">護膚品</text>
+          <rect x="90" y="278" width="223.7" height="18" rx="4" fill="#2a78d6"></rect>
+          <rect x="90" y="278" width="6" height="18" fill="#2a78d6"></rect>
+          <text x="326.7" y="292" class="bar-value">2.2M</text>
+        </g>
+        <g class="bar">
+          <title>鞋　AI Volume 2.2M</title>
+          <text x="78" y="325" text-anchor="end" class="bar-label">鞋</text>
+          <rect x="90" y="311" width="223.7" height="18" rx="4" fill="#2a78d6"></rect>
+          <rect x="90" y="311" width="6" height="18" fill="#2a78d6"></rect>
+          <text x="326.7" y="325" class="bar-value">2.2M</text>
+        </g>
+        <g class="bar">
+          <title>嬰兒用品　AI Volume 2.2M</title>
+          <text x="78" y="358" text-anchor="end" class="bar-label">嬰兒用品</text>
+          <rect x="90" y="344" width="223.7" height="18" rx="4" fill="#2a78d6"></rect>
+          <rect x="90" y="344" width="6" height="18" fill="#2a78d6"></rect>
+          <text x="326.7" y="358" class="bar-value">2.2M</text>
+        </g>
+        <g class="bar">
+          <title>化妝品　AI Volume 2.0M</title>
+          <text x="78" y="391" text-anchor="end" class="bar-label">化妝品</text>
+          <rect x="90" y="377" width="203.4" height="18" rx="4" fill="#2a78d6"></rect>
+          <rect x="90" y="377" width="6" height="18" fill="#2a78d6"></rect>
+          <text x="306.4" y="391" class="bar-value">2.0M</text>
+        </g>
+      </svg>
+    </figure>
+
+    <div class="side">
+      <p class="note"><b>来源：</b>Semrush Prompt Research，地区香港，2026-09-20。<br><br>
+      <b>口径：</b>"AI Volume"是该关键词相关话题的 AI 搜索量合计。这是 Semrush 的估算值，口径未向厂商确认。</p>
+      <ul class="obs" style="margin:0">
+        <li>明显领先的只有手機和家電。其余九个品类都挤在 2.0–2.9M，差距不大。</li>
+        <li>商业＋交易意图占比，各品类都在 17–25%。这个维度分不出高下，不作为决策依据。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section id="s4">
+  <p class="eyebrow">第 4 节 · <b>维度一（续）：光看量不够</b></p>
+  <h2>量一样大，用户问的问题可能完全不同</h2>
+  <p class="lead">各取一个品类里最大的那个话题，放在一起对照。</p>
 
   <div class="vs">
     <div class="card">
@@ -432,7 +463,7 @@
         <div class="t-n">73,727</div>
       </div>
       <div class="guess">
-        <p style="margin:0;font-size:13px"><span class="tag">🟡 推断</span>从标题看像是资费和型号新闻，不是"买哪款"。</p>
+        <p><span class="tag">🟡 推断</span>从标题看像是资费和型号新闻，不是"买哪款"。</p>
       </div>
     </div>
 
@@ -445,56 +476,31 @@
         <div class="t-n">15,802</div>
       </div>
       <div class="guess">
-        <p style="margin:0;font-size:13px"><span class="tag">🟡 推断</span>从标题看是明确的购买决策问题。</p>
+        <p><span class="tag">🟡 推断</span>从标题看是明确的购买决策问题。</p>
       </div>
     </div>
   </div>
 
   <ul class="obs">
-    <li>同样的量，背后的问题类型可能完全不同。选品类要看问题类型，不只看量。</li>
+    <li>量大不等于是买东西的问题。选品类要看问题类型，不只看量。</li>
   </ul>
 
-  <p class="note">来源：Semrush Prompt Research，地区香港，2026-09-20。话题名称与数值为导出原文；对"属于哪种问题类型"的归类是我的判断，已标 🟡 推断。</p>
+  <p class="note">来源：Semrush Prompt Research，地区香港，2026-09-20。话题名称与数值是导出原文；"属于哪种问题类型"是我看标题得出的判断，已标 🟡 推断。</p>
 </section>
 
-<!-- ============ 4 ============ -->
-<section id="s4">
-  <p class="eyebrow">第 4 节</p>
-  <h2>三个判断维度，第三个我们还没有数据</h2>
-  <p class="lead">今天这场讨论主要就是为了补第三个维度。</p>
-
-  <div class="tbl-wrap" style="margin-bottom:16px">
-    <table>
-      <thead>
-        <tr><th style="width:26%">维度</th><th style="width:34%">数据来源</th><th>状态</th></tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><b>维度一</b>　有没有人问</td>
-          <td>Semrush Prompt Research</td>
-          <td><span class="status-yes">已有</span>　（见第 2 节）</td>
-        </tr>
-        <tr>
-          <td><b>维度二</b>　我们现在表现如何</td>
-          <td>港区跟踪 262 题</td>
-          <td><span class="status-yes">已有</span>，但覆盖窄（见下表）</td>
-        </tr>
-        <tr>
-          <td><b>维度三</b>　我们有没有独家数据</td>
-          <td>我们自己的商品库</td>
-          <td><span class="status-no">❌ 没有数据</span>　这次讨论要解决的就是它</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+<!-- ============ 5 ============ -->
+<section id="s5">
+  <p class="eyebrow">第 5 节 · <b>维度二：我们现在做得怎么样</b></p>
+  <h2>港区跟踪 262 题的表现，样本很窄</h2>
+  <p class="lead">先说清楚怎么读这张表：这批题是围绕淘宝购物场景生成的，不是全品类随机抽样。各品类的题数差了十几倍，所以品类之间不能直接比高低，只能看我们在哪里已经有一点积累。</p>
 
   <div class="tbl-wrap">
     <table>
       <thead>
         <tr>
           <th style="width:22%">品类</th>
-          <th style="width:39%">我们的题数（条形长度以本表最大值 74 为满格）</th>
-          <th style="width:39%">平均可见度（条形长度以本表最大值 62.3 为满格）</th>
+          <th style="width:39%">我们的题数（条形以本表最大值 74 为满格）</th>
+          <th style="width:39%">平均可见度（条形以本表最大值 62.3 为满格）</th>
         </tr>
       </thead>
       <tbody>
@@ -542,21 +548,20 @@
     </table>
   </div>
 
-  <p class="note"><b>来源：</b>港区跟踪项目，262 题，2026-08-20 至 2026-09-18。<br>
-  这 262 题是围绕淘宝购物场景生成的，不是港区全品类的随机样本，品类间不可直接比较，仅供参考。</p>
+  <p class="note"><b>来源：</b>港区跟踪项目，262 题，2026-08-20 至 2026-09-18。表内只列出有题目覆盖的 8 个品类。</p>
 </section>
 
-<!-- ============ 5 ============ -->
-<section id="s5">
-  <p class="eyebrow">第 5 节</p>
-  <h2>一个待讨论的倾向</h2>
-  <div class="guess" style="margin:0 0 22px;max-width:62ch">
-    <p style="margin:0;font-size:14px"><span class="tag">🟡 推断</span><b>本节整节都是推断，需要大家验证。</b>这里没有第三个维度（商品数据）的输入，结论随时可能推翻。</p>
+<!-- ============ 6 ============ -->
+<section id="s6">
+  <p class="eyebrow">第 6 节 · <b>我的倾向</b></p>
+  <h2>我倾向押 家電 ＋ 廚具，请大家推翻</h2>
+  <div class="guess" style="margin:0 0 20px;max-width:62ch">
+    <p><span class="tag">🟡 推断</span><b>这一整节都是我的判断，不是结论。</b>维度三还空着，所以这个倾向随时可能被推翻——这正是我想听你们意见的地方。</p>
   </div>
 
-  <div class="s5grid">
+  <div class="s6grid">
     <figure>
-      <figcaption>合并口径下的量级对比（单位：M）</figcaption>
+      <figcaption>把家電和廚具合起来看（单位：M）</figcaption>
       <svg viewBox="0 0 340 162" role="img" aria-label="家電加廚具合计 6.4M 与手機 5.9M 的条形对比">
         <text x="0" y="14" class="bar-label" style="font-size:12px">家電 ＋ 廚具（合并口径）</text>
         <g class="bar">
@@ -579,65 +584,60 @@
         </g>
         <text x="0" y="152" class="bar-value" style="font-size:13px">5.9M</text>
       </svg>
-      <p class="note" style="margin-top:8px">数值来源同第 2 节（Semrush Prompt Research，香港，2026-09-20）；"家電 ＋ 廚具 合并为一个大类"是本节提出的口径，不是 Semrush 的分类。</p>
+      <p class="note" style="margin-top:8px">数值来源同第 3 节。把家電和廚具合成一个大类是我提出的口径，不是 Semrush 的分类。</p>
     </figure>
 
     <div class="cards" style="gap:12px">
       <div class="guess">
-        <p style="margin:0"><span class="tag">🟡 推断</span><b>理由 ①　需求足够大，且是购买决策型问题。</b><br>
-        代表话题：微波爐購買指引、不銹鋼鍋具、洗碗機比較、保溫壺。</p>
+        <p><span class="tag">🟡 推断</span><b>理由 ①　量够大，而且问的是买东西。</b>合并后 6.4M，超过手機的 5.9M。这个品类的话题长这样：微波爐購買指引、不銹鋼鍋具、洗碗機比較、保溫壺。</p>
       </div>
       <div class="guess">
-        <p style="margin:0"><span class="tag">🟡 推断</span><b>理由 ②　最吃参数、价格、规格对比</b>——正好是商品数据的强项。（这一条要等第 6 节问题 ① 的回答才能确认。）</p>
+        <p><span class="tag">🟡 推断</span><b>理由 ②　这类问题最吃参数、价格、规格对比。</b>正好是商品数据的强项——前提是维度三的答案支持，见第 7 节问题 ①。</p>
       </div>
       <div class="guess">
-        <p style="margin:0"><span class="tag">🟡 推断</span><b>理由 ③　现有内容在这个品类已有基础。</b><br>
-        跟踪数据里"家居生活"平均可见度 41.6，在 8 个品类中排第 3（数据见第 4 节，样本窄）。</p>
+        <p><span class="tag">🟡 推断</span><b>理由 ③　我们在这个品类已经有一点底子。</b>跟踪数据里"家居生活"平均可见度 41.6，8 个品类里排第 3。样本窄，只能当参考。</p>
       </div>
     </div>
   </div>
 
-  <h3 style="font-size:16px;margin:26px 0 12px;font-weight:600">两条排除理由</h3>
+  <h3 style="font-size:16px;margin:24px 0 12px;font-weight:600">同样是判断：为什么排除这几个</h3>
   <div class="cards c2">
     <div class="guess">
-      <p style="margin:0 0 6px"><span class="tag">🟡 推断</span><b>不选手機</b></p>
-      <p style="margin:0 0 6px;font-size:13.5px">水货保修问题——推断会让 AI 在推荐跨境平台时更保守。</p>
-      <p style="margin:0;font-size:13.5px">"香港手機資訊"那 7 万的量（73,727，见第 3 节），从标题看不像购买意图。</p>
+      <p><span class="tag">🟡 推断</span><b>不选手機。</b>最大的那个话题是"香港手機資訊"，7 万多的量（73,727，见第 4 节），从标题看不像购买意图。另外水货保修是这个品类绕不开的问题，我推断 AI 在推荐跨境平台时会更保守。</p>
     </div>
     <div class="guess">
-      <p style="margin:0 0 6px"><span class="tag">🟡 推断</span><b>不选護膚品 / 嬰兒用品</b></p>
-      <p style="margin:0;font-size:13.5px">这两个品类"真假货"是用户第一关切——推断跨境平台在这一点上天然处于劣势。</p>
+      <p><span class="tag">🟡 推断</span><b>不选護膚品 / 嬰兒用品。</b>这两个品类用户的第一关切是真假货。我推断跨境平台在这一点上天然吃亏。</p>
     </div>
   </div>
-  <p class="note">以上五条均无数据支持，是我的判断。第 6 节问题 ② 请大家直接反驳。</p>
+  <p class="note">这一节五条判断都没有数据支持。第 7 节问题 ② 就是请大家直接反驳它们。</p>
 </section>
 
-<!-- ============ 6 ============ -->
-<section id="s6">
-  <p class="eyebrow">第 6 节</p>
-  <h2>请大家回答的三个问题</h2>
-  <p class="lead">可以当场在下面填，也可以 Ctrl+P 打印出来手写。</p>
+<!-- ============ 7 ============ -->
+<section id="s7">
+  <p class="eyebrow">第 7 节 · <b>请你回答</b></p>
+  <h2>三个问题，现在就能答</h2>
+  <p class="lead">直接在下面填；也可以打印出来手写，打印时每节一页。</p>
 
   <div class="cards c3">
     <div class="qcard">
       <span class="who">给技术 / 产品</span>
-      <h3>① 我们的商品数据在哪些品类最丰富？价差最大？长尾 SKU 最多？中文评价最全？</h3>
-      <p class="hint">这是第三个维度，也是这次讨论最关键的输入。</p>
+      <h3>① 我们的商品数据，哪些品类最强？</h3>
+      <p class="hint">最丰富、价差最大、长尾 SKU 最多、中文评价最全——这就是第 2 节里空着的维度三，我完全没有数据，只能问你们。</p>
       <textarea id="q1" placeholder="按品类写，能给个大致排序最好……"></textarea>
       <div class="print-mirror" id="q1-print"></div>
     </div>
 
     <div class="qcard">
       <span class="who">给所有人</span>
-      <h3>② 第 5 节那两条排除理由（不选手機、不选護膚品 / 嬰兒用品），你们同意吗？</h3>
-      <p class="hint">有没有我没考虑到的因素？</p>
+      <h3>② 第 6 节那两条排除理由，站得住吗？</h3>
+      <p class="hint">不选手機、不选護膚品 / 嬰兒用品。有没有我没考虑到的因素？</p>
       <textarea id="q2" placeholder="同意 / 不同意，以及理由……"></textarea>
       <div class="print-mirror" id="q2-print"></div>
     </div>
 
     <div class="qcard">
       <span class="who">给所有人</span>
-      <h3>③ 10 万篇全押一个品类，还是留一部分做对照？</h3>
+      <h3>③ 全押一个品类，还是留一部分做对照？</h3>
       <p class="hint">如果留，留多少？</p>
       <textarea id="q3" placeholder="全押 / 留对照，留多少……"></textarea>
       <div class="print-mirror" id="q3-print"></div>
@@ -645,45 +645,44 @@
   </div>
 
   <div class="saveline">
-    <span id="saveState">填写内容只保存在你自己的浏览器里，不上传。</span>
+    <span id="saveState">填写内容只存在你自己的浏览器里，不上传，也不会汇总给别人。</span>
     <button type="button" id="clearBtn">清空本页填写</button>
   </div>
 </section>
 
-<!-- ============ 7 ============ -->
-<section id="s7">
-  <p class="eyebrow">第 7 节</p>
-  <h2>决定之后会发生什么</h2>
-  <p class="lead">定下品类之后的路径。</p>
+<!-- ============ 8 ============ -->
+<section id="s8">
+  <p class="eyebrow">第 8 节 · <b>之后</b></p>
+  <h2>定下品类之后走五步，三到四周后才看得到结果</h2>
+  <p class="lead">今天定的是第一步，但它决定了后面四步的形状。</p>
 
   <div class="timeline">
     <div class="step"><div class="line"></div><div class="dot"></div>
-      <div class="k">第 1 步</div><div class="v">定品类</div>
-      <div class="d">即今天这场讨论要产出的结论。</div></div>
+      <div class="k">第 1 步　今天</div><div class="v">定品类</div>
+      <div class="d">这场讨论要产出的结论。</div></div>
     <div class="step"><div class="line"></div><div class="dot"></div>
-      <div class="k">第 2 步</div><div class="v">出该品类的分类表</div>
-      <div class="d">按"用户意图 × 问题类型"拆。</div></div>
+      <div class="k">第 2 步</div><div class="v">出分类表</div>
+      <div class="d">按"用户意图 × 问题类型"把这个品类拆开。</div></div>
     <div class="step"><div class="line"></div><div class="dot"></div>
-      <div class="k">第 3 步</div><div class="v">出这一批的选题方向</div>
-      <div class="d">对应 10 万篇的产出范围。</div></div>
+      <div class="k">第 3 步</div><div class="v">出选题方向</div>
+      <div class="d">圈定这 10 万篇具体写什么。</div></div>
     <div class="step"><div class="line"></div><div class="dot"></div>
       <div class="k">第 4 步</div><div class="v">生产上线</div>
-      <div class="d">—</div></div>
+      <div class="d">按选题方向产出并发布。</div></div>
     <div class="step"><div class="line"></div><div class="dot"></div>
-      <div class="k">第 5 步</div><div class="v">观察被引情况</div>
-      <div class="d">通过港区三引擎跟踪项目（已于 2026-09-18 上线）。</div></div>
+      <div class="k">第 5 步</div><div class="v">看被引情况</div>
+      <div class="d">通过港区三引擎跟踪项目观察，该项目 2026-09-18 已上线。</div></div>
   </div>
 
-  <ul class="obs" style="margin-top:26px">
-    <li>这一批的效果要三到四周后才能看出来，所以今天的决定影响的是 10 月中之后的判断。</li>
+  <ul class="obs" style="margin-top:24px">
+    <li>这一批的效果三到四周后才看得出来。今天的决定，影响的是 10 月中之后的判断。</li>
   </ul>
 
-  <p class="note">本页数据来源：Semrush 全量导出（2026-09-20）、Semrush Prompt Research 香港（2026-09-20）、港区跟踪 262 题（2026-08-20 至 2026-09-18）。标 🟡 推断 的内容为个人判断，未经数据验证。</p>
+  <p class="note">本页数据来源：Semrush 全量导出（2026-09-20）、Semrush Prompt Research 香港（2026-09-20）、港区跟踪 262 题（2026-08-20 至 2026-09-18）。标 🟡 推断 的内容是我的判断，没有数据验证。</p>
 </section>
 
 <script>
 (function(){
-  // 导航高亮
   var links = Array.prototype.slice.call(document.querySelectorAll('.nav a'));
   var map = {};
   links.forEach(function(a){ map[a.getAttribute('href').slice(1)] = a; });
@@ -699,7 +698,6 @@
     document.querySelectorAll('section').forEach(function(s){ io.observe(s); });
   }
 
-  // 填写内容：本地保存 + 打印镜像
   var ids = ['q1','q2','q3'];
   function mirror(id){
     var t = document.getElementById(id);
@@ -727,7 +725,7 @@
       try { window.localStorage.removeItem('geo-cat-' + id); } catch(e){}
     });
     var s = document.getElementById('saveState');
-    if (s) s.textContent = '已清空。填写内容只保存在你自己的浏览器里，不上传。';
+    if (s) s.textContent = '已清空。填写内容只存在你自己的浏览器里，不上传。';
   });
 })();
 </script>
