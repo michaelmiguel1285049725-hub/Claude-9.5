@@ -63,6 +63,11 @@ th,td{border:1px solid var(--line);padding:8px 12px;vertical-align:top;text-alig
 th{background:var(--gray-bg);font-weight:600}
 td.k{color:var(--muted);white-space:nowrap;background:#fafafa}
 .tsrc{font-size:12.5px;color:var(--muted);margin:0 0 14px}
+table.prog td{font-size:14px;line-height:1.6;padding:10px 12px}
+table.prog td.k{white-space:nowrap;font-weight:600;color:var(--ink2)}
+table.prog .item{margin-bottom:10px}
+table.prog .item:last-child{margin-bottom:0}
+table.prog .item b{display:block;font-weight:600;color:var(--ink)}
 
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:12px 0 6px}
 .stat{border:1px solid var(--line);border-top:3px solid var(--obs);padding:12px 16px 10px;border-radius:4px}
@@ -220,7 +225,7 @@ svg text{font-family:inherit}
     <text x="1234" y="372" text-anchor="middle" font-size="15" fill="#6b7280">进站后的转化：站内已有路径</text>
     <text x="712" y="420" text-anchor="middle" font-size="14" fill="#6b7280">两段数据目前尚未打通</text>
   </svg>
-  <figcaption><b>图 1 · 从一句提问到一笔订单。</b>问题取自固定题库"淘寶支付"类；来源域名 wise.com、hk01、yohohongkong 为港区监测中被 AI 引用最多的网站；淘宝文章为 world.taobao.com 下 shopping-guide 路径的文章。</figcaption>
+  <figcaption><b>图 1 · 从一句提问到一笔订单。</b></figcaption>
 </figure>
 <p>用户在 AI 里提问，AI 的回答列出几个来源，其中一个是我们的文章。用户点进文章，文章里带商品链接，用户由此进入淘宝，下单。这就是 GEO 带来流量、流量变成 GMV 的完整路径。</p>
 <p>从 AI 引用到进站的这一段，目前我们已能监测；进站之后的转化走的是站内已有路径，这两段数据目前尚未打通。</p>
@@ -265,7 +270,7 @@ svg text{font-family:inherit}
 <div class="three">
   <div class="card"><h4>① 免费流量</h4>不需要投放广告。AI 引用带来的点击不产生投放成本，引用一旦稳定，流量就持续。</div>
   <div class="card"><h4>② 时间窗口</h4>AI 搜索刚开始普及，哪些网站会成为 AI 的常用来源，格局还没有形成。先进入的有先发优势。</div>
-  <div class="card"><h4>③ 行业动向</h4><span class="ph block">公司名和依据，作者自填</span></div>
+  <div class="card"><h4>③ 行业动向</h4>国内大厂已在投入。腾讯上线了 GEO 观测平台 AnswerBit；百度面向海外的 GEO 产品为 BaiduWiki。</div>
 </div>
 
 <!-- ================= 2 ================= -->
@@ -390,7 +395,7 @@ svg text{font-family:inherit}
 <div class="note">例如：问题"在香港用淘寶怎麼付款"，在 Google AI Mode 上，过去 30 天里有 12 天引用了我们某篇文章，平均排在第 3 位。<span class="fn">（数字为示意）</span></div>
 <div class="three" style="margin-top:14px">
   <div class="card obs"><h4>固定题库 <span class="pill on">已上线</span></h4>81 个港区用户常问的购物问题，分六类：選購攻略、淘寶物流、淘寶支付、包郵、退貨售後、優惠促銷。每天在三个 AI 产品（Google AI Mode、ChatGPT、Gemini）上运行。9 月 18 日上线。</div>
-  <div class="card gray"><h4>问题覆盖表 <span class="pill off">待建</span></h4>按用户意图和问题类型把问题分格，看哪些格子没人问、哪些格子我们没被引用。</div>
+  <div class="card gray"><h4>问题覆盖表 <span class="pill run">开发中</span></h4>按用户意图和问题类型把问题分格，看哪些格子没人问、哪些格子我们没被引用。</div>
   <div class="card obs"><h4>每日追踪、每周分析 <span class="pill on">在跑</span></h4>每天自动运行，按周汇总看趋势。</div>
 </div>
 
@@ -428,7 +433,6 @@ svg text{font-family:inherit}
     <p>方法：把 1,410 篇被 AI 引用过的文章和 500 篇没被引用的放在一起，逐个维度比较平均分。有差异，说明这个维度衡量的东西 AI 确实在乎；没有差异，说明这个维度没有意义；方向相反，说明这个维度在误导。</p>
     <p class="fn">来源：被引用文章来自我们自己配题监测到的港区数据（2026-08-20 至 09-18）；内部评分表由技术同学提供，2026-09-21。</p>
     <p>评分数据已于 9 月 21 日到位，分析进行中。</p>
-    <span class="ph block">评分验证结果：逐维度对比表</span>
   </div>
   <figure class="box" style="margin-top:0">
     <svg viewBox="0 0 760 300">
@@ -456,7 +460,7 @@ svg text{font-family:inherit}
   <tr><td class="k">商品数据</td><td>无</td><td>有</td><td>有</td></tr>
   <tr><td class="k">结构化策略</td><td>无</td><td>有</td><td>无</td></tr>
   <tr><td class="k">说明</td><td>现有线上版本</td><td>商品数据 + 结构化策略</td><td>只加商品数据，其余与原版一致</td></tr>
-  <tr><td class="k">状态</td><td><span class="pill off">线上</span></td><td><span class="pill on">已开发</span></td><td><span class="pill run">技术开发中</span></td></tr>
+  <tr><td class="k">状态</td><td><span class="pill off">线上</span></td><td><span class="pill on">我已开发</span></td><td><span class="pill run">技术开发中</span></td></tr>
 </table>
 <p class="tsrc">表 1 · 三个工作流版本。</p>
 <p>R9 和 R10 的差别只在有没有结构化策略。下一批 10 万篇文章在同一个品类、同一批种子上，两个版本各生产一半，发布后通过 AI 引用监测比较哪一版被引用得更多，以此判断结构化策略是否有效。</p>
@@ -464,10 +468,51 @@ svg text{font-family:inherit}
 
 <!-- ================= 5 ================= -->
 <h2 id="s5"><span class="n">5</span>目前进度</h2>
-<div class="cols2">
-  <div><h4 style="border-color:var(--obs);color:var(--obs-ink)">已上线</h4><ul><li>种子来源切换为 AI 缺口问题（8 月）</li><li>AI 引用监测上线（9 月 18 日）</li></ul></div>
-  <div><h4 style="border-color:var(--cross);color:var(--cross-ink)">进行中</h4><ul><li>评分验证（数据已到位）</li><li>下一批 10 万篇的品类决策</li><li>新版工作流 R9 / R10 准备发布</li><li>固定题库 v1.0</li></ul></div>
-</div>
+<table class="prog">
+  <tr><th style="width:120px"></th><th>已上线</th><th>已完成</th><th>进行中</th></tr>
+  <tr>
+    <td class="k">内容生产</td>
+    <td>
+      <div class="item"><b>文章选题来源切换（8 月）</b>选题依据从站内热搜词改为 AI 搜索中的用户问题，优先选那些 AI 回答未引用淘宝的问题。我提出方案，技术完成落地。</div>
+    </td>
+    <td>
+      <div class="item"><b>内容策略研究</b>系统梳理了影响 AI 引用的相关研究，总结出一组写作规则，作为新版工作流的设计依据。</div>
+      <div class="item"><b>商品数据接入试验</b>设计了商品数据进入工作流的方式，完成三轮共约 80 篇的小批量试验；结果显示加入商品数据后文章的事实准确性和整体质量提升。</div>
+      <div class="item"><b>商品数据评审</b><span class="ph">作者补充</span></div>
+      <div class="item"><b>新版工作流 R9</b>在原工作流基础上加入商品数据和结构化写作规则，9 月 18 日完成发布，尚未切换为正式生产版本。</div>
+    </td>
+    <td>
+      <div class="item"><b>R9 与 R10 对照实验</b>R10 由技术开发中；品类确定后两个版本各生产一批，比较 AI 引用情况。</div>
+      <div class="item"><b>下一批 10 万篇的品类选择</b>已完成 12 个候选品类的需求分析，待产品和运营确认。</div>
+    </td>
+  </tr>
+  <tr>
+    <td class="k">AI 引用监测</td>
+    <td>
+      <div class="item"><b>香港地区 AI 引用监测（9 月 18 日）</b>81 个固定问题，每天在 Google AI Mode、ChatGPT、Gemini 上各运行一次，记录是否引用淘宝及排名位置。</div>
+    </td>
+    <td>
+      <div class="item"><b>监测工具评估</b>梳理了 Semrush 的功能范围和数据口径，明确了哪些数据可作为指标、哪些仅供参考。</div>
+      <div class="item"><b>固定题库第一版</b>81 个问题，覆盖六类购物场景。</div>
+      <div class="item"><b>全量引用数据分析</b>对 35,516 篇被 AI 引用过的文章做了分布分析，4.2 节的结论来自这项分析。</div>
+    </td>
+    <td>
+      <div class="item"><b>固定题库第二版</b>按用户意图和提问类型重新设计题目。</div>
+      <div class="item"><b>每周引用分析</b>首份周报 9 月 25 日产出。</div>
+    </td>
+  </tr>
+  <tr>
+    <td class="k">评分验证</td>
+    <td><span style="color:var(--muted)">—</span></td>
+    <td>
+      <div class="item"><b>验证方法设计</b>确定对照方式：被 AI 引用的文章与未被引用的文章逐维度比较评分。</div>
+      <div class="item"><b>被引用文章清单</b>从监测数据中整理出 1,410 篇被 AI 引用过的文章。</div>
+    </td>
+    <td>
+      <div class="item"><b>评分对照分析</b>1,410 篇被引用与 500 篇未被引用文章的评分数据已到位，分析进行中。</div>
+    </td>
+  </tr>
+</table>
 
 <!-- ================= 6 ================= -->
 <h2 id="s6"><span class="n">6</span>阶段三（10 月后）：让反馈循环自动运转</h2>
@@ -484,7 +529,6 @@ svg text{font-family:inherit}
   <b>现在知道了什么</b><span>AI 在引用我们的文章，但引用得又广又浅；内部评分是否可信，正在验证。</span>
   <b>接下来做什么</b><span>确定品类，发布 10 万篇 R9 / R10 对照文章，四周后看结果；根据评分验证结果修正内部评分。</span>
 </div>
-<p>迭代速度偏慢是我的短板，后面两周的排期是：<span class="ph">两周排期，作者自填</span></p>
 
 </main>
 </div>
