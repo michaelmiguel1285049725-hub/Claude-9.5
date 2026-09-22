@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GEO 阶段二汇报 · 初稿 v1</title>
+<style>
+:root{
+  --bg:#f2f3f5; --paper:#ffffff; --ink:#1f2933; --muted:#6b7280; --line:#d9dde3;
+  --gray:#8b919a; --gray-bg:#eef0f3; --gray-ink:#4b5563;
+  --obs:#1f7a8c; --obs-bg:#e4f1f4; --obs-ink:#155d6b;
+  --cross:#c2600a; --cross-bg:#fbeee0; --cross-ink:#9a4a05;
+  --ph:#fff2a8; --ph-line:#c9a800;
+  --s:1;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+  font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;font-size:22px;line-height:1.5}
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+.slide{display:none;width:1600px;height:900px;background:var(--paper);position:relative;
+  padding:64px 88px 90px;transform:scale(var(--s));transform-origin:center;box-shadow:0 8px 40px rgba(0,0,0,.08);flex:0 0 auto}
+.slide.active{display:block}
+.slide h1{font-size:44px;font-weight:600;line-height:1.3;margin:0 0 30px;letter-spacing:.5px}
+.slide h1 small{display:block;font-size:20px;font-weight:400;color:var(--muted);margin-top:6px}
+.tag{position:absolute;top:22px;right:30px;font-size:15px;color:var(--muted)}
+.pn{position:absolute;bottom:22px;left:0;right:0;text-align:center;font-size:15px;color:var(--muted)}
+.foot{position:absolute;left:88px;right:88px;bottom:52px;font-size:15px;color:var(--muted);line-height:1.5}
+.src{font-size:14px;color:var(--muted)}
+.ph{background:var(--ph);border:1.5px dashed var(--ph-line);padding:2px 10px;border-radius:4px;color:#5a4a00;font-size:.85em}
+.ph.block{display:block;padding:18px;text-align:center;font-size:20px}
+.pill{display:inline-block;font-size:14px;padding:1px 10px;border-radius:999px;border:1.5px solid currentColor;line-height:1.5;vertical-align:middle}
+.pill.on{color:var(--obs);background:var(--obs-bg)}
+.pill.off{color:var(--gray-ink);background:var(--gray-bg)}
+.pill.run{color:var(--cross);background:var(--cross-bg)}
+.lbl{font-size:20px;color:var(--muted)}
+.num{font-size:96px;font-weight:600;line-height:1;letter-spacing:-1px}
+.nav{position:fixed;right:18px;bottom:14px;display:flex;gap:6px;z-index:9}
+.nav button{font:inherit;font-size:14px;padding:4px 12px;border:1px solid var(--line);background:#fff;border-radius:6px;cursor:pointer;color:var(--muted)}
+.hint{position:fixed;left:18px;bottom:18px;font-size:13px;color:var(--muted)}
+svg text{font-family:inherit}
+.row{display:flex;gap:40px}
+.col{flex:1;min-width:0}
+.card{border:1.5px solid var(--line);border-radius:10px;padding:22px 26px;background:#fff}
+.card.obs{border-color:var(--obs);background:var(--obs-bg)}
+.card.cross{border-color:var(--cross);background:var(--cross-bg)}
+.card.gray{border-color:var(--gray);background:var(--gray-bg)}
+table.cmp{border-collapse:collapse;width:100%;font-size:20px}
+table.cmp th,table.cmp td{border:1px solid var(--line);padding:12px 16px;vertical-align:top;text-align:left;line-height:1.45}
+table.cmp th{background:var(--gray-bg);font-weight:600}
+table.cmp td:first-child{color:var(--muted);width:170px;background:#fafafa}
+.cols4{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+.cols4 h3{font-size:22px;margin:0 0 10px;padding-bottom:8px;border-bottom:3px solid var(--line)}
+.cols4 ol,.cols4 ul{margin:0;padding-left:22px;font-size:18px;line-height:1.55}
+.cols4 li{margin-bottom:8px}
+.stat{font-size:15px;color:var(--muted);margin-top:4px}
+@media print{
+  @page{size:297mm 167mm;margin:0}
+  html,body{background:#fff}
+  #stage{position:static;display:block}
+  .slide{display:block!important;transform:none;zoom:.7015;box-shadow:none;page-break-after:always;break-after:page}
+  .slide:last-child{page-break-after:auto;break-after:auto}
+  .nav,.hint{display:none}
+}
+</style>
+</head>
+<body>
+<div id="stage">
+
+<!-- ============ 1 封面 ============ -->
+<section class="slide" style="padding-top:220px">
+  <div class="tag">初稿 v1 · 2026-09-22</div>
+  <div style="font-size:22px;color:var(--obs);font-weight:600;letter-spacing:2px;margin-bottom:18px">淘宝海外 · GEO 项目 · 阶段二汇报</div>
+  <h1 style="font-size:64px;margin-bottom:26px">让 AI 回答问题时，引用淘宝</h1>
+  <p style="font-size:28px;margin:0 0 60px;max-width:1200px;color:var(--gray-ink)">GEO 是让 AI 在回答用户问题时引用我们的内容。我做的事：给这条内容链路加一把外部尺子，接出两个环。</p>
+  <div style="font-size:20px;color:var(--muted)">Miguel · 产品侧 · 2026 年 7 月中至今 · 10.16 转正答辩初稿</div>
+  <div class="pn"></div>
+</section>
+
+<!-- ============ 2 一个香港人的一次购物 ============ -->
+<section class="slide">
+  <div class="tag">初稿 v1 · 2026-09-22</div>
+  <h1>一个香港人问了 AI 一句话，最后在淘宝下了单</h1>
+  <svg viewBox="0 0 1424 560" width="1424" height="560" style="display:block">
+    <defs>
+      <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8b919a"/></marker>
+    </defs>
+    <!-- 卡 1：他问 -->
+    <g transform="translate(0,0)">
+      <rect x="0" y="0" width="320" height="470" rx="14" fill="#fafbfc" stroke="#d9dde3" stroke-width="1.5"/>
+      <text x="160" y="40" text-anchor="middle" font-size="22" font-weight="600" fill="#1f2933">① 他在 AI 里问</text>
+      <rect x="30" y="180" width="260" height="110" rx="22" fill="#eef0f3"/>
+      <text x="160" y="228" text-anchor="middle" font-size="24" fill="#1f2933">在香港用淘寶</text>
+      <text x="160" y="262" text-anchor="middle" font-size="24" fill="#1f2933">怎麼付款？</text>
+      <rect x="40" y="400" width="240" height="34" rx="4" fill="#fff2a8" stroke="#c9a800" stroke-dasharray="4 3"/>
+      <text x="160" y="423" text-anchor="middle" font-size="15" fill="#5a4a00">措辞待换成评测集原题</text>
+    </g>
+    <path d="M330 235 L360 235" stroke="#8b919a" stroke-width="3" marker-end="url(#ar)"/>
+    <!-- 卡 2：AI 回答 -->
+    <g transform="translate(368,0)">
+      <rect x="0" y="0" width="360" height="470" rx="14" fill="#fafbfc" stroke="#d9dde3" stroke-width="1.5"/>
+      <text x="180" y="40" text-anchor="middle" font-size="22" font-weight="600" fill="#1f2933">② AI 回答，底下列了来源</text>
+      <rect x="30" y="70" width="300" height="12" rx="6" fill="#c8ccd2"/>
+      <rect x="30" y="94" width="270" height="12" rx="6" fill="#c8ccd2"/>
+      <rect x="30" y="118" width="290" height="12" rx="6" fill="#c8ccd2"/>
+      <rect x="30" y="142" width="200" height="12" rx="6" fill="#c8ccd2"/>
+      <text x="30" y="200" font-size="15" fill="#6b7280">來源</text>
+      <g font-size="17" fill="#4b5563">
+        <circle cx="42" cy="228" r="7" fill="#c8ccd2"/><text x="60" y="234">wise.com</text>
+        <circle cx="42" cy="266" r="7" fill="#c8ccd2"/><text x="60" y="272">hk01.com</text>
+        <rect x="18" y="288" width="324" height="44" rx="8" fill="#e4f1f4" stroke="#1f7a8c" stroke-width="2"/>
+        <circle cx="42" cy="310" r="7" fill="#1f7a8c"/><text x="60" y="316" fill="#155d6b" font-weight="600">taobao.com › shopping-guide</text>
+        <circle cx="42" cy="354" r="7" fill="#c8ccd2"/><text x="60" y="360">yohohongkong.com</text>
+      </g>
+      <text x="180" y="440" text-anchor="middle" font-size="14" fill="#6b7280">来源示意；竞对域名取自跟踪数据 🟡</text>
+    </g>
+    <path d="M738 235 L768 235" stroke="#8b919a" stroke-width="3" marker-end="url(#ar)"/>
+    <!-- 卡 3：点进文章 -->
+    <g transform="translate(776,0)">
+      <rect x="0" y="0" width="320" height="470" rx="14" fill="#fafbfc" stroke="#d9dde3" stroke-width="1.5"/>
+      <text x="160" y="40" text-anchor="middle" font-size="22" font-weight="600" fill="#1f2933">③ 他点进这篇文章</text>
+      <rect x="30" y="80" width="260" height="300" rx="8" fill="#fff" stroke="#c8ccd2" stroke-width="1.5"/>
+      <rect x="30" y="80" width="260" height="34" rx="8" fill="#eef0f3"/>
+      <text x="46" y="103" font-size="13" fill="#6b7280">world.taobao.com/lang/zh-tw/shopping-guide/…</text>
+      <rect x="50" y="135" width="180" height="16" rx="4" fill="#1f7a8c"/>
+      <rect x="50" y="170" width="220" height="9" rx="4" fill="#d9dde3"/>
+      <rect x="50" y="190" width="200" height="9" rx="4" fill="#d9dde3"/>
+      <rect x="50" y="210" width="220" height="9" rx="4" fill="#d9dde3"/>
+      <rect x="50" y="240" width="220" height="60" rx="4" fill="#eef0f3"/>
+      <rect x="50" y="320" width="180" height="9" rx="4" fill="#d9dde3"/>
+      <rect x="50" y="340" width="210" height="9" rx="4" fill="#d9dde3"/>
+      <text x="160" y="420" text-anchor="middle" font-size="16" fill="#4b5563">我们这条链路生产的文章</text>
+    </g>
+    <path d="M1106 235 L1136 235" stroke="#8b919a" stroke-width="3" marker-end="url(#ar)"/>
+    <!-- 卡 4：下单 -->
+    <g transform="translate(1144,0)">
+      <rect x="0" y="0" width="280" height="470" rx="14" fill="#fafbfc" stroke="#d9dde3" stroke-width="1.5"/>
+      <text x="140" y="40" text-anchor="middle" font-size="22" font-weight="600" fill="#1f2933">④ 他在淘宝下单</text>
+      <circle cx="140" cy="230" r="70" fill="#e4f1f4" stroke="#1f7a8c" stroke-width="3"/>
+      <path d="M105 232 L130 257 L178 205" stroke="#1f7a8c" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="140" y="350" text-anchor="middle" font-size="22" fill="#155d6b" font-weight="600">已下單</text>
+      <text x="140" y="420" text-anchor="middle" font-size="16" fill="#4b5563">流量变成 GMV</text>
+    </g>
+    <!-- 底部一句 -->
+    <text x="712" y="535" text-anchor="middle" font-size="22" fill="#1f2933">他没搜索、没看广告。AI 引了谁，他就点了谁。</text>
+  </svg>
+  <div class="pn"></div>
+</section>
+
+<!-- ============ 3 GEO 和 SEO ============ -->
+<section class="slide">
+  <div class="tag">初稿 v1 · 2026-09-22</div>
+  <h1>SEO 是让人在搜索结果里点到你，GEO 是让 AI 在回答里引用你</h1>
+  <div class="row" style="gap:60px">
+    <div class="col">
+      <svg viewBox="0 0 680 470" width="680" height="470" style="display:block">
+        <text x="0" y="24" font-size="24" font-weight="600" fill="#4b5563">SEO · 搜索结果页</text>
+        <rect x="0" y="44" width="680" height="410" rx="12" fill="#fafbfc" stroke="#d9dde3" stroke-width="1.5"/>
+        <rect x="24" y="64" width="632" height="34" rx="17" fill="#fff" stroke="#c8ccd2"/>
+        <g id="seo-rows"></g>
+        <text x="340" y="446" text-anchor="middle" font-size="16" fill="#6b7280">十条蓝链接，用户自己挑一条点</text>
+      </svg>
+    </div>
+    <div class="col">
+      <svg viewBox="0 0 680 470" width="680" height="470" style="display:block">
+        <text x="0" y="24" font-size="24" font-weight="600" fill="#155d6b">GEO · AI 回答</text>
+        <rect x="0" y="44" width="680" height="410" rx="12" fill="#fafbfc" stroke="#1f7a8c" stroke-width="1.5"/>
+        <rect x="24" y="72" width="540" height="12" rx="6" fill="#c8ccd2"/>
+        <rect x="24" y="98" width="600" height="12" rx="6" fill="#c8ccd2"/>
+        <rect x="24" y="124" width="500" height="12" rx="6" fill="#c8ccd2"/>
+        <rect x="24" y="150" width="580" height="12" rx="6" fill="#c8ccd2"/>
+        <rect x="24" y="176" width="360" height="12" rx="6" fill="#c8ccd2"/>
+        <text x="24" y="232" font-size="15" fill="#6b7280">來源</text>
+        <g font-size="18" fill="#4b5563">
+          <circle cx="36" cy="262" r="7" fill="#c8ccd2"/><text x="56" y="268">来源 1</text>
+          <rect x="18" y="286" width="420" height="44" rx="8" fill="#e4f1f4" stroke="#1f7a8c" stroke-width="2"/>
+          <circle cx="36" cy="308" r="7" fill="#1f7a8c"/><text x="56" y="314" fill="#155d6b" font-weight="600">world.taobao.com › shopping-guide</text>
+          <circle cx="36" cy="352" r="7" fill="#c8ccd2"/><text x="56" y="358">来源 3</text>
+          <circle cx="36" cy="392" r="7" fill="#c8ccd2"/><text x="56" y="398">来源 4</text>
+        </g>
+        <text x="340" y="446" text-anchor="middle" font-size="16" fill="#6b7280">一段话，底下三五个来源</text>
+      </svg>
+    </div>
+  </div>
+  <p style="font-size:26px;margin:36px 0 0;text-align:center">AI 回答只引三五个来源，不是十条蓝链接。进不了那三五个，就等于不存在。</p>
+  <div class="pn"></div>
+</section>
+
+<!-- ============ 4 为什么值得做 ============ -->
+<section class="slide">
+  <div class="tag">初稿 v1 · 2026-09-22</div>
+  <h1>免费、还早、别人已经在做</h1>
+  <div class="row" style="gap:48px;margin-top:40px">
+    <div class="col card" style="min-height:440px;padding:36px">
+      <svg viewBox="0 0 80 80" width="80" height="80"><circle cx="40" cy="40" r="34" fill="#e4f1f4" stroke="#1f7a8c" stroke-width="3"/><text x="40" y="52" text-anchor="middle" font-size="34" fill="#1f7a8c" font-weight="600">0</text></svg>
+      <h2 style="font-size:28px;margin:22px 0 12px">① 免费流量</h2>
+      <p style="margin:0;font-size:22px;color:var(--gray-ink)">不买广告。AI 引用你，点击就来。</p>
+    </div>
+    <div class="col card" style="min-height:440px;padding:36px">
+      <svg viewBox="0 0 80 80" width="80" height="80"><circle cx="40" cy="40" r="34" fill="#e4f1f4" stroke="#1f7a8c" stroke-width="3"/><path d="M40 20 V42 L54 50" stroke="#1f7a8c" stroke-width="4" fill="none" stroke-linecap="round"/></svg>
+      <h2 style="font-size:28px;margin:22px 0 12px">② 早期红利</h2>
+      <p style="margin:0;font-size:22px;color:var(--gray-ink)">格局没定。先占住的来源，AI 会反复引用。</p>
+    </div>
+    <div class="col card" style="min-height:440px;padding:36px">
+      <svg viewBox="0 0 80 80" width="80" height="80"><rect x="12" y="26" width="24" height="42" fill="#e4f1f4" stroke="#1f7a8c" stroke-width="3"/><rect x="44" y="12" width="24" height="56" fill="#e4f1f4" stroke="#1f7a8c" stroke-width="3"/></svg>
+      <h2 style="font-size:28px;margin:22px 0 12px">③ 谁在做</h2>
+      <p style="margin:0 0 18px;font-size:22px;color:var(--gray-ink)">国内外多家公司已投入。</p>
+      <span class="ph block">公司名占位 · 待确认后填</span>
+    </div>
+  </div>
+  <div class="foot">本页是判断，不含数据。</div>
+  <div class="pn"></div>
+</section>
+
+<!-- ============ 5 三阶段总览 ============ -->
+<section class="slide">
+  <div class="tag">初稿 v1 · 2026-09-22</div>
+  <h1>三个阶段：先有管子，再接成环，最后让环自己转</h1>
+  <svg viewBox="0 0 1424 520" width="1424" height="520" style="display:block;margin-top:30px">
+    <!-- 轴 -->
+    <line x1="40" y1="200" x2="1384" y2="200" stroke="#c8ccd2" stroke-width="3"/>
+    <g font-size="16" fill="#6b7280" text-anchor="middle">
+      <text x="40" y="240">3 月</text><text x="200" y="240">4 月</text><text x="360" y="240">5 月</text><text x="520" y="240">6 月</text>
+      <text x="680" y="240">7 月</text><text x="840" y="240">8 月</text><text x="1000" y="240">9 月</text><text x="1160" y="240">10 月</text><text x="1320" y="240">之后</text>
+    </g>
+    <g stroke="#c8ccd2" stroke-width="2">
+      <line x1="40" y1="192" x2="40" y2="208"/><line x1="200" y1="192" x2="200" y2="208"/><line x1="360" y1="192" x2="360" y2="208"/><line x1="520" y1="192" x2="520" y2="208"/>
+      <line x1="680" y1="192" x2="680" y2="208"/><line x1="840" y1="192" x2="840" y2="208"/><line x1="1000" y1="192" x2="1000" y2="208"/><line x1="1160" y1="192" x2="1160" y2="208"/>
+    </g>
+    <!-- 阶段一 3–7 月 -->
+    <rect x="40" y="150" width="720" height="50" rx="6" fill="#8b919a"/>
+    <text x="400" y="182" text-anchor="middle" font-size="20" fill="#fff" font-weight="600">阶段一 · 单向链路（3–7 月）</text>
+    <!-- 阶段二 7 月中–10 月中 -->
+    <rect x="760" y="150" width="480" height="50" rx="6" fill="#1f7a8c"/>
+    <text x="1000" y="182" text-anchor="middle" font-size="20" fill="#fff" font-weight="600">阶段二 · 建体系（7 月中–10 月中）</text>
+    <!-- 阶段三 -->
+    <rect x="1240" y="150" width="144" height="50" rx="6" fill="#e4f1f4" stroke="#1f7a8c" stroke-width="2" stroke-dasharray="6 4"/>
+    <text x="1312" y="182" text-anchor="middle" font-size="20" fill="#155d6b" font-weight="600">阶段三</text>
+    <!-- 入职标记 -->
+    <line x1="760" y1="100" x2="760" y2="150" stroke="#1f7a8c" stroke-width="2"/>
+    <text x="760" y="88" text-anchor="middle" font-size="17" fill="#155d6b">7 月中 我入职</text>
+    <line x1="1160" y1="100" x2="1160" y2="150" stroke="#c8ccd2" stroke-width="2"/>
+    <text x="1160" y="88" text-anchor="middle" font-size="17" fill="#6b7280">10.16 答辩</text>
+    <!-- 三段说明 -->
+    <g font-size="21" fill="#1f2933">
+      <text x="40" y="320" font-weight="600" fill="#4b5563">阶段一 · 单向链路</text>
+      <text x="40" y="356">种子到发布全自动，写完发出去就结束。</text>
+      <text x="40" y="390">没有外部反馈，评分自己打自己看。</text>
+      <text x="560" y="320" font-weight="600" fill="#155d6b">阶段二 · 建体系（我在的阶段）</text>
+      <text x="560" y="356">加一把外部尺子：AI 到底用没用。</text>
+      <text x="560" y="390">把管子接成快慢两个环。</text>
+      <text x="1080" y="320" font-weight="600" fill="#155d6b">阶段三 · 自动化</text>
+      <text x="1080" y="356">环自己转，报告自动出。</text>
+    </g>
+  </svg>
+  <div class="pn"></div>
+</section>
+
+<!-- ============ 6 阶段一 ============ -->
+<section class="slide">
+  <div class="tag">初稿 v1 · 2026-09-22</div>
+  <h1>阶段一：一根单向管子，写完发出去就结束</h1>
+  <svg viewBox="0 0 1424 420" width="1424" height="420" style="display:block">
+    <defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6b7280"/></marker></defs>
+    <rect x="10" y="10" width="1404" height="380" rx="16" fill="#eef0f3" stroke="#8b919a" stroke-width="3"/>
+    <text x="40" y="52" font-size="20" fill="#4b5563" font-weight="600">阶段一 · 生产链路（3–7 月形成，技术一人在跑）</text>
+    <g font-size="20" fill="#1f2933" text-anchor="middle">
+      <rect x="50" y="130" width="170" height="100" rx="10" fill="#fff" stroke="#8b919a" stroke-width="2"/><text x="135" y="188">种子集</text>
+      <path d="M222 180 L262 180" stroke="#6b7280" stroke-width="3" marker-end="url(#ar2)"/>
+      <rect x="266" y="130" width="200" height="100" rx="10" fill="#fff" stroke="#8b919a" stroke-width="2"/><text x="366" y="176">关键词筛选</text><text x="366" y="206" font-size="15" fill="#6b7280">代码</text>
+      <path d="M468 180 L508 180" stroke="#6b7280" stroke-width="3" marker-end="url(#ar2)"/>
+      <rect x="512" y="130" width="230" height="100" rx="10" fill="#fff" stroke="#8b919a" stroke-width="2"/><text x="627" y="176">工作流 1</text><text x="627" y="206" font-size="15" fill="#6b7280">关键词 → 文章主题</text>
+      <path d="M744 180 L784 180" stroke="#6b7280" stroke-width="3" marker-end="url(#ar2)"/>
+      <rect x="788" y="100" width="340" height="160" rx="10" fill="#fff" stroke="#8b919a" stroke-width="2"/><text x="958" y="140">工作流 2</text><text x="958" y="166" font-size="15" fill="#6b7280">主题 → 正文</text>
+      <rect x="812" y="186" width="292" height="52" rx="8" fill="#eef0f3" stroke="#8b919a" stroke-width="1.5" stroke-dasharray="5 3"/>
+      <text x="958" y="219" font-size="16" fill="#4b5563">9 维评分在里面 · 低分维度自动修订</text>
+      <path d="M1130 180 L1170 180" stroke="#6b7280" stroke-width="3" marker-end="url(#ar2)"/>
+      <rect x="1174" y="130" width="200" height="100" rx="10" fill="#fff" stroke="#8b919a" stroke-width="2"/><text x="1274" y="176">发布</text><text x="1274" y="206" font-size="15" fill="#6b7280">/shopping-guide/</text>
+    </g>
+    <text x="1274" y="300" text-anchor="middle" font-size="18" fill="#6b7280">→ 然后呢？没有然后。</text>
+    <text x="40" y="360" font-size="16" fill="#6b7280">几乎无人工环节。8 月起种子改用 Semrush 缺口 prompt（我提出并推动）。</text>
+  </svg>
+  <div style="margin-top:34px;font-size:23px;line-height:1.7">
+    <div>多轮迭代才跑通，几乎无人工，产出约 700 万篇。<span class="src">团队口述，待核 🟡</span></div>
+    <div>问题：写完就结束，没人知道 AI 用没用；所有评分都是自己打自己看。</div>
+  </div>
+  <div class="pn"></div>
+</section>
+
+<!-- ============ 7 阶段二 ============ -->
+<section class="slide">
+  <div class="tag">初稿 v1 · 2026-09-22</div>
+  <h1>加一把外部尺子，接出两个环</h1>
+  <svg viewBox="0 0 1424 640" width="1424" height="640" style="display:block">
+    <defs>
+      <marker id="arO" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1f7a8c"/></marker>
+      <marker id="arC" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#c2600a"/></marker>
+      <marker id="arG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6b7280"/></marker>
+    </defs>
+
+    <!-- 快环（实线，观测色） -->
+    <g stroke="#1f7a8c" stroke-width="4" fill="none">
+      <path d="M640 110 L876 110" marker-end="url(#arO)"/>
+      <path d="M1140 210 L1140 366" marker-end="url(#arO)"/>
+      <path d="M1140 570 L1140 612 L60 612 L60 110 L116 110" marker-end="url(#arO)"/>
+    </g>
+    <text x="758" y="98" text-anchor="middle" font-size="17" fill="#155d6b">哪些题我们不出现</text>
+    <text x="1156" y="296" font-size="17" fill="#155d6b">定种子集 / 品类</text>
+    <text x="600" y="602" text-anchor="middle" font-size="17" fill="#155d6b">发布后，每篇被引没被引，回到观测</text>
+
+    <!-- 慢环（虚线，交叉色） -->
+    <g stroke="#c2600a" stroke-width="3.5" fill="none" stroke-dasharray="10 8">
+      <path d="M380 210 L380 366" marker-end="url(#arC)"/>
+      <path d="M876 520 L644 520" marker-end="url(#arC)"/>
+      <path d="M640 430 L872 430" marker-end="url(#arC)"/>
+    </g>
+    <text x="396" y="296" font-size="17" fill="#9a4a05">引用记录</text>
+    <text x="758" y="548" text-anchor="middle" font-size="17" fill="#9a4a05">9 维分</text>
+    <text x="758" y="418" text-anchor="middle" font-size="17" fill="#9a4a05">校准 9 维 · 改工作流</text>
+
+    <!-- 观测体系 -->
+    <rect x="120" y="10" width="520" height="200" rx="14" fill="#e4f1f4" stroke="#1f7a8c" stroke-width="3"/>
+    <text x="150" y="56" font-size="24" font-weight="600" fill="#155d6b">观测体系 · 唯一的外部尺子</text>
+    <text x="150" y="102" font-size="19" fill="#1f2933">黄金评测集 × 三引擎，每日跑</text>
+    <text x="150" y="136" font-size="19" fill="#1f2933">产出：引用记录（AI 用没用我们）</text>
+    <text x="150" y="182" font-size="16" fill="#155d6b">阶段二新加的</text>
+
+    <!-- 方向分析 -->
+    <rect x="880" y="10" width="520" height="200" rx="14" fill="#fff" stroke="#1f7a8c" stroke-width="3"/>
+    <text x="910" y="56" font-size="24" font-weight="600" fill="#155d6b">方向分析 · 每周</text>
+    <text x="910" y="102" font-size="19" fill="#1f2933">意图格子 → 哪格空着</text>
+    <text x="910" y="136" font-size="19" fill="#1f2933">→ 定种子集 / 品类</text>
+    <text x="910" y="182" font-size="16" fill="#6b7280">回答：该写什么</text>
+
+    <!-- 交叉分析 -->
+    <rect x="120" y="370" width="520" height="200" rx="14" fill="#fbeee0" stroke="#c2600a" stroke-width="3"/>
+    <text x="150" y="416" font-size="24" font-weight="600" fill="#9a4a05">交叉分析 · 每批一次</text>
+    <text x="150" y="462" font-size="19" fill="#1f2933">引用记录 × 9 维分</text>
+    <text x="150" y="496" font-size="19" fill="#1f2933">→ 哪些维度真的和被引有关</text>
+    <text x="150" y="542" font-size="16" fill="#9a4a05">回答：尺子准不准</text>
+
+    <!-- 内容生产（阶段一缩小版） -->
+    <rect x="880" y="370" width="520" height="200" rx="14" fill="#eef0f3" stroke="#8b919a" stroke-width="3"/>
+    <text x="910" y="410" font-size="24" font-weight="600" fill="#4b5563">内容生产</text>
+    <text x="1060" y="410" font-size="15" fill="#6b7280">= 阶段一那根管子，缩小放这里</text>
+    <g font-size="13" fill="#1f2933" text-anchor="middle">
+      <rect x="906" y="440" width="70" height="46" rx="6" fill="#fff" stroke="#8b919a" stroke-width="1.5"/><text x="941" y="468">种子集</text>
+      <path d="M978 463 L992 463" stroke="#6b7280" stroke-width="2" marker-end="url(#arG)"/>
+      <rect x="996" y="440" width="80" height="46" rx="6" fill="#fff" stroke="#8b919a" stroke-width="1.5"/><text x="1036" y="468">关键词筛选</text>
+      <path d="M1078 463 L1092 463" stroke="#6b7280" stroke-width="2" marker-end="url(#arG)"/>
+      <rect x="1096" y="440" width="70" height="46" rx="6" fill="#fff" stroke="#8b919a" stroke-width="1.5"/><text x="1131" y="468">工作流 1</text>
+      <path d="M1168 463 L1182 463" stroke="#6b7280" stroke-width="2" marker-end="url(#arG)"/>
+      <rect x="1186" y="432" width="120" height="62" rx="6" fill="#fff" stroke="#8b919a" stroke-width="1.5"/><text x="1246" y="453">工作流 2</text>
+      <rect x="1194" y="462" width="104" height="24" rx="4" fill="#eef0f3" stroke="#8b919a" stroke-width="1" stroke-dasharray="3 2"/><text x="1246" y="479" font-size="12" fill="#4b5563">9 维门槛</text>
+      <path d="M1308 463 L1322 463" stroke="#6b7280" stroke-width="2" marker-end="url(#arG)"/>
+      <rect x="1326" y="440" width="56" height="46" rx="6" fill="#fff" stroke="#8b919a" stroke-width="1.5"/><text x="1354" y="468">发布</text>
+    </g>
+    <text x="910" y="530" font-size="16" fill="#4b5563">9 维在里面，是发布前的门槛，不是事后验收</text>
+    <text x="910" y="556" font-size="16" fill="#6b7280">新工作流 R9 / TF1 在这里换</text>
+
+  </svg>
+  <div class="foot" style="display:flex;justify-content:space-between;align-items:center;font-size:17px;color:var(--ink)">
+    <span>快环每周告诉我们该写什么；慢环每批告诉我们尺子准不准、工作流该怎么改。</span>
+    <span style="white-space:nowrap"><span style="display:inline-block;width:56px;border-top:4px solid var(--obs);vertical-align:middle;margin-right:10px"></span>快环 · 每周转一次<span style="display:inline-block;width:56px;border-top:3.5px dashed var(--cross);vertical-align:middle;margin:0 10px 0 36px"></span>慢环 · 每批文章转一次</span>
+  </div>
+  <div class="pn"></div>
+</section>
+
+<!-- ============ 8 观测体系怎么做 ============ -->
+<section class="slide">
+  <div class="tag">初稿 v1 · 2026-09-22</div>
+  <h1>观测体系：我们自己出题，每天问 AI，看它引没引我们</h1>
+  <div class="row" style="gap:56px">
+    <div class="col" style="flex:1.15">
+      <div class="lbl" style="margin-bottom:14px">像一个定点摄像头。每道题、每个引擎、每天一条记录：</div>
+      <svg viewBox="0 0 760 300" width="760" height="300" style="display:block">
+        <rect x="0" y="0" width="760" height="300" rx="12" fill="#e4f1f4" stroke="#1f7a8c" stroke-width="2"/>
+        <g font-size="15" fill="#155d6b">
+          <text x="28" y="40">题目</text><text x="262" y="40">引擎</text><text x="372" y="40">引到的页面</text><text x="612" y="40">30 天引到</text><text x="688" y="40">平均位次</text>
+        </g>
+        <line x1="20" y1="52" x2="740" y2="52" stroke="#1f7a8c" stroke-width="1"/>
+        <g font-size="17" fill="#1f2933">
+          <text x="28" y="90">在香港用淘寶怎麼付款？</text><text x="262" y="90">ChatGPT</text><text x="372" y="90">taobao.com/…/shopping-guide</text><text x="612" y="90">N 天</text><text x="688" y="90">第 N 位</text>
+          <text x="28" y="130">在香港用淘寶怎麼付款？</text><text x="262" y="130">Gemini</text><text x="372" y="130">wise.com/…</text><text x="612" y="130">—</text><text x="688" y="130">—</text>
+          <text x="28" y="170">淘寶集運到香港要幾天？</text><text x="262" y="170">AI Mode</text><text x="372" y="170">taobao.com/…/shopping-guide</text><text x="612" y="170">N 天</text><text x="688" y="170">第 N 位</text>
+          <text x="28" y="210" fill="#6b7280">……</text>
+        </g>
+        <text x="28" y="270" font-size="14" fill="#6b7280">示意行。题目措辞与数值待换成评测集实际导出 🟡</text>
+      </svg>
+      <div class="lbl" style="margin-top:22px;font-size:19px">读数按周不按天：AI 回答随机，单日噪音大。跨引擎不比。</div>
+    </div>
+    <div class="col">
+      <div class="card obs" style="margin-bottom:16px">
+        <div style="font-size:24px;font-weight:600">黄金评测集 v0.5 <span class="pill on">已上线</span></div>
+        <div style="font-size:18px;color:var(--gray-ink);margin-top:6px">固定考题：港区用户会问的购物问题。v1.0 按意图网格出题，在做。</div>
+      </div>
+      <div class="card gray" style="margin-bottom:16px">
+        <div style="font-size:24px;font-weight:600">意图格子 <span class="pill off">待建</span></div>
+        <div style="font-size:18px;color:var(--gray-ink);margin-top:6px">用户意图 × 问题类型。看哪格没人问、哪格我们缺席。等品类定了先建。</div>
+      </div>
+      <div class="card obs">
+        <div style="font-size:24px;font-weight:600">每日追踪 · 每周分析 <span class="pill on">在跑</span></div>
+        <div style="font-size:18px;color:var(--gray-ink);margin-top:6px">每天自动跑，不用人动。每周分析的固定动作还没形成。</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">已上线的具体数：81 题 × 3 引擎（Google AI Mode / ChatGPT / Gemini），9.18 起每日跑，9.25 看第一个周读数。<span class="src">来源：Semrush 项目 HK 9.18 配置 🟢</span></div>
+  <div class="pn"></div>
+</section>
+
+<!-- ============ 9 观测看到了什么 ============ -->
+<section class="slide">
+  <div class="tag">初稿 v1 · 2026-09-22</div>
+  <h1>AI 在用我们的文章，但用得又广又浅</h1>
+  <div class="row" style="gap:48px;align-items:stretch">
+    <div class="col card" style="padding:34px 38px">
+      <div class="num" style="color:var(--obs)">61.7%</div>
+      <div style="font-size:24px;margin-top:14px">被引的淘宝页面里，是我们生产的文章</div>
+      <div class="src" style="margin-top:14px">来源：Semrush 全量导出 2026-09-20，自算。57,550 个唯一淘宝页面中 35,516 篇 shopping-guide 文章 🟢</div>
+    </div>
+    <div class="col card" style="padding:34px 38px">
+      <div class="num" style="color:var(--gray-ink)">62.5%</div>
+      <div style="font-size:24px;margin-top:14px">的文章只有一条引用记录</div>
+      <div class="src" style="margin-top:14px">来源：同上，35,516 篇，中位数 1，平均 3.18 🟢。口径为被引记录数</div>
+    </div>
+    <div class="col card" style="padding:28px 32px;flex:1.3">
+      <div style="font-size:20px;color:var(--gray-ink);margin-bottom:12px">前 10% 的文章，占了 56.7% 的引用记录</div>
+      <svg viewBox="0 0 520 250" style="display:block;width:100%;height:auto">
+        <text x="0" y="40" font-size="16" fill="#6b7280">文章</text>
+        <rect x="70" y="22" width="44" height="30" fill="#1f7a8c"/>
+        <rect x="114" y="22" width="396" height="30" fill="#d9dde3"/>
+        <text x="92" y="16" text-anchor="middle" font-size="14" fill="#155d6b">10%</text>
+        <text x="312" y="16" text-anchor="middle" font-size="14" fill="#6b7280">90%</text>
+        <polygon points="70,52 114,52 319,150 70,150" fill="#1f7a8c" opacity=".15"/>
+        <text x="0" y="170" font-size="16" fill="#6b7280">引用记录</text>
+        <rect x="70" y="150" width="249" height="30" fill="#1f7a8c"/>
+        <rect x="319" y="150" width="191" height="30" fill="#d9dde3"/>
+        <text x="194" y="202" text-anchor="middle" font-size="14" fill="#155d6b">56.7%</text>
+        <text x="414" y="202" text-anchor="middle" font-size="14" fill="#6b7280">43.3%</text>
+        <text x="0" y="240" font-size="13" fill="#6b7280">来源：同上，🟢</text>
+      </svg>
+    </div>
+  </div>
+  <p style="font-size:28px;text-align:center;margin:40px 0 0">铺得开，还没被信任。</p>
+  <div class="foot">跟踪版（263 题单引擎，8.20–9.18）独立得出同一结论：88% 的文章只被一条题引过 🟢。</div>
+  <div class="pn"></div>
+</section>
+
+<!-- ============ 10 交叉分析 ============ -->
+<section class="slide">
+  <div class="tag">初稿 v1 · 2026-09-22</div>
+  <h1>交叉分析：9 维打高分的文章，AI 真的更爱引吗？</h1>
+  <div class="row" style="gap:56px">
+    <div class="col card gray" style="flex:0.9;padding:30px 34px">
+      <div class="lbl" style="color:var(--gray-ink);font-weight:600;margin-bottom:12px">问题</div>
+      <p style="font-size:24px;margin:0">9 维评分是我们自己的尺子，跑在每篇文章发布前。它和 AI 引不引有没有关系，从来没验证过。</p>
+    </div>
+    <div class="col card cross" style="flex:1.3;padding:26px 30px">
+      <div class="lbl" style="color:var(--cross-ink);font-weight:600;margin-bottom:8px">方法</div>
+      <svg viewBox="0 0 760 300" width="760" height="300" style="display:block">
+        <!-- 两堆 -->
+        <g font-size="17" text-anchor="middle">
+          <rect x="0" y="20" width="150" height="110" rx="10" fill="#e4f1f4" stroke="#1f7a8c" stroke-width="2"/>
+          <text x="75" y="66" fill="#155d6b" font-weight="600">被引过</text><text x="75" y="96" fill="#155d6b" font-size="15">一堆文章</text>
+          <rect x="0" y="160" width="150" height="110" rx="10" fill="#eef0f3" stroke="#8b919a" stroke-width="2"/>
+          <text x="75" y="206" fill="#4b5563" font-weight="600">没被引过</text><text x="75" y="236" fill="#4b5563" font-size="15">同批随机抽</text>
+        </g>
+        <text x="200" y="150" font-size="22" fill="#9a4a05">逐维度比平均分 →</text>
+        <!-- 9 维成对小柱（无数值，占位） -->
+        <g transform="translate(420,20)">
+          <line x1="0" y1="200" x2="330" y2="200" stroke="#c8ccd2"/>
+          <g id="dims"></g>
+          <text x="165" y="250" text-anchor="middle" font-size="14" fill="#6b7280">经验 创作者 专家 丰富 准确 偏见 流畅 相关 逻辑</text>
+          <text x="165" y="275" text-anchor="middle" font-size="13" fill="#9a4a05">柱高为示意，结果未出</text>
+        </g>
+      </svg>
+      <div style="font-size:18px;margin-top:6px;display:flex;gap:28px;color:var(--cross-ink)"><span>有差异 = 有效</span><span>无差异 = 无效</span><span>方向反 = 有害</span></div>
+    </div>
+  </div>
+  <div style="margin-top:30px;display:flex;gap:40px;align-items:center">
+    <div style="flex:1;font-size:22px">状态：1,410 篇被引 + 500 篇未引的评分表 9.21 到手，分析进行中。<br><span class="src">来源：跟踪版被引清单（AI Overview-HK，263 题，8.20–9.18）+ 技术给的 9 维评分表 🟢；未引组是否同期同批次待核</span></div>
+    <div style="flex:1"><span class="ph block">结果占位：逐维度对比表（被引 vs 未引，带误差，标灯）</span></div>
+  </div>
+  <div class="pn"></div>
+</section>
+
+<!-- ============ 11 内容生产 ============ -->
+<section class="slide">
+  <div class="tag">初稿 v1 · 2026-09-22</div>
+  <h1>两版新工作流：商品主导，还是问题主导？</h1>
+  <table class="cmp">
+    <tr><th></th><th style="color:var(--gray-ink)">原版</th><th>R9 · 商品主导</th><th>TF1 · 问题主导、商品辅助</th></tr>
+    <tr><td>第一步做什么</td><td>定风格、禁忌、读者关注点</td><td>先筛商品：哪些用、哪些不用</td><td>先不看商品，先列读者会问哪几个问题</td></tr>
+    <tr><td>商品的角色</td><td>无</td><td>主导：围着入选商品写，至少一张比较表</td><td>辅助：哪个问题需要证据才拿商品答，可以不用</td></tr>
+    <tr><td>9 维在不在里面</td><td>在：初稿后评分，低分维度自动修订</td><td>移除，改为证据 / 阅读价值检查</td><td>同 R9</td></tr>
+    <tr><td>状态</td><td><span class="pill off">线上</span> 配置是否仍相同待核</td><td><span class="pill on">已发布 v1（9.18）</span> 未切成默认</td><td><span class="pill off">草稿</span> 试跑过 3 题</td></tr>
+  </table>
+  <div style="margin-top:30px;font-size:23px">下一批 10 万篇：同一品类、同一批种子，两版各跑一批，比谁被 AI 引得多。<span class="ph">品类待定</span></div>
+  <div class="foot">来源：三版工作流差异报告（2026-09-21 逐字段核对）🟡。两版差异是整套打包改动，只比策略优劣，不做单行归因。原版内嵌 9 维修订，9 维分天然占优，所以主指标看被引，不看 9 维。</div>
+  <div class="pn"></div>
+</section>
+
+<!-- ============ 12 清单 ============ -->
+<section class="slide">
+  <div class="tag">初稿 v1 · 2026-09-22</div>
+  <h1>已上线的只有两项，其余是分析、材料和进行中的事</h1>
+  <div class="cols4">
+    <div>
+      <h3 style="border-color:var(--obs);color:var(--obs-ink)">已上线 <span class="pill on">2</span></h3>
+      <ul>
+        <li>8 月种子切换为 Semrush 缺口 prompt（我提出并推动）</li>
+        <li>9.18 港区三引擎跟踪项目（黄金评测集 v0.5）</li>
+      </ul>
+    </div>
+    <div>
+      <h3>已产出 <span class="pill off">分析 / 材料，非线上</span></h3>
+      <ul>
+        <li>1,410 篇被引清单；全量 35,516 篇分析 + 四地区分片</li>
+        <li>评测集 v0.5 + tag 体系</li>
+        <li>结论标签规则（口头）</li>
+        <li>三版工作流差异报告</li>
+        <li>品类候选分析 + 可视化材料</li>
+        <li>两份数据源对比可视化</li>
+        <li>商品数据接入试验（3 轮约 80 篇）</li>
+        <li>工作流 B / R9 / TF1 设计</li>
+      </ul>
+    </div>
+    <div>
+      <h3 style="border-color:var(--cross);color:var(--cross-ink)">进行中</h3>
+      <ul>
+        <li>交叉分析（校准 v0）：评分表已到，开始做</li>
+        <li>品类决策：材料待发产品 / 运营，周三前回复</li>
+        <li>答辩材料重做</li>
+      </ul>
+    </div>
+    <div>
+      <h3>排期中（按顺序）</h3>
+      <ol>
+        <li>核评分表 → 跑交叉分析 → 出对比表</li>
+        <li>发品类材料 → 定品类</li>
+        <li>向技术确认试跑三件事</li>
+        <li>搭试跑观测 / 验收体系</li>
+        <li>意图网格 → 试卷 v1.0</li>
+        <li>10 万篇第一批试跑 → 三四周后看被引</li>
+        <li>校准 v1 → 9 维 v2</li>
+      </ol>
+    </div>
+  </div>
+  <div class="foot">来源：项目上下文第 6 节，2026-09-22。</div>
+  <div class="pn"></div>
+</section>
+
+<!-- ============ 13 阶段三 ============ -->
+<section class="slide">
+  <div class="tag">初稿 v1 · 2026-09-22</div>
+  <h1>阶段三：让环自己转</h1>
+  <div class="row" style="gap:48px;margin-top:40px">
+    <div class="col card" style="min-height:400px;padding:36px;border-style:dashed">
+      <svg viewBox="0 0 80 80" width="80" height="80"><path d="M40 12 A28 28 0 1 1 14 30" stroke="#1f7a8c" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M8 18 L14 32 L28 26" stroke="#1f7a8c" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <h2 style="font-size:26px;margin:22px 0 12px">数据闭环沉淀策略</h2>
+      <p style="margin:0;font-size:21px;color:var(--gray-ink)">每轮校准的结论存下来，变成下一轮选题和写法的规则。</p>
+    </div>
+    <div class="col card" style="min-height:400px;padding:36px;border-style:dashed">
+      <svg viewBox="0 0 80 80" width="80" height="80"><rect x="10" y="20" width="26" height="40" rx="4" fill="#e4f1f4" stroke="#1f7a8c" stroke-width="3"/><rect x="44" y="20" width="26" height="40" rx="4" fill="#fff" stroke="#1f7a8c" stroke-width="3"/><text x="23" y="46" text-anchor="middle" font-size="16" fill="#155d6b">A</text><text x="57" y="46" text-anchor="middle" font-size="16" fill="#155d6b">B</text></svg>
+      <h2 style="font-size:26px;margin:22px 0 12px">工作流优化实验自动化</h2>
+      <p style="margin:0;font-size:21px;color:var(--gray-ink)">新版本自动分流、自动看被引，不靠人盯。</p>
+    </div>
+    <div class="col card" style="min-height:400px;padding:36px;border-style:dashed">
+      <svg viewBox="0 0 80 80" width="80" height="80"><rect x="14" y="10" width="52" height="60" rx="4" fill="#e4f1f4" stroke="#1f7a8c" stroke-width="3"/><line x1="24" y1="28" x2="56" y2="28" stroke="#1f7a8c" stroke-width="3"/><line x1="24" y1="40" x2="56" y2="40" stroke="#1f7a8c" stroke-width="3"/><line x1="24" y1="52" x2="44" y2="52" stroke="#1f7a8c" stroke-width="3"/></svg>
+      <h2 style="font-size:26px;margin:22px 0 12px">观测与诊断自动出报告</h2>
+      <p style="margin:0;font-size:21px;color:var(--gray-ink)">每日追踪、每周分析自动生成，人只看结论。</p>
+    </div>
+  </div>
+  <div class="foot">未来方向，不在本期范围。</div>
+  <div class="pn"></div>
+</section>
+
+<!-- ============ 14 收尾 ============ -->
+<section class="slide">
+  <div class="tag">初稿 v1 · 2026-09-22</div>
+  <h1>做了一把尺子，看到了第一组读数，四周后看环转不转</h1>
+  <div style="margin-top:70px;display:grid;grid-template-columns:240px 1fr;row-gap:70px;column-gap:30px;font-size:27px;line-height:1.6">
+    <div style="color:var(--obs-ink);font-weight:600">我做了什么</div>
+    <div>给单向链路加了外部观测，接出快慢两个环；交叉分析在跑，两版新工作流待试跑。</div>
+    <div style="color:var(--obs-ink);font-weight:600">现在能看到什么</div>
+    <div>AI 引淘宝时 61.7% 引的是我们的文章，但 62.5% 只被引过一次；三引擎每日跟踪 9.25 出第一个周读数。<div class="src">来源：Semrush 全量导出 2026-09-20 自算 🟢；HK 9.18 跟踪项目</div></div>
+    <div style="color:var(--obs-ink);font-weight:600">接下来四周</div>
+    <div>定品类 → 10 万篇 R9 vs TF1 试跑 → 校准 v0 出对比表 → 用新引用记录做校准 v1。</div>
+  </div>
+  <div class="foot" style="font-size:17px">迭代速度偏慢是我的短板，后面两周的排期是 <span class="ph">占位：两周排期，待填</span></div>
+  <div class="pn"></div>
+</section>
+
+</div>
+
+<div class="nav"><button id="prev">← 上一页</button><button id="next">下一页 →</button></div>
+<div class="hint">← → 翻页 · Ctrl+P 打印</div>
+
+<script>
+(function(){
+  var slides=Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var n=slides.length, i=0;
+  function fit(){
+    var s=Math.min(window.innerWidth/1600, window.innerHeight/900)*0.96;
+    document.documentElement.style.setProperty('--s', s);
+  }
+  function go(k){
+    i=Math.max(0,Math.min(n-1,k));
+    slides.forEach(function(s,j){ s.classList.toggle('active', j===i); });
+    if(history.replaceState) history.replaceState(null,'','#'+(i+1));
+  }
+  slides.forEach(function(s,j){ var p=s.querySelector('.pn'); if(p) p.textContent=(j+1)+' / '+n; });
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key==='PageDown'||e.key===' '){ e.preventDefault(); go(i+1); }
+    else if(e.key==='ArrowLeft'||e.key==='ArrowUp'||e.key==='PageUp'){ e.preventDefault(); go(i-1); }
+    else if(e.key==='Home'){ go(0); } else if(e.key==='End'){ go(n-1); }
+  });
+  document.getElementById('prev').onclick=function(){go(i-1)};
+  document.getElementById('next').onclick=function(){go(i+1)};
+  window.addEventListener('resize',fit);
+  fit();
+  var h=parseInt(location.hash.slice(1),10);
+  go(isNaN(h)?0:h-1);
+
+  // 第 3 页：SEO 十条蓝链接
+  var seo=document.getElementById('seo-rows');
+  if(seo){
+    var ns='http://www.w3.org/2000/svg';
+    for(var r=0;r<10;r++){
+      var y=116+r*30, hi=(r===3);
+      if(hi){ var bg=document.createElementNS(ns,'rect'); bg.setAttribute('x',16); bg.setAttribute('y',y-8); bg.setAttribute('width',648); bg.setAttribute('height',26); bg.setAttribute('rx',6); bg.setAttribute('fill','#e4f1f4'); seo.appendChild(bg); }
+      var t=document.createElementNS(ns,'rect'); t.setAttribute('x',24); t.setAttribute('y',y); t.setAttribute('width',hi?300:200+((r*53)%140)); t.setAttribute('height',10); t.setAttribute('rx',5); t.setAttribute('fill',hi?'#1f7a8c':'#5b7fbf'); seo.appendChild(t);
+      var d=document.createElementNS(ns,'rect'); d.setAttribute('x',340); d.setAttribute('y',y+1); d.setAttribute('width',180+((r*37)%120)); d.setAttribute('height',8); d.setAttribute('rx',4); d.setAttribute('fill','#d9dde3'); seo.appendChild(d);
+    }
+  }
+  // 第 10 页：9 维示意柱（无数值）
+  var dims=document.getElementById('dims');
+  if(dims){
+    var ns2='http://www.w3.org/2000/svg';
+    for(var k=0;k<9;k++){
+      var x=k*36;
+      var a=document.createElementNS(ns2,'rect'); a.setAttribute('x',x+4); a.setAttribute('y',90); a.setAttribute('width',12); a.setAttribute('height',110); a.setAttribute('fill','#1f7a8c'); a.setAttribute('opacity','.35'); dims.appendChild(a);
+      var b=document.createElementNS(ns2,'rect'); b.setAttribute('x',x+18); b.setAttribute('y',90); b.setAttribute('width',12); b.setAttribute('height',110); b.setAttribute('fill','#8b919a'); b.setAttribute('opacity','.35'); dims.appendChild(b);
+      var q=document.createElementNS(ns2,'text'); q.setAttribute('x',x+17); q.setAttribute('y',80); q.setAttribute('text-anchor','middle'); q.setAttribute('font-size','14'); q.setAttribute('fill','#9a4a05'); q.textContent='?'; dims.appendChild(q);
+    }
+  }
+})();
+</script>
+</body>
+</html>
