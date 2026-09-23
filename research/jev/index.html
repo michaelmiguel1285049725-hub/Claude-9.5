@@ -1,0 +1,713 @@
+<title>Jev 快思考模型</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#F3F5F7; --surface:#FFFFFF; --ink:#16202C; --muted:#5A6675; --line:#D8DEE5;
+  --fast:#A8680F; --fast-soft:#FBEFD8; --slow:#3F4FC4; --slow-soft:#E4E7FB;
+  --ok:#2F7D52; --ok-soft:#DDF1E5; --human:#80653F; --human-soft:#F1EADF; --bad:#B23A3A; --bad-soft:#F7E1E1;
+  --code-bg:#EEF1F5;
+  --serif:"Noto Serif SC","Songti SC","STSong",serif;
+  --sans:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0E131A; --surface:#161E28; --ink:#E5EAF0; --muted:#98A4B3; --line:#2A3542;
+    --fast:#F0B347; --fast-soft:#3A2D12; --slow:#949FFF; --slow-soft:#232A4D;
+    --ok:#62C98E; --ok-soft:#173526; --human:#CDAE7E; --human-soft:#3A3021; --bad:#F08080; --bad-soft:#3F1F22;
+    --code-bg:#1C2531;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0E131A; --surface:#161E28; --ink:#E5EAF0; --muted:#98A4B3; --line:#2A3542;
+  --fast:#F0B347; --fast-soft:#3A2D12; --slow:#949FFF; --slow-soft:#232A4D;
+  --ok:#62C98E; --ok-soft:#173526; --human:#CDAE7E; --human-soft:#3A3021; --bad:#F08080; --bad-soft:#3F1F22;
+  --code-bg:#1C2531;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.75;padding-inline:20px;padding-block:0 64px}
+.wrap{max-width:980px;margin:0 auto}
+.prose{max-width:68ch}
+h1,h2,h3{font-family:var(--serif);text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:clamp(34px,6vw,58px);font-weight:900;letter-spacing:.01em}
+h2{font-size:clamp(24px,3.4vw,32px);font-weight:900}
+h3{font-size:19px;font-weight:600}
+p{margin:0}
+.stack{display:flex;flex-direction:column;gap:14px}
+code,.mono{font-family:var(--mono);font-size:.88em}
+code{background:var(--code-bg);padding:1px 6px;border-radius:4px}
+a{color:var(--slow)}
+a:focus-visible,button:focus-visible,input:focus-visible,label:focus-within{outline:2px solid var(--slow);outline-offset:2px}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.fast{color:var(--fast)} .slow{color:var(--slow)}
+.muted{color:var(--muted)}
+.small{font-size:14px}
+
+/* nav */
+nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);margin-inline:-20px;padding:10px 20px;overflow-x:auto;white-space:nowrap;font-size:14px}
+nav.toc a{color:var(--muted);text-decoration:none;margin-right:18px}
+nav.toc a:hover{color:var(--ink)}
+
+/* hero */
+header.hero{padding-block:48px 28px;display:grid;gap:22px}
+.hero .lede{font-size:19px;max-width:40ch}
+.hero .lede b{background:linear-gradient(transparent 60%,var(--fast-soft) 60%)}
+.tldr{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.tldr div{border-top:2px solid var(--ink);padding-top:8px;font-size:14.5px;line-height:1.6}
+.tldr b{display:block;font-family:var(--serif);font-size:16px;margin-bottom:2px}
+
+section{padding-block:44px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:20px}
+.sec-head{display:flex;flex-direction:column;gap:6px}
+
+/* race */
+.race{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:680px){.race{grid-template-columns:1fr}}
+.lane{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:10px;min-height:250px}
+.lane-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.lane-top b{font-family:var(--serif);font-size:17px}
+.timer{font-family:var(--mono);font-size:13px;font-variant-numeric:tabular-nums;color:var(--muted)}
+.stream{font-family:var(--mono);font-size:13px;line-height:1.6;background:var(--code-bg);border-radius:6px;padding:10px;min-height:150px;white-space:pre-wrap;word-break:break-all}
+.stream .tok{border-bottom:1px dashed var(--slow)}
+.jev-out{display:grid;gap:8px;opacity:.25;transition:opacity .2s}
+.jev-out.on{opacity:1}
+.jrow{display:grid;grid-template-columns:92px 1fr 56px;align-items:center;gap:8px;font-size:13.5px}
+.jrow .k{font-family:var(--mono);color:var(--muted);font-size:12px}
+.bar{height:10px;background:var(--code-bg);border-radius:5px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--fast);border-radius:5px}
+.jrow .v{font-family:var(--mono);font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+button.btn{font:inherit;font-size:14px;font-weight:600;border:1px solid var(--ink);background:var(--ink);color:var(--bg);padding:7px 16px;border-radius:999px;cursor:pointer;align-self:flex-start}
+button.ghost{background:transparent;color:var(--ink)}
+.caption{font-size:13.5px;color:var(--muted);line-height:1.6}
+
+/* analogy */
+.twin{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+@media (max-width:680px){.twin{grid-template-columns:1fr}}
+.twin>div{padding:18px;display:flex;flex-direction:column;gap:10px}
+.twin .s1{background:var(--fast-soft)}
+.twin .s2{background:var(--slow-soft)}
+.twin h3 small{font-family:var(--sans);font-size:13px;font-weight:500;color:var(--muted);margin-left:6px}
+.twin ul{margin:0;padding-left:18px;font-size:14.5px}
+.twin li{margin:3px 0}
+
+/* diagrams */
+.figure{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;overflow-x:auto}
+.figure svg{display:block;width:100%;height:auto;min-width:620px}
+svg text{font-family:var(--sans);fill:var(--ink)}
+svg .t-muted{fill:var(--muted)}
+svg .t-mono{font-family:var(--mono)}
+svg .f-surface{fill:var(--surface)} svg .f-code{fill:var(--code-bg)}
+svg .f-fast{fill:var(--fast-soft)} svg .f-slow{fill:var(--slow-soft)} svg .f-ok{fill:var(--ok-soft)} svg .f-human{fill:var(--human-soft)}
+svg .s-line{stroke:var(--line)} svg .s-ink{stroke:var(--ink)} svg .s-fast{stroke:var(--fast)} svg .s-slow{stroke:var(--slow)} svg .s-muted{stroke:var(--muted)}
+svg .t-fast{fill:var(--fast)} svg .t-slow{fill:var(--slow)} svg .t-ok{fill:var(--ok)} svg .t-human{fill:var(--human)}
+svg .fill-fast{fill:var(--fast)} svg .fill-slow{fill:var(--slow)}
+
+/* primitives */
+.prims{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media (max-width:760px){.prims{grid-template-columns:1fr}}
+.prim{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.prim .name{font-family:var(--mono);font-weight:600;font-size:15px;color:var(--fast)}
+.prim p{font-size:14.5px}
+.prim .ex{font-size:13.5px;background:var(--code-bg);border-radius:6px;padding:8px 10px;font-family:var(--mono);line-height:1.55}
+
+.demo{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:16px}
+.seg{display:flex;flex-wrap:wrap;gap:8px}
+.seg button{font:inherit;font-size:13.5px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:6px 12px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{border-color:var(--fast);background:var(--fast-soft);font-weight:700}
+.state{font-family:var(--mono);font-size:13px;background:var(--code-bg);border-radius:6px;padding:12px;white-space:pre-wrap;word-break:break-word;line-height:1.6}
+.answers{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media (max-width:760px){.answers{grid-template-columns:1fr}}
+.ans{border-top:2px solid var(--fast);padding-top:8px;display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.ans .q{font-weight:700}
+.ans .big{font-family:var(--mono);font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+.dist{display:grid;grid-template-columns:auto 1fr 44px;gap:4px 8px;align-items:center;font-size:12.5px}
+.dist .bar{height:8px}
+.dist .n{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.dist .win{font-weight:700}
+.conf{font-size:12.5px;color:var(--muted)}
+.scale{position:relative;height:30px;margin-top:4px}
+.scale .track{position:absolute;left:0;right:0;top:12px;height:6px;border-radius:3px;background:linear-gradient(90deg,var(--ok-soft),var(--fast-soft),var(--bad-soft))}
+.scale .pin{position:absolute;top:4px;width:4px;height:22px;background:var(--ink);border-radius:2px;transform:translateX(-2px);transition:left .4s}
+.scale-l{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted)}
+
+/* why fast */
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:680px){.cols2{grid-template-columns:1fr}}
+.note{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:8px;font-size:14.5px}
+.note h3{font-size:17px}
+
+/* chart */
+.chart-row{display:grid;grid-template-columns:minmax(150px,230px) 1fr 64px;gap:10px;align-items:center;font-size:13.5px;padding-block:5px;border-bottom:1px dashed var(--line)}
+.chart-row:last-child{border-bottom:0}
+.chart-row .lbl small{display:block;color:var(--muted);font-size:12px;line-height:1.4}
+.chart-row .track2{position:relative;height:14px}
+.chart-row .track2 i{position:absolute;left:0;top:0;height:100%;border-radius:3px;background:var(--muted)}
+.chart-row.claim .track2 i{background:var(--fast)}
+.chart-row .val{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;font-weight:600}
+.axis{display:grid;grid-template-columns:minmax(150px,230px) 1fr 64px;gap:10px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.axis .ticks{position:relative;height:16px}
+.axis .ticks span{position:absolute;transform:translateX(-50%)}
+.axis .ticks span:first-child{transform:none}
+.axis .ticks span:last-child{transform:translateX(-100%)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-1px;margin-right:6px}
+@media (max-width:560px){.chart-row,.axis{grid-template-columns:120px 1fr 52px}}
+
+/* gate */
+.gate-ctrl{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:620px){.gate-ctrl{grid-template-columns:1fr}}
+.gate-ctrl label{display:flex;flex-direction:column;gap:4px;font-size:14px}
+.gate-ctrl input[type=range]{width:100%;accent-color:var(--fast)}
+.gate-ctrl output{font-family:var(--mono);font-weight:600}
+.lanes3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:620px){.lanes3{grid-template-columns:1fr}}
+.bucket{border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:6px;min-height:120px}
+.bucket h4{margin:0;font-size:14px;display:flex;justify-content:space-between}
+.bucket.auto{background:var(--ok-soft)} .bucket.auto h4{color:var(--ok)}
+.bucket.human{background:var(--human-soft)} .bucket.human h4{color:var(--human)}
+.bucket.llm{background:var(--slow-soft)} .bucket.llm h4{color:var(--slow)}
+.chip{font-size:12.5px;background:var(--surface);border-radius:5px;padding:4px 8px;display:flex;justify-content:space-between;gap:8px}
+.chip .mono{color:var(--muted)}
+.chip.wrong{box-shadow:inset 3px 0 0 var(--bad)}
+.gate-sum{display:flex;flex-wrap:wrap;gap:18px;font-size:14px}
+.gate-sum b{font-family:var(--mono);font-size:18px}
+
+/* myths */
+.myths{display:grid;gap:12px}
+.myth{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+@media (max-width:680px){.myth{grid-template-columns:1fr}}
+.myth>div{padding:14px 16px;font-size:14.5px;display:flex;flex-direction:column;gap:4px}
+.myth .claim{background:var(--code-bg)}
+.myth .tag{font-size:11.5px;letter-spacing:.12em;font-weight:700;text-transform:uppercase}
+.myth .claim .tag{color:var(--muted)}
+.myth .real .tag{color:var(--ok)}
+
+/* checklist */
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:680px){.checks{grid-template-columns:1fr}}
+.checks label{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;cursor:pointer;font-size:14.5px;line-height:1.5}
+.checks input{margin-top:4px;accent-color:var(--fast);width:16px;height:16px;flex:none}
+.checks b{display:block}
+.verdict{display:flex;gap:16px;align-items:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.verdict .score{font-family:var(--mono);font-size:30px;font-weight:600;font-variant-numeric:tabular-nums}
+.verdict .pill{font-size:13px;font-weight:700;padding:3px 10px;border-radius:999px}
+.pill.good{background:var(--ok-soft);color:var(--ok)} .pill.mid{background:var(--human-soft);color:var(--human)} .pill.no{background:var(--bad-soft);color:var(--bad)}
+
+/* relevance */
+.map-links{display:grid;gap:10px}
+.ml{display:grid;grid-template-columns:130px 1fr;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:14.5px}
+@media (max-width:560px){.ml{grid-template-columns:1fr;gap:4px}}
+.ml .node{font-family:var(--serif);font-weight:600}
+.ml .node small{display:block;font-family:var(--mono);font-size:12px;color:var(--muted);font-weight:400}
+.ideas{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:15px}
+
+/* glossary & timeline */
+dl.gloss{display:grid;grid-template-columns:max-content 1fr;gap:8px 18px;margin:0;font-size:14.5px}
+dl.gloss dt{font-weight:700;font-family:var(--mono);font-size:13.5px;padding-top:2px}
+dl.gloss dd{margin:0}
+@media (max-width:560px){dl.gloss{grid-template-columns:1fr} dl.gloss dd{margin-bottom:6px}}
+.tl{display:grid;gap:0;border-left:2px solid var(--line);margin-left:6px}
+.tl div{position:relative;padding:0 0 14px 20px;font-size:14.5px}
+.tl div::before{content:"";position:absolute;left:-7px;top:8px;width:12px;height:12px;border-radius:50%;background:var(--bg);border:2px solid var(--fast)}
+.tl b{font-family:var(--mono);font-size:13px;margin-right:8px}
+.sources{font-size:13.5px;columns:2 300px;column-gap:28px;padding-left:18px;margin:0}
+.sources li{break-inside:avoid;margin-bottom:4px}
+footer{padding-top:28px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="目录">
+  <a href="#race">一眼看懂</a><a href="#analogy">快与慢</a><a href="#how">怎么工作</a><a href="#types">三种答案</a><a href="#why">为什么快</a><a href="#numbers">数字核实</a><a href="#gate">置信度</a><a href="#place">放在哪</a><a href="#myths">常见误解</a><a href="#fit">适不适合</a><a href="#you">和你的项目</a><a href="#refs">来源</a>
+</nav>
+
+<header class="hero">
+  <span class="eyebrow">技术拆解 · 写给新手 · 2026 年 9 月</span>
+  <h1>Jev：<span class="fast">不写字</span>，只做判断的 AI</h1>
+  <p class="lede">大多数 AI（ChatGPT、Claude）是一个字一个字<b>“写”</b>出答案。Jev 反过来：你先把<b>选项</b>定好，它一次性告诉你<b>选哪个、有多大把握</b>。它是 TypeSafe AI 在 2026 年 9 月 15 日发布的第一个“System One（系统 1）模型”。</p>
+  <div class="tldr">
+    <div><b>它是什么</b>一个“判断器”：输入一堆材料 + 几个带选项的问题，输出每题的答案和概率。</div>
+    <div><b>它不是什么</b>不是聊天机器人，不会写文章、写代码，也不会一步步推理。</div>
+    <div><b>为什么火</b>官方称比大模型快约 200 倍、便宜约 400 倍；独立实测多在 1.2–10 倍。</div>
+    <div><b>名字从哪来</b>卡尼曼《思考，快与慢》里的“系统 1”——正好是你偏见地图 A-2 那个节点。</div>
+  </div>
+</header>
+
+<section id="race">
+  <div class="sec-head">
+    <span class="eyebrow">一眼看懂</span>
+    <h2>同一个问题，两种回答方式</h2>
+    <p class="prose muted">问题：“这条客服消息该转给哪个部门？是不是在要退款？有多急？”点下面按钮看两者怎么交卷。</p>
+  </div>
+  <div class="race">
+    <div class="lane">
+      <div class="lane-top"><b class="slow">普通大模型（系统 2 式）</b><span class="timer" id="t-llm">0 个 token</span></div>
+      <div class="stream" id="stream" aria-live="off"></div>
+      <p class="caption">逐字生成：每写一个“字”（token）都要把模型整个跑一遍。输出越长越慢，还可能写出格式错误的 JSON、或编一个不存在的部门。</p>
+    </div>
+    <div class="lane">
+      <div class="lane-top"><b class="fast">Jev（系统 1 式）</b><span class="timer" id="t-jev">等待中</span></div>
+      <div class="jev-out" id="jevout">
+        <div class="jrow"><span class="k">部门 Choice</span><div class="bar"><i style="width:91%"></i></div><span class="v">账单 .91</span></div>
+        <div class="jrow"><span class="k">要退款? Noul</span><div class="bar"><i style="width:96%"></i></div><span class="v">.96</span></div>
+        <div class="jrow"><span class="k">紧急度 Score</span><div class="bar"><i style="width:55%"></i></div><span class="v">2.2/4</span></div>
+      </div>
+      <p class="caption">一次并行算完所有问题：答案只能落在你给的选项里，每题都附一个概率。它不解释理由——想要理由，得交给会“写”的模型。</p>
+    </div>
+  </div>
+  <button class="btn" id="play">▶ 开始比赛</button>
+  <p class="caption">动画速度是示意，不是实测；真实数字见下方“数字核实”。</p>
+</section>
+
+<section id="analogy">
+  <div class="sec-head">
+    <span class="eyebrow">先打个比方</span>
+    <h2>快思考 vs 慢思考，搬到了 AI 身上</h2>
+  </div>
+  <p class="prose">心理学家卡尼曼把人的思考分成两套：<span class="fast"><b>系统 1</b></span> 是“一眼就知道”的直觉判断，<span class="slow"><b>系统 2</b></span> 是要动脑、一步步算的深思。TypeSafe 的说法是：现在所有前沿大模型都是“系统 2 机器”，而软件里每天发生的海量判断，其实只需要系统 1。</p>
+  <div class="twin">
+    <div class="s1">
+      <h3 class="fast">系统 1 · Jev<small>快、便宜、只选不写</small></h3>
+      <ul>
+        <li>像一个老练客服扫一眼工单：“账单问题，挺急。”</li>
+        <li>答案空间事先定好：选项 / 是否 / 分级</li>
+        <li>自带“把握有多大”的概率</li>
+        <li>单跳判断，不做多步推理</li>
+      </ul>
+    </div>
+    <div class="s2">
+      <h3 class="slow">系统 2 · ChatGPT / Claude<small>慢、贵、能写能想</small></h3>
+      <ul>
+        <li>像一个分析师写报告：先查资料，再推理，再落笔</li>
+        <li>答案是开放的文字，可以说任何话</li>
+        <li>能解释理由、能规划、能写代码</li>
+        <li>但每次判断都要“写一段话”，贵且慢</li>
+      </ul>
+    </div>
+  </div>
+  <p class="prose muted small">创始人 Diogo Almeida（前 OpenAI，RLHF / InstructGPT 的共同发明者之一）的原话大意：逐字生成“对自然对话很棒，但对计算机完全没用”——因为程序要的是一个能直接 <code>if</code> 的值，不是一段话。</p>
+</section>
+
+<section id="how">
+  <div class="sec-head">
+    <span class="eyebrow">它怎么工作</span>
+    <h2>“材料 + 带类型的问题” 进，“带概率的答案” 出</h2>
+  </div>
+  <div class="figure" role="img" aria-label="Jev 的输入输出流程：状态和问题进入一次并行计算，输出每个问题的类型化答案和概率">
+    <svg viewBox="0 0 900 300">
+      <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" class="fill-fast"/></marker></defs>
+      <rect x="10" y="20" width="230" height="130" rx="10" class="f-code s-line" stroke-width="1"/>
+      <text x="26" y="46" font-weight="700" font-size="15">① State 状态（材料）</text>
+      <text x="26" y="72" font-size="12.5" class="t-mono t-muted">{ "message": "我被重复扣费了…",</text>
+      <text x="26" y="92" font-size="12.5" class="t-mono t-muted">  "customer": {"plan":"Pro"},</text>
+      <text x="26" y="112" font-size="12.5" class="t-mono t-muted">  "history": [...] }</text>
+      <text x="26" y="136" font-size="12" class="t-muted">判断需要的一切，都要放进来</text>
+      <rect x="10" y="165" width="230" height="120" rx="10" class="f-code s-line" stroke-width="1"/>
+      <text x="26" y="191" font-weight="700" font-size="15">② Questions 问题</text>
+      <text x="26" y="216" font-size="12.5" class="t-mono t-muted">Choice 哪个部门? [账单|技术|销售]</text>
+      <text x="26" y="238" font-size="12.5" class="t-mono t-muted">Noul   是否要求退款?</text>
+      <text x="26" y="260" font-size="12.5" class="t-mono t-muted">Score  紧急度? [0 轻微 … 3 严重]</text>
+      <path d="M245,85 C300,85 300,150 345,150" class="s-fast" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+      <path d="M245,225 C300,225 300,150 345,150" class="s-fast" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+      <rect x="350" y="70" width="200" height="160" rx="12" class="f-fast s-fast" stroke-width="2"/>
+      <text x="450" y="108" text-anchor="middle" font-weight="700" font-size="16" class="t-fast">Jev</text>
+      <text x="450" y="134" text-anchor="middle" font-size="13">一次前向计算</text>
+      <text x="450" y="154" text-anchor="middle" font-size="13">所有问题并行</text>
+      <text x="450" y="180" text-anchor="middle" font-size="12" class="t-muted">预测头直接出概率</text>
+      <text x="450" y="198" text-anchor="middle" font-size="12" class="t-muted">不逐字解码</text>
+      <path d="M555,150 C600,150 600,70 640,70" class="s-fast" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+      <path d="M555,150 L640,150" class="s-fast" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+      <path d="M555,150 C600,150 600,230 640,230" class="s-fast" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+      <rect x="645" y="45" width="245" height="50" rx="8" class="f-surface s-line" stroke-width="1"/>
+      <text x="660" y="67" font-size="13" font-weight="700">账单</text><text x="700" y="67" font-size="12" class="t-mono t-muted">p=.91 · 置信度 .84</text>
+      <text x="660" y="85" font-size="11.5" class="t-muted">技术 .07 · 销售 .02（全分布）</text>
+      <rect x="645" y="125" width="245" height="50" rx="8" class="f-surface s-line" stroke-width="1"/>
+      <text x="660" y="147" font-size="13" font-weight="700">是</text><text x="700" y="147" font-size="12" class="t-mono t-muted">p=.96</text>
+      <text x="660" y="165" font-size="11.5" class="t-muted">概率本身就是把握</text>
+      <rect x="645" y="205" width="245" height="50" rx="8" class="f-surface s-line" stroke-width="1"/>
+      <text x="660" y="227" font-size="13" font-weight="700">2.2</text><text x="700" y="227" font-size="12" class="t-mono t-muted">介于“中等”和“严重”</text>
+      <text x="660" y="245" font-size="11.5" class="t-muted">可以落在两级之间</text>
+      <text x="767" y="285" text-anchor="middle" font-size="13" font-weight="700">③ 程序直接拿去 if / 路由</text>
+    </svg>
+  </div>
+  <div class="cols2">
+    <div class="note"><h3>关键 1：问题之间互相独立</h3><p>同一次请求里的几个问题是分开算的，前一题的答案不会影响后一题。好处是每个判断都能单独测试、单独审计；代价是需要多步依赖的问题，你得自己在代码里拆开、串起来。</p></div>
+    <div class="note"><h3>关键 2：“状态工程”是新的难点</h3><p>Jev 不会上网查资料，判断只能基于你塞给它的状态。创始人在 Hacker News 上说，真正的难点是“state engineering”——就像以前的“提示词工程”，现在变成了“怎么把材料组织好”。官方建议用结构化 JSON，让材料之间的关系一目了然。</p></div>
+  </div>
+</section>
+
+<section id="types">
+  <div class="sec-head">
+    <span class="eyebrow">三种答案类型</span>
+    <h2>Jev 只会回答三种形状的问题</h2>
+    <p class="prose muted">这就是它名字里 “TypeSafe（类型安全）” 的含义：答案的类型你事先规定，它不可能交出类型以外的东西。</p>
+  </div>
+  <div class="prims">
+    <div class="prim"><span class="name">Noul · 是/否</span><p>一个命题成立的概率（0–1）。没有单独的“置信度”，概率本身就是把握。</p><div class="ex">“这条消息在要求退款吗？” → 0.96</div><p class="muted small">用于：检测、核实、风险识别（欺诈、提示词注入…）</p></div>
+    <div class="prim"><span class="name">Choice · 单选</span><p>从预设选项中选一个（最多 255 个），返回胜出项、完整概率分布和置信度。</p><div class="ex">“该哪个团队处理？” [安全|住房|HR|IT|其他] → IT</div><p class="muted small">用于：分类、路由、选工具、选模型</p></div>
+    <div class="prim"><span class="name">Score · 分级</span><p>在 2–10 级的有序量表上打分，结果可以落在两级之间，同样带分布和置信度。</p><div class="ex">“严重程度？” 0 轻微 … 3 危急 → 1.6</div><p class="muted small">用于：严重度、相关性、质量评估、排序</p></div>
+  </div>
+  <p class="prose small muted">官方提示：Score 的每一级要写成具体情境（“需要人工介入”），而不是空洞的“低/中/高”，效果更好。</p>
+
+  <div class="demo">
+    <div class="stack" style="gap:8px">
+      <h3>动手试试：换一条消息，看三种答案怎么变</h3>
+      <div class="seg" role="group" aria-label="示例消息" id="seg"></div>
+    </div>
+    <div class="state" id="demo-state"></div>
+    <div class="answers">
+      <div class="ans"><span class="q">Noul：要求退款吗？</span><span class="big" id="d-noul"></span><div class="bar"><i id="d-noul-bar"></i></div><span class="conf">概率即把握</span></div>
+      <div class="ans"><span class="q">Choice：转给哪个部门？</span><div class="dist" id="d-choice"></div><span class="conf" id="d-choice-conf"></span></div>
+      <div class="ans"><span class="q">Score：紧急度（0–3）</span><span class="big" id="d-score"></span><div class="scale"><div class="track"></div><div class="pin" id="d-pin"></div></div><div class="scale-l"><span>0 轻微</span><span>1 中等</span><span>2 严重</span><span>3 危急</span></div><span class="conf" id="d-score-conf"></span></div>
+    </div>
+    <p class="caption">⚠ 这里的数值是为讲解编的示意，不是 Jev 的真实输出。注意第三条“模糊”消息：部门分布被摊平、置信度变低——这正是你该把它交给人或大模型的信号。</p>
+  </div>
+</section>
+
+<section id="why">
+  <div class="sec-head">
+    <span class="eyebrow">为什么快、为什么便宜</span>
+    <h2>省掉的是“逐字写”的那个循环</h2>
+  </div>
+  <div class="figure" role="img" aria-label="对比：自回归模型为每个输出 token 各跑一次模型；Jev 对所有问题只跑一次">
+    <svg viewBox="0 0 900 220">
+      <text x="10" y="28" font-weight="700" font-size="14" class="t-slow">大模型：输出 N 个 token = 跑 N 次</text>
+      <g id="loops"></g>
+      <text x="10" y="138" font-weight="700" font-size="14" class="t-fast">Jev：不管几个问题 = 跑 1 次</text>
+      <rect x="10" y="152" width="120" height="44" rx="6" class="f-code s-line"/><text x="70" y="179" text-anchor="middle" font-size="12.5">状态 + 问题</text>
+      <path d="M134,174 L166,174" class="s-fast" stroke-width="2" marker-end="url(#ar)"/>
+      <rect x="170" y="152" width="100" height="44" rx="6" class="f-fast s-fast" stroke-width="1.5"/><text x="220" y="179" text-anchor="middle" font-size="12.5" class="t-fast" font-weight="700">模型 ×1</text>
+      <path d="M274,174 L306,174" class="s-fast" stroke-width="2" marker-end="url(#ar)"/>
+      <rect x="310" y="152" width="200" height="44" rx="6" class="f-surface s-line"/><text x="410" y="179" text-anchor="middle" font-size="12.5">全部答案 + 概率</text>
+      <text x="530" y="170" font-size="12.5" class="t-muted">输出几乎不花钱：官方定价</text>
+      <text x="530" y="190" font-size="12.5" class="t-muted" >输入 $0.042 / 百万 token，输出免费</text>
+    </svg>
+  </div>
+  <div class="cols2">
+    <div class="note"><h3>三件官方公开的“新东西”</h3><p><b>新架构</b>：预测头直接输出所有概率，不走解码循环。<br><b>新采样器</b>：并行而不是一个 token 接一个。<br><b>新训练法 RLCD</b>（为“校准的决策”做强化学习）：RLHF 优化的是“人更喜欢的回答”，RLCD 优化的是“概率要和现实一致”。</p></div>
+    <div class="note"><h3>社区的“拆机”猜测</h3><p>官方没公开结构细节。技术博主和 Hacker News 讨论普遍认为：它本质上是一个能力很强的 Transformer + 共享的上下文计算 + 类型化的输出头，思路接近“BERT 式编码器 + 分类头”，但做成了通用、零样本、可校准。已经有至少 6 个开源仿制品，Google 工程师也写了用 DiffusionGemma 做“Jev 式分类器”的教程。<span class="muted">（推测，非官方确认）</span></p></div>
+  </div>
+</section>
+
+<section id="numbers">
+  <div class="sec-head">
+    <span class="eyebrow">数字核实</span>
+    <h2>“快 193 倍” 到底快多少？</h2>
+    <p class="prose muted">官方标题数字和独立测试差得很远。下图用对数刻度——每一格是 10 倍。</p>
+  </div>
+  <div class="demo" style="gap:6px">
+    <div class="legend"><span><i style="background:var(--fast)"></i>TypeSafe 官方宣称</span><span><i style="background:var(--muted)"></i>第三方 / 社区实测</span></div>
+    <h3 style="margin-top:8px">速度：比对照模型快几倍</h3>
+    <div id="speed"></div>
+    <h3 style="margin-top:16px">成本：比对照模型便宜几倍</h3>
+    <div id="cost"></div>
+    <p class="caption" style="margin-top:8px">延迟绝对值：官方称端到端 70–500 ms；一项测试中位数 378 ms（Claude Sonnet 3,554 ms），另一项 239 ms（Claude Haiku 687 ms）。有人在特定场景下报出 2–5 ms/次，属个例。</p>
+  </div>
+  <div class="cols2">
+    <div class="note"><h3>准确率：大多数简单题打平，难题会掉</h3><p>60 条客服工单意图分类：Jev 59/60，Claude Opus 60/60——几乎一样。<br>一个钓鱼邮件检测任务：Jev <b>62.6%</b>，Claude Haiku <b>81.3%</b>——明显落后。<br>还有测试发现：换行、Markdown 格式、问题措辞一改，结果就会摆动。</p></div>
+    <div class="note"><h3>官方的 68% 是什么</h3><p>官方在 4 个生产工作流上报告 Jev 与“两个前沿模型的平均答案”一致率 67.8%，和 GPT-5.6 Terra 打平，比最强的几个模型低 5–6 个点。注意：参考答案本身来自前沿模型，所以这是<b>“一致率”</b>，不是经过人工核验的<b>“准确率”</b>。</p></div>
+  </div>
+</section>
+
+<section id="gate">
+  <div class="sec-head">
+    <span class="eyebrow">最被低估的部分</span>
+    <h2>置信度：让程序知道“什么时候该问别人”</h2>
+    <p class="prose">很多人盯着“快、便宜”，但不少一线开发者认为 Jev 真正的价值是<b>校准</b>：它说 90% 有把握的那些判断，大约真的对 90%。有了靠谱的把握值，你就能设两道门槛：很有把握 → 程序自动执行；有点犹豫 → 给人看；很没把握 → 升级给大模型慢慢想。拖动滑块试试。</p>
+  </div>
+  <div class="demo">
+    <div class="gate-ctrl">
+      <label for="hi">自动执行门槛：置信度 ≥ <output id="hi-o">0.90</output><input type="range" id="hi" min="0.5" max="0.99" step="0.01" value="0.90"></label>
+      <label for="lo">升级给大模型门槛：置信度 &lt; <output id="lo-o">0.60</output><input type="range" id="lo" min="0.2" max="0.9" step="0.01" value="0.60"></label>
+    </div>
+    <div class="lanes3">
+      <div class="bucket auto"><h4><span>✓ 自动执行</span><span id="c-auto"></span></h4><div id="b-auto" class="stack" style="gap:5px"></div></div>
+      <div class="bucket human"><h4><span>人工复核</span><span id="c-human"></span></h4><div id="b-human" class="stack" style="gap:5px"></div></div>
+      <div class="bucket llm"><h4><span>升级给系统 2</span><span id="c-llm"></span></h4><div id="b-llm" class="stack" style="gap:5px"></div></div>
+    </div>
+    <div class="gate-sum"><span>自动执行里的错误：<b id="s-err"></b></span><span>估算成本（Jev 全跑 + 升级部分再调大模型）：<b id="s-cost"></b></span></div>
+    <p class="caption">12 条示意工单，红色左边线表示 Jev 判断错了。门槛越低，自动化越多、成本越低，但混进自动执行的错误也越多——“校准 ≠ 正确”，门槛必须用你自己领域的真实数据去定。成本按“大模型一次 = 100 单位，Jev 一次 = 1 单位”示意。</p>
+  </div>
+</section>
+
+<section id="place">
+  <div class="sec-head">
+    <span class="eyebrow">它放在系统的哪里</span>
+    <h2>代码负责算，Jev 负责判，大模型负责想和写</h2>
+  </div>
+  <div class="figure" role="img" aria-label="观察、判断、推理、行动的流水线：Jev 在判断层，按置信度分流到直接行动、人工复核或大模型">
+    <svg viewBox="0 0 900 250">
+      <rect x="10" y="95" width="120" height="56" rx="8" class="f-code s-line"/><text x="70" y="119" text-anchor="middle" font-weight="700" font-size="14">观察</text><text x="70" y="139" text-anchor="middle" font-size="12" class="t-muted">代码收集状态</text>
+      <path d="M134,123 L176,123" class="s-fast" stroke-width="2" marker-end="url(#ar)"/>
+      <rect x="180" y="85" width="150" height="76" rx="10" class="f-fast s-fast" stroke-width="2"/><text x="255" y="115" text-anchor="middle" font-weight="700" font-size="15" class="t-fast">判断 · Jev</text><text x="255" y="138" text-anchor="middle" font-size="12">毫秒级 · 带概率</text>
+      <path d="M334,110 C380,110 380,40 420,40" class="s-fast" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+      <path d="M334,123 L420,123" class="s-fast" stroke-width="2" marker-end="url(#ar)"/>
+      <path d="M334,136 C380,136 380,206 420,206" class="s-fast" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+      <text x="350" y="62" font-size="11.5" class="t-ok">很有把握</text>
+      <text x="352" y="118" font-size="11.5" class="t-human">犹豫</text>
+      <text x="350" y="194" font-size="11.5" class="t-slow">模糊/难</text>
+      <rect x="424" y="16" width="180" height="48" rx="8" class="f-ok s-line"/><text x="514" y="45" text-anchor="middle" font-size="13">代码直接执行</text>
+      <rect x="424" y="99" width="180" height="48" rx="8" class="f-human s-line"/><text x="514" y="128" text-anchor="middle" font-size="13">交给人复核</text>
+      <rect x="424" y="182" width="180" height="48" rx="8" class="f-slow s-slow"/><text x="514" y="211" text-anchor="middle" font-size="13" class="t-slow" font-weight="700">推理 · 大模型</text>
+      <path d="M608,40 L700,110" class="s-muted" stroke-width="1.5" marker-end="url(#ar)"/>
+      <path d="M608,123 L700,123" class="s-muted" stroke-width="1.5" marker-end="url(#ar)"/>
+      <path d="M608,206 L700,136" class="s-muted" stroke-width="1.5" marker-end="url(#ar)"/>
+      <rect x="704" y="95" width="180" height="56" rx="8" class="f-code s-line"/><text x="794" y="119" text-anchor="middle" font-weight="700" font-size="14">行动</text><text x="794" y="139" text-anchor="middle" font-size="12" class="t-muted">代码掌控副作用</text>
+    </svg>
+  </div>
+  <p class="prose">这张图就是社区最常引用的用法：<b>先让便宜的系统 1 分诊，只有真正难的才叫醒昂贵的系统 2。</b>目前开发者圈子里最常见的四种落地方式：</p>
+  <div class="cols2">
+    <div class="note"><h3>① 模型路由器</h3><p>LangChain 官方教程：Jev 先判断请求复杂度，简单的交给小模型，复杂的交给大模型。LangChain 已有对应的中间件（ModelRouterMiddleware）。</p></div>
+    <div class="note"><h3>② 工具调用守门员</h3><p>智能体要执行“删除账户”这类危险操作前，Jev 按风险策略（低/中/高）打分，高风险直接拦下（AutoModeMiddleware）。</p></div>
+    <div class="note"><h3>③ 即时上下文压缩</h3><p>X 上开发者 Tamara 的做法：让 Jev 给每条历史工具调用打“还相关吗”的分，丢掉无关的，代替让大模型写摘要。已开源。</p></div>
+    <div class="note"><h3>④ 实时循环</h3><p>游戏、机器人、网页 DOM 循环、交易机器人、Minecraft 智能体——需要每秒做很多次小判断的地方。有人实测一天后的结论：它是“更快的通用分类器”，最配“有限选项 + 低延迟”。</p></div>
+  </div>
+</section>
+
+<section id="myths">
+  <div class="sec-head">
+    <span class="eyebrow">冷静看</span>
+    <h2>五个常见误解</h2>
+  </div>
+  <div class="myths">
+    <div class="myth"><div class="claim"><span class="tag">听说</span>“Jev 零幻觉，不会出错。”</div><div class="real"><span class="tag">实际</span>它不会<b>编造选项以外的答案</b>（你给了“账单/技术/销售”，它不可能回“法务”）。但它完全可能<b>自信地选错</b>。零幻觉 ≠ 零错误。</div></div>
+    <div class="myth"><div class="claim"><span class="tag">听说</span>“比大模型快 200 倍、便宜 400 倍。”</div><div class="real"><span class="tag">实际</span>这是官方最佳情况。独立单次判断实测多在 1.2–10 倍；多步工作流里把很多判断合并成一次调用，才可能到约 100 倍。</div></div>
+    <div class="myth"><div class="claim"><span class="tag">听说</span>“准确率 68%，和顶级模型差不多。”</div><div class="real"><span class="tag">实际</span>那是和前沿模型答案的“一致率”，参考答案本身就来自大模型，不是人工核验的真值。</div></div>
+    <div class="myth"><div class="claim"><span class="tag">听说</span>“它能替代 LLM。”</div><div class="real"><span class="tag">实际</span>它只能替代那些“唯一工作就是分类、打分、判断、路由”的 LLM 调用。写作、解释、规划、生成代码或工具参数，它都做不了。</div></div>
+    <div class="myth"><div class="claim"><span class="tag">听说</span>“有置信度就可以放心自动化。”</div><div class="real"><span class="tag">实际</span>校准是统计意义上的：“90% 的那一堆里大约 90% 是对的”。单个高置信判断仍可能错，而且在你的特定领域可能校准得没那么好——门槛要自己用数据验证。</div></div>
+  </div>
+</section>
+
+<section id="fit">
+  <div class="sec-head">
+    <span class="eyebrow">自测</span>
+    <h2>你的场景适合用 Jev 吗？</h2>
+    <p class="prose muted">这是社区整理的“六问测试”。勾上符合你场景的项。最短版本只有一句：能不能写成“给定这些材料，告诉我 X，X 是一个选项 / 分数 / 概率”？</p>
+  </div>
+  <div class="checks" id="checks">
+    <label for="c1"><input type="checkbox" id="c1"><span><b>是判断，不是创作</b>AI 要做的是“决定”，而不是“写出来”</span></label>
+    <label for="c2"><input type="checkbox" id="c2"><span><b>答案空间有界</b>所有可能的答案能提前列出来</span></label>
+    <label for="c3"><input type="checkbox" id="c3"><span><b>单一原子问题</b>一次只问一件聚焦的事</span></label>
+    <label for="c4"><input type="checkbox" id="c4"><span><b>材料自给自足</b>需要的信息都能放进状态里，不用上网查</span></label>
+    <label for="c5"><input type="checkbox" id="c5"><span><b>专家几秒能判</b>一个懂行的人扫一眼就能回答</span></label>
+    <label for="c6"><input type="checkbox" id="c6"><span><b>给程序用</b>结果由软件直接消费，不是给人读的</span></label>
+  </div>
+  <div class="verdict"><span class="score" id="fit-score">0/6</span><span class="pill no" id="fit-pill">不适合</span><span id="fit-text" class="small">大概率该用大模型或普通代码。</span></div>
+</section>
+
+<section id="you">
+  <div class="sec-head">
+    <span class="eyebrow">和你正在做的事</span>
+    <h2>为什么你会觉得它“很相关”</h2>
+    <p class="prose">我看了你这个仓库：你在做的是一张按“思考哪一步出错”排列的认知偏差地图，v3 还接入了 AI 讲解，后端跑在 Cloudflare 上。Jev 和你的项目至少在三个层面重合——而且它的弱点，几乎可以直接用你地图上的节点来解释。</p>
+  </div>
+  <h3>层面一：它的理论出处就在你的地图上</h3>
+  <div class="map-links">
+    <div class="ml"><span class="node">系统 1 / 系统 2<small>A-2 · system1_system2</small></span><span>Jev 的整个产品定位来自这里。你地图上的节点备注写着“是比喻不是解剖”——同样适用于 Jev：它并不真的是“直觉”，只是一个把问题压缩成一次计算的模型。</span></div>
+    <div class="ml"><span class="node">直觉可信的条件<small>G-1 · intuitive_expertise</small></span><span>卡尼曼和克莱因的结论：直觉只在“规律稳定 + 长期有反馈”的环境里可信，主观自信不是指标。这几乎就是“什么时候该信 Jev”的答案：选项固定、有真实数据回测过的场景才放心自动化。</span></div>
+  </div>
+  <h3>层面二：它的失败方式，就是你地图上的偏差</h3>
+  <div class="map-links">
+    <div class="ml"><span class="node">框架效应<small>C-6 · framing</small></span><span>测试发现改一改换行、Markdown 或措辞，Jev 的判断就会摆动——这就是机器版的框架效应：“换个说法，选择反转”。</span></div>
+    <div class="ml"><span class="node">过度自信<small>B-12 · overconfidence</small></span><span>RLCD 训练的目标，就是专门对抗“高估精确度”这一种过度自信。官方的卖点等于说：“我们的系统 1 被训练得不过度自信。”但它在你的领域是否依然校准，要自己测。</span></div>
+    <div class="ml"><span class="node">偏差 vs 噪声<small>H-1 · bias_vs_noise</small></span><span>“选错但一致”是偏差，“同一问题换个格式答案就变”是噪声。评估 Jev 时这两种误差要分开看——你地图上的“噪声审计”思路可以直接拿来用。</span></div>
+    <div class="ml"><span class="node">属性替换<small>A-3 · attribute_substitution</small></span><span>系统 1 会把难问题偷偷换成易问题。给 Jev 一个本来需要多步推理的问题，它也只能给出一个“看起来像”的单跳答案——这就是为什么要把复杂问题拆开。</span></div>
+  </div>
+  <h3>层面三：可以直接用到你项目里的地方（建议，未实现）</h3>
+  <ol class="ideas">
+    <li><b>给“问 AI”加一个分诊层</b>：用户提问先经过 Jev 判断“是能从节点语料直接回答的简单题，还是需要深度推理的问题”，简单的走小模型，难的才调 Claude，省钱省时间。</li>
+    <li><b>笔记自动归类</b>：用户写的笔记，用一个 Choice 问题（最多 255 个选项，足够放下 101 个节点）判断它最相关哪个节点，再用 Noul 判断“这条笔记里是否描述了一次真实的决策失误”。</li>
+    <li><b>“我此刻在哪一步出错？”</b>：你地图的主轴问题本身就是一个分类问题——用户描述一个决策场景，Jev 判断它落在流水线哪一站（估计/选择/记忆…），再把置信度低的交给 Claude 详细讲解。</li>
+    <li><b>部署上的便利</b>：Cloudflare 的 AI 模型文档里已经有 Jev 的页面，你的“传达室” worker 就在 Cloudflare 上，接入成本可能很低（具体接口和计费以 Cloudflare 文档为准）。</li>
+  </ol>
+  <p class="prose muted small">如果你想做的其实是别的事（比如智能体、游戏、客服系统），告诉我具体方向，我可以针对那个场景再拆一次。</p>
+</section>
+
+<section id="glossary">
+  <div class="sec-head"><span class="eyebrow">新手词典</span><h2>读这篇需要的几个词</h2></div>
+  <dl class="gloss">
+    <dt>token</dt><dd>模型处理文字的最小单位，大约是一个汉字或半个英文单词。大模型按 token 逐个输出、按 token 收费。</dd>
+    <dt>自回归</dt><dd>“写一个字，看一眼前面，再写下一个字”的生成方式。ChatGPT、Claude 都是这样。Jev 是“非自回归”。</dd>
+    <dt>推理 / inference</dt><dd>模型跑一次得出结果的过程（不是“逻辑推理”）。延迟、成本都按这个算。</dd>
+    <dt>schema / 类型</dt><dd>事先约定好的答案格式，比如“只能是 账单/技术/销售 之一”。</dd>
+    <dt>校准 calibration</dt><dd>说 80% 把握的判断里，真的大约 80% 是对的。天气预报说“70% 下雨”的那些天里真下了 70%，就叫校准良好。</dd>
+    <dt>RLHF / RLCD</dt><dd>RLHF：用人类偏好训练模型（ChatGPT 的关键技术，Jev 创始人参与发明）。RLCD：TypeSafe 新提出的，用“概率准不准”来训练。</dd>
+    <dt>harness</dt><dd>包在 AI 智能体外面的一层“安全带”代码：决定用哪个模型、哪些操作要拦下。</dd>
+    <dt>路由 routing</dt><dd>决定一个请求该送到哪里处理（哪个部门、哪个模型、哪个流程）。</dd>
+  </dl>
+</section>
+
+<section id="timeline">
+  <div class="sec-head"><span class="eyebrow">时间线</span><h2>它是怎么冒出来的</h2></div>
+  <div class="tl">
+    <div><b>2024</b>TypeSafe AI 在旧金山成立，创始人 Diogo Almeida（前 OpenAI）。</div>
+    <div><b>2026-09-15</b>Jev 以有限早期访问形式发布，同时宣布 DCVC 领投的 4000 万美元种子轮。</div>
+    <div><b>发布后两天</b>Hacker News 讨论帖 1,821 分、480 条评论，创始人亲自下场回答。</div>
+    <div><b>9 月中下旬</b>LangChain 办了“用 Jev 搭 harness”的直播；Cloudflare 上架模型页；X 上出现交易机器人、Minecraft、上下文压缩等玩法；同时出现一批质疑速度倍数和评测方法的独立测评。</div>
+  </div>
+</section>
+
+<section id="refs">
+  <div class="sec-head"><span class="eyebrow">来源</span><h2>本页资料出处</h2>
+  <p class="prose muted small">以下为 2026-09-23 检索到的公开资料。本环境无法直接打开 X，X 上的观点（Tamara 的上下文压缩、Jiayuan Zhang 的一日实测、创始人发布帖）来自对其转述整理的 GitHub / 媒体页面。不同来源对个别数字说法不一（如 193x / 200x、445x / 400x），本页均标注为“官方宣称”。</p></div>
+  <ul class="sources">
+    <li><a href="https://en.wikipedia.org/wiki/Jev_(AI_model)">Wikipedia · Jev (AI model)</a></li>
+    <li><a href="https://typesafe.ai/blog/introducing-system-one-models-and-jev">TypeSafe 官方博客 · Introducing System One Models & Jev</a></li>
+    <li><a href="https://techcrunch.com/2026/09/18/a-new-kind-of-ai-model-from-a-chatgpt-inventor-is-thrilling-developers/">TechCrunch · A new kind of AI model…</a></li>
+    <li><a href="https://thenewstack.io/typesafe-jev-system-one/">The New Stack · “totally useless for computers”</a></li>
+    <li><a href="https://www.tomshardware.com/tech-industry/artificial-intelligence/typesafe-ais-jev-offers-an-alternative-to-llms-that-claims-to-be-193x-faster-and-445x-cheaper-system-one-type-model-is-bespoke-for-probabilistic-decision-making">Tom's Hardware · 193x / 445x</a></li>
+    <li><a href="https://www.kdnuggets.com/what-everyone-is-getting-wrong-about-typesafe-ais-jev">KDnuggets · What Everyone Is Getting Wrong</a></li>
+    <li><a href="https://dev.to/arifulislamat/typesafes-jev-model-is-it-really-193x-faster-and-444x-cheaper-56oa">DEV · Is it really 193x faster?</a></li>
+    <li><a href="https://xenospectrum.com/en/jev-typesafe-bert-classifier-decomposition/">XenoSpectrum · 准确率随提问方式摆动</a></li>
+    <li><a href="https://openrouter.ai/blog/tutorials/jev-vs-llm-when-to-use-each/">OpenRouter · Jev vs LLM 基准</a></li>
+    <li><a href="https://dev.to/bengreenberg/jev-vs-claude-who-wins-4mln">DEV · Jev vs Claude</a></li>
+    <li><a href="https://www.datacamp.com/blog/typesafe-jev-vs-gpt-6-astra">DataCamp · Jev vs GPT-6 Astra</a></li>
+    <li><a href="https://gist.github.com/pjburnhill/adf8d28efcad9df037bfdece178ef965">GitHub Gist · Jev 综合参考（原语、模式、局限）</a></li>
+    <li><a href="https://archerhume.com/posts/jevs-architecture-unmasked/">archerhume · Jev's Architecture Unmasked</a></li>
+    <li><a href="https://lilting.ch/en/articles/jev-clones-architecture-comparison">6 个开源 Jev 仿制品对比</a></li>
+    <li><a href="https://medium.com/google-cloud/how-to-build-a-jev-style-classifier-with-diffusiongemma-and-vllm-ef2e0bfa9ad7">Google Cloud 社区 · 用 DiffusionGemma 做 Jev 式分类器</a></li>
+    <li><a href="https://www.langchain.com/blog/building-a-harness-with-jev">LangChain · Building a Harness with Jev</a></li>
+    <li><a href="https://www.sitepoint.com/build-safer-ai-agent-harness-jev-langchain/">SitePoint · Jev + LangChain 安全 harness</a></li>
+    <li><a href="https://github.com/lizliz404/agent-skills/issues/3">GitHub · Jev 情报汇总（X 上的实测转述）</a></li>
+    <li><a href="https://developers.cloudflare.com/ai/models/typesafe/jev/">Cloudflare AI 文档 · Jev</a></li>
+    <li><a href="https://www.datacamp.com/blog/system-one-models-jev">DataCamp · System One Model That Never Hallucinates</a></li>
+    <li><a href="https://x.com/i/trending/2101370964336578639">X 热门话题 · Jev</a></li>
+  </ul>
+</section>
+
+<footer>本页为学习用讲解。标注“示意”的数值为教学编造；其余数字来自上列来源，未经本人独立复现。</footer>
+</div>
+
+<script>
+(function(){
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- race ---------- */
+  var llmText = '{\n  "department": "billing",\n  "is_refund_request": true,\n  "urgency": "serious",\n  "reason": "用户称被重复扣费，要求退回…"\n}';
+  var toks = llmText.match(/[一-鿿]|[A-Za-z_]+|\s+|[^\sA-Za-z_一-鿿]/g);
+  var stream = document.getElementById('stream'), tl = document.getElementById('t-llm'),
+      tj = document.getElementById('t-jev'), jo = document.getElementById('jevout'), btn = document.getElementById('play');
+  var timer = null;
+  function run(){
+    clearInterval(timer); stream.textContent=''; jo.classList.remove('on'); tj.textContent='计算中…';
+    var i=0;
+    setTimeout(function(){ jo.classList.add('on'); tj.textContent='1 次前向 · 完成'; }, reduce?0:260);
+    if(reduce){ stream.textContent=llmText; tl.textContent=toks.length+' 个 token · 完成'; return; }
+    timer=setInterval(function(){
+      if(i>=toks.length){ clearInterval(timer); tl.textContent=toks.length+' 个 token · 完成'; btn.textContent='↻ 再跑一次'; return; }
+      var s=document.createElement('span'); s.textContent=toks[i];
+      if(/\S/.test(toks[i])) s.className='tok';
+      stream.appendChild(s);
+      if(i>0 && stream.children[i-1]) stream.children[i-1].className='';
+      i++; tl.textContent=i+' 个 token（跑了 '+i+' 次模型）';
+    },70);
+  }
+  btn.addEventListener('click',run);
+  stream.textContent=llmText; tl.textContent=toks.length+' 个 token'; jo.classList.add('on'); tj.textContent='1 次前向';
+
+  /* ---------- primitives demo ---------- */
+  var depts=['账单','技术','销售','其他'];
+  var samples=[
+    {label:'重复扣费',msg:'我这个月被扣了两次钱！请马上退回多扣的那笔，不然我就投诉。',plan:'Pro',noul:.96,dist:[.91,.05,.02,.02],score:2.2},
+    {label:'登录故障',msg:'升级之后一直登不上，提示 403，我们整个团队今天都没法工作。',plan:'Team',noul:.04,dist:[.03,.93,.01,.03],score:2.7},
+    {label:'模糊消息',msg:'你们的东西最近有点怪，价格和用法我都不太懂，能不能找个人聊聊？',plan:'Free',noul:.18,dist:[.34,.29,.27,.10],score:0.9},
+    {label:'询价',msg:'我们公司 200 人，想了解一下企业版的报价和折扣。',plan:'—',noul:.02,dist:[.08,.03,.86,.03],score:0.6}
+  ];
+  function confOf(d){ var h=0; d.forEach(function(p){ if(p>0) h-=p*Math.log(p); }); return 1-h/Math.log(d.length); }
+  var seg=document.getElementById('seg');
+  samples.forEach(function(s,idx){
+    var b=document.createElement('button'); b.type='button'; b.textContent=s.label; b.setAttribute('aria-pressed',idx===0?'true':'false');
+    b.addEventListener('click',function(){ [].forEach.call(seg.children,function(c){c.setAttribute('aria-pressed','false');}); b.setAttribute('aria-pressed','true'); show(idx); });
+    seg.appendChild(b);
+  });
+  function show(k){
+    var s=samples[k];
+    document.getElementById('demo-state').textContent='state = {\n  "message": "'+s.msg+'",\n  "customer": { "plan": "'+s.plan+'" }\n}';
+    document.getElementById('d-noul').textContent=s.noul.toFixed(2);
+    document.getElementById('d-noul-bar').style.width=(s.noul*100)+'%';
+    var max=Math.max.apply(null,s.dist), html='';
+    s.dist.forEach(function(p,i){ var w=p===max?' win':''; html+='<span class="'+w+'">'+depts[i]+'</span><div class="bar"><i style="width:'+(p*100)+'%"></i></div><span class="n'+w+'">'+p.toFixed(2)+'</span>'; });
+    document.getElementById('d-choice').innerHTML=html;
+    var c=confOf(s.dist);
+    document.getElementById('d-choice-conf').textContent='置信度 '+c.toFixed(2)+(c<.5?' · 分布很平，拿不准':'');
+    document.getElementById('d-score').textContent=s.score.toFixed(1);
+    document.getElementById('d-pin').style.left=(s.score/3*100)+'%';
+    document.getElementById('d-score-conf').textContent=s.score>=2?'建议优先处理':'可排队处理';
+  }
+  show(0);
+
+  /* ---------- loop diagram ---------- */
+  var g=document.getElementById('loops'), ns='http://www.w3.org/2000/svg', x=10;
+  var words=['{','"dept','":','"bill','ing','",','"ref','und','":','true','…'];
+  words.forEach(function(w,i){
+    var r=document.createElementNS(ns,'rect'); r.setAttribute('x',x); r.setAttribute('y',44); r.setAttribute('width',66); r.setAttribute('height',34); r.setAttribute('rx',5); r.setAttribute('class','f-slow s-slow'); r.setAttribute('stroke-width','1'); g.appendChild(r);
+    var t=document.createElementNS(ns,'text'); t.setAttribute('x',x+33); t.setAttribute('y',66); t.setAttribute('text-anchor','middle'); t.setAttribute('font-size','11'); t.setAttribute('class','t-slow'); t.textContent= i===words.length-1?'…':'模型'; g.appendChild(t);
+    var o=document.createElementNS(ns,'text'); o.setAttribute('x',x+33); o.setAttribute('y',98); o.setAttribute('text-anchor','middle'); o.setAttribute('font-size','11'); o.setAttribute('class','t-mono t-muted'); o.textContent=w; g.appendChild(o);
+    x+=80;
+  });
+
+  /* ---------- log chart ---------- */
+  var MAX=Math.log10(500);
+  function pos(v){ return Math.log10(v)/MAX*100; }
+  function chart(id,rows){
+    var el=document.getElementById(id), h='';
+    rows.forEach(function(r){
+      h+='<div class="chart-row'+(r.claim?' claim':'')+'"><div class="lbl">'+r.l+'<small>'+r.s+'</small></div><div class="track2"><i style="width:'+Math.max(pos(r.v),.8)+'%"></i></div><div class="val">'+r.v+'×</div></div>';
+    });
+    h+='<div class="axis"><span></span><div class="ticks">'+[1,10,100,500].map(function(t){return '<span style="left:'+pos(t)+'%">'+t+'×</span>';}).join('')+'</div><span></span></div>';
+    el.innerHTML=h;
+  }
+  chart('speed',[
+    {l:'官方标题数字',s:'对比 GPT-6 Astra',v:193.6,claim:true},
+    {l:'多步工作流',s:'TrueStandard 独立测试',v:100},
+    {l:'对比 Claude Sonnet',s:'中位延迟 378 vs 3,554 ms',v:9.4},
+    {l:'公开实测上限',s:'社区汇总的最高值',v:6},
+    {l:'对比 Claude Haiku',s:'中位延迟 239 vs 687 ms',v:2.9},
+    {l:'单次判断',s:'TrueStandard 独立测试',v:1.7},
+    {l:'公开实测下限',s:'来自 TypeSafe 员工本人',v:1.16}
+  ]);
+  chart('cost',[
+    {l:'官方标题数字',s:'对比 GPT-6 Astra',v:445,claim:true},
+    {l:'1 万次评估',s:'$2.27 vs Claude Sonnet $129.74',v:57}
+  ]);
+
+  /* ---------- gate ---------- */
+  var items=[
+    ['重复扣费要退款',.97,1],['密码重置',.95,1],['询价企业版',.93,1],['发票抬头修改',.91,0],
+    ['登录 403',.88,1],['取消订阅',.84,1],['功能建议',.79,0],['数据导出失败',.72,1],
+    ['“有点怪”',.55,0],['合同条款质疑',.48,1],['混合投诉',.41,0],['疑似钓鱼转发',.33,0]
+  ];
+  var hi=document.getElementById('hi'), lo=document.getElementById('lo');
+  function gate(){
+    var H=+hi.value, L=+lo.value;
+    if(L>H){ L=H; lo.value=H; }
+    document.getElementById('hi-o').textContent=H.toFixed(2);
+    document.getElementById('lo-o').textContent=L.toFixed(2);
+    var b={auto:[],human:[],llm:[]};
+    items.forEach(function(it){ var k= it[1]>=H?'auto':(it[1]<L?'llm':'human'); b[k].push(it); });
+    ['auto','human','llm'].forEach(function(k){
+      document.getElementById('b-'+k).innerHTML=b[k].map(function(it){ return '<div class="chip'+(it[2]?'':' wrong')+'"><span>'+it[0]+'</span><span class="mono">'+it[1].toFixed(2)+'</span></div>'; }).join('');
+      document.getElementById('c-'+k).textContent=b[k].length;
+    });
+    var err=b.auto.filter(function(it){return !it[2];}).length;
+    document.getElementById('s-err').textContent=err+' / '+b.auto.length;
+    var cost=items.length*1+b.llm.length*100, all=items.length*100;
+    document.getElementById('s-cost').textContent=cost+' 单位（全用大模型需 '+all+'）';
+  }
+  hi.addEventListener('input',gate); lo.addEventListener('input',gate); gate();
+
+  /* ---------- fit test ---------- */
+  var boxes=document.querySelectorAll('#checks input');
+  function fit(){
+    var n=[].filter.call(boxes,function(b){return b.checked;}).length, p=document.getElementById('fit-pill'), t=document.getElementById('fit-text');
+    document.getElementById('fit-score').textContent=n+'/6';
+    if(n>=5){p.className='pill good';p.textContent='非常适合';t.textContent='典型的 Jev 场景：直接试，同时用真实数据定置信度门槛。';}
+    else if(n>=3){p.className='pill mid';p.textContent='拆开后可能适合';t.textContent='先把问题拆成几个独立的小判断，再看每个能不能交给 Jev。';}
+    else{p.className='pill no';p.textContent='不适合';t.textContent='大概率该用大模型（要写、要想）或普通代码（有明确规则）。';}
+  }
+  [].forEach.call(boxes,function(b){b.addEventListener('change',fit);}); fit();
+})();
+</script>
