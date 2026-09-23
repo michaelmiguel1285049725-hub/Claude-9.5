@@ -1,0 +1,1255 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>大模型八年史</title>
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f1f3ef; --surface:#ffffff; --sunk:#e7eae3; --ink:#15191e; --ink2:#48505a; --muted:#7a818a;
+  --line:#d4d8d0; --line2:#e3e6df;
+  --accent:#2744d0; --accent-soft:#dce2fb; --amber:#b86e0c; --amber-soft:#f6e5c9;
+  --good:#1d7f55; --bad:#b93a27;
+  --t1:#dce4ff; --t2:#f8e3c3; --t3:#d3efdf; --t4:#f5d7dd; --t5:#e5dcf7; --t6:#d4ecf2;
+  --serif:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong","SimSun",serif;
+  --sans:"Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  --mono:"SFMono-Regular",Menlo,Consolas,"Liberation Mono",monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0e1115; --surface:#161a20; --sunk:#1e232b; --ink:#e6e9ed; --ink2:#b1b8c2; --muted:#808893;
+    --line:#2c323b; --line2:#232830;
+    --accent:#8a9dff; --accent-soft:#252e57; --amber:#efac48; --amber-soft:#3b2c14;
+    --good:#4cc28c; --bad:#f07c66;
+    --t1:#27305a; --t2:#43321a; --t3:#193b2c; --t4:#46232b; --t5:#322849; --t6:#183a42;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0e1115; --surface:#161a20; --sunk:#1e232b; --ink:#e6e9ed; --ink2:#b1b8c2; --muted:#808893;
+  --line:#2c323b; --line2:#232830;
+  --accent:#8a9dff; --accent-soft:#252e57; --amber:#efac48; --amber-soft:#3b2c14;
+  --good:#4cc28c; --bad:#f07c66;
+  --t1:#27305a; --t2:#43321a; --t3:#193b2c; --t4:#46232b; --t5:#322849; --t6:#183a42;
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.8;-webkit-font-smoothing:antialiased}
+a{color:var(--accent)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;display:grid;grid-template-columns:190px minmax(0,1fr);gap:56px}
+main{min-width:0;padding-block:24px 96px}
+
+/* rail: the 7 stops are a real sequence, so they are numbered */
+.rail{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;padding-block:40px;max-height:100vh;overflow:auto}
+.rail .rail-h{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+.rail ol{list-style:none;margin:0;padding:0;display:grid;gap:2px;position:relative}
+.rail ol::before{content:"";position:absolute;left:11px;top:12px;bottom:12px;width:1px;background:var(--line)}
+.rail a{display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:center;padding:6px 0;text-decoration:none;color:var(--ink2);font-size:14px;line-height:1.35}
+.rail a .n{width:23px;height:23px;border-radius:50%;background:var(--bg);border:1px solid var(--line);display:grid;place-items:center;font-family:var(--mono);font-size:11px;position:relative}
+.rail a:hover{color:var(--ink)}
+.rail a.on{color:var(--ink);font-weight:700}
+.rail a.on .n{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.rail small{display:block;font-family:var(--mono);font-size:10.5px;color:var(--muted);font-weight:400;letter-spacing:.02em}
+
+@media (max-width:900px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:0}
+  .rail{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding-block:8px;margin-inline:-20px;padding-inline:20px;max-height:none}
+  .rail .rail-h{display:none}
+  .rail ol{display:flex;gap:14px;overflow-x:auto;scrollbar-width:none}
+  .rail ol::before{display:none}
+  .rail a{grid-template-columns:22px auto;white-space:nowrap;gap:6px}
+  .rail small{display:none}
+}
+
+/* type */
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:0 0 10px}
+h1,h2,h3{font-family:var(--serif);text-wrap:balance;margin:0}
+h1{font-size:clamp(32px,5.2vw,54px);line-height:1.18;font-weight:900;letter-spacing:-.01em}
+h1 em{font-style:normal;color:var(--accent)}
+h2{font-size:clamp(26px,3.4vw,36px);line-height:1.25;font-weight:900}
+h3{font-size:19px;line-height:1.4;font-weight:600;margin-top:32px}
+.lead{font-size:18px;color:var(--ink2);max-width:36em;margin:18px 0 0}
+.prose{max-width:38em}
+.prose p{margin:14px 0}
+.prose ul{padding-left:1.2em;margin:12px 0}
+.prose li{margin:6px 0}
+b,strong{font-weight:700}
+.term{font-family:var(--mono);font-size:.86em;background:var(--sunk);padding:1px 6px;border-radius:4px;white-space:nowrap}
+.en{font-family:var(--mono);font-size:.82em;color:var(--muted);font-weight:400;margin-left:.4em}
+
+section.stop{padding-block:64px 24px;border-top:1px solid var(--line);scroll-margin-top:56px}
+.hero{padding-block:48px 24px}
+
+/* figures */
+.fig{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:22px;margin-block:26px}
+.fig-h{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between;margin-bottom:16px}
+.fig-t{font-weight:700;font-size:15px}
+.fig-note{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.cap{font-size:13.5px;color:var(--muted);margin:14px 0 0;line-height:1.65}
+.scroll-x{overflow-x:auto}
+
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 14px;font-size:14px;cursor:pointer;line-height:1.4}
+.btn:hover{border-color:var(--ink2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface);font-weight:500}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.btn:disabled{opacity:.4;cursor:default}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg .btn{border:0;border-radius:0}
+.seg .btn+.btn{border-left:1px solid var(--line)}
+label.ctl{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink2);flex-wrap:wrap}
+label.ctl output{font-family:var(--mono);color:var(--ink);min-width:3.5em;font-variant-numeric:tabular-nums}
+input[type=range]{accent-color:var(--accent);width:180px;max-width:100%}
+
+/* tokens */
+.tok{display:inline-block;font-family:var(--mono);font-size:14.5px;padding:2px 7px;border-radius:5px;background:var(--t1);color:var(--ink);white-space:pre;line-height:1.6}
+.tok:nth-child(6n+2){background:var(--t2)} .tok:nth-child(6n+3){background:var(--t3)} .tok:nth-child(6n+4){background:var(--t4)} .tok:nth-child(6n+5){background:var(--t5)} .tok:nth-child(6n+6){background:var(--t6)}
+.tok-row{display:flex;flex-wrap:wrap;gap:4px}
+
+@keyframes pop{from{background:var(--accent-soft)}to{background:transparent}}
+.gen-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:720px){.gen-grid{grid-template-columns:minmax(0,1fr)}}
+.gen-q{font-size:13px;color:var(--muted);margin-bottom:8px}
+
+.bars{display:grid;gap:6px}
+.bar{display:grid;grid-template-columns:5.5em minmax(0,1fr) 3.6em;gap:10px;align-items:center;font-size:14px;border:0;background:none;padding:3px 4px;border-radius:6px;text-align:left;width:100%}
+button.bar{cursor:pointer}
+button.bar:hover{background:var(--sunk)}
+.bar .lbl{font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .track{display:block;height:14px;background:var(--sunk);border-radius:3px;overflow:hidden}
+.bar .fill{display:block;height:100%;background:var(--accent);border-radius:3px;transition:width .35s ease}
+.bar .fill.amber{background:var(--amber)}
+.bar .pct{font-family:var(--mono);font-size:13px;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink2)}
+.bar.cut{opacity:.35}
+.bar.hi .lbl{font-weight:600;color:var(--accent)}
+
+.callout{border-left:3px solid var(--amber);background:var(--amber-soft);padding:12px 16px;border-radius:0 8px 8px 0;margin:20px 0;font-size:15px;max-width:40em}
+.callout b{color:var(--ink)}
+
+@media (max-width:760px){.train-grid{grid-template-columns:minmax(0,1fr)}}
+.loss-read{display:flex;gap:28px;margin-top:10px;font-size:13px;color:var(--ink2)}
+.loss-read b{display:block;font-family:var(--mono);font-size:22px;color:var(--ink);font-variant-numeric:tabular-nums}
+.phases{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;margin:24px 0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
+@media (max-width:760px){.phases{grid-template-columns:minmax(0,1fr)}}
+.phase{padding:18px 18px 20px;border-right:1px solid var(--line)}
+.phase:last-child{border-right:0}
+@media (max-width:760px){.phase{border-right:0;border-bottom:1px solid var(--line)}.phase:last-child{border-bottom:0}}
+.phase .k{font-family:var(--mono);font-size:11.5px;color:var(--accent);letter-spacing:.08em}
+.phase h4{font-family:var(--serif);font-size:18px;margin:4px 0 8px}
+.phase p{margin:0;font-size:14px;color:var(--ink2);line-height:1.7}
+.phase .data{margin-top:10px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.cmp{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media (max-width:700px){.cmp{grid-template-columns:minmax(0,1fr)}}
+.cmp .col{border:1px solid var(--line);border-radius:10px;padding:14px 16px;background:var(--bg)}
+.cmp .who{font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:6px}
+.cmp .prompt{font-weight:700}
+.cmp .cont{color:var(--accent)}
+.cmp ol{margin:6px 0 0;padding-left:1.3em;color:var(--accent)}
+
+/* scale + myths */
+.spec{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border-top:1px solid var(--line);margin-top:18px}
+@media (max-width:640px){.spec{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.spec div{padding:14px 12px 14px 0;border-bottom:1px solid var(--line)}
+.spec b{display:block;font-family:var(--mono);font-size:26px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.3}
+.spec span{font-size:13px;color:var(--muted)}
+.myths{display:grid;gap:0;margin-top:20px;max-width:46em}
+.myth{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:20px;padding:16px 0;border-bottom:1px solid var(--line)}
+@media (max-width:640px){.myth{grid-template-columns:minmax(0,1fr);gap:4px}}
+.myth .no{color:var(--bad);font-weight:500;text-decoration:line-through;text-decoration-thickness:1px;text-decoration-color:var(--bad)}
+.myth .yes{color:var(--ink2);font-size:15px}
+.recap{font-family:var(--serif);font-size:clamp(17px,2.2vw,21px);line-height:2.1;margin-top:28px;max-width:40em}
+.recap a{text-decoration:none;border-bottom:1px solid var(--accent-soft);white-space:nowrap}
+.recap .arr{color:var(--muted);font-family:var(--mono);margin:0 6px}
+footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:20px;margin-top:56px;max-width:46em}
+
+/* ===== history-specific ===== */
+:root{ --oa:#0d7a62; --oa-soft:#d2eee6; --an:#b4532a; --an-soft:#f6ddd1; --os:#2744d0; --os-soft:#dce2fb; --gg:#7a4bc0; --gg-soft:#e7dcf7; }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --oa:#4cc4a2; --oa-soft:#153a31; --an:#f0936a; --an-soft:#44261a; --os:#8a9dff; --os-soft:#252e57; --gg:#b99af2; --gg-soft:#322849; } }
+:root[data-theme="dark"]{ --oa:#4cc4a2; --oa-soft:#153a31; --an:#f0936a; --an-soft:#44261a; --os:#8a9dff; --os-soft:#252e57; --gg:#b99af2; --gg-soft:#322849; }
+
+.rail small{white-space:nowrap}
+.yr{font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.04em;margin:0 0 6px}
+
+/* lane legend chips */
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--ink2)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 12px;font-size:13px;cursor:pointer;line-height:1.5}
+.chip:hover{border-color:var(--ink2)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip b{font-weight:500}
+
+/* big map */
+.map-scroll{overflow-x:auto;margin-inline:-6px;padding-inline:6px}
+.map-svg{display:block;min-width:1100px;width:100%}
+.map-svg .lane-bg{fill:var(--sunk)}
+.map-svg .lane-t{font-size:12px;font-weight:700;fill:var(--ink)}
+.map-svg .lane-s{font-size:10.5px;fill:var(--muted);font-family:var(--mono)}
+.map-svg .tick{stroke:var(--line);stroke-width:1}
+.map-svg .tick-t{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+.map-svg .era{fill:var(--bg);opacity:.0}
+.map-svg .era-t{font-size:11px;fill:var(--ink2);font-weight:600}
+.map-svg .era-l{stroke:var(--line);stroke-dasharray:3 4}
+.map-svg .zig{stroke:var(--muted);fill:none}
+.nd{cursor:pointer}
+.nd circle{stroke:var(--surface);stroke-width:2;transition:r .15s}
+.nd text{font-size:11px;fill:var(--ink)}
+.nd.big text{font-weight:700}
+.nd:hover circle,.nd:focus circle{r:8}
+.nd:focus{outline:none}
+.nd.sel circle{stroke:var(--ink);stroke-width:2.5}
+.nd.dim{opacity:.16}
+.nd .stem{stroke:var(--line)}
+
+.card{border-top:1px solid var(--line);margin-top:16px;padding-top:16px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:8px 28px;min-height:128px}
+@media (max-width:720px){.card{grid-template-columns:minmax(0,1fr)}}
+.card .who{font-family:var(--mono);font-size:12px;letter-spacing:.06em}
+.card h4{font-family:var(--serif);font-size:22px;margin:2px 0 6px;line-height:1.3}
+.card .date{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.card p{margin:0 0 8px;font-size:15px;color:var(--ink2)}
+.card .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tag{font-size:12px;border-radius:4px;padding:1px 7px;background:var(--sunk);color:var(--ink2)}
+.card .go{font-size:14px}
+
+/* threads matrix */
+.thr{width:100%;border-collapse:collapse;font-size:13.5px;min-width:720px}
+.thr th,.thr td{border-bottom:1px solid var(--line2);padding:8px 8px;vertical-align:top;text-align:left}
+.thr th{font-size:12px;color:var(--muted);font-weight:500}
+.thr td:first-child{font-weight:700;white-space:nowrap;color:var(--ink)}
+.thr td.on{background:var(--accent-soft)}
+.thr td.hot{background:var(--accent);color:var(--surface)}
+.thr td small{display:block;color:inherit;opacity:.85;font-size:12px;line-height:1.5}
+
+/* era stat strip */
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0;border-top:1px solid var(--line);margin-top:18px}
+.facts div{padding:12px 12px 12px 0;border-bottom:1px solid var(--line)}
+.facts b{display:block;font-family:var(--mono);font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.3}
+.facts span{font-size:13px;color:var(--muted)}
+
+/* model entries inside chapters */
+.ms{display:grid;gap:0;margin:20px 0;max-width:46em}
+.m{display:grid;grid-template-columns:7.5em minmax(0,1fr);gap:16px;padding:14px 0;border-bottom:1px solid var(--line2)}
+.m:first-child{border-top:1px solid var(--line2)}
+@media (max-width:560px){.m{grid-template-columns:minmax(0,1fr);gap:2px}}
+.m .d{font-family:var(--mono);font-size:12.5px;color:var(--muted);padding-top:3px}
+.m .d i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px}
+.m h4{margin:0;font-size:16px;font-weight:700}
+.m p{margin:4px 0 0;font-size:15px;color:var(--ink2)}
+.c-oa{background:var(--oa)} .c-an{background:var(--an)} .c-os{background:var(--os)} .c-gg{background:var(--gg)}
+.t-oa{color:var(--oa)} .t-an{color:var(--an)} .t-os{color:var(--os)} .t-gg{color:var(--gg)}
+
+/* generic svg diagram text */
+.dg text{font-size:13px;fill:var(--ink)}
+.dg .sub{font-size:11px;fill:var(--muted);font-family:var(--mono)}
+.dg .box{fill:var(--surface);stroke:var(--line)}
+.dg .box.a{fill:var(--accent-soft);stroke:var(--accent)}
+.dg .box.b{fill:var(--amber-soft);stroke:var(--amber)}
+.dg .box.g{fill:var(--sunk);stroke:var(--line)}
+.dg .ar{stroke:var(--ink2);stroke-width:1.5;fill:none}
+.dg .hl{stroke:var(--accent);stroke-width:2.5;fill:none}
+
+/* log chart */
+.lc text{font-size:12px;fill:var(--ink2)}
+.lc .grid{stroke:var(--line2)}
+.lc .ax{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+.lc .lbl{font-size:12.5px;fill:var(--ink)}
+.lc .val{font-family:var(--mono);font-size:11.5px;fill:var(--ink2)}
+
+/* MoE */
+.moe-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:760px){.moe-grid{grid-template-columns:minmax(0,1fr)}}
+.moe-toks{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.moe-toks button{font-family:var(--mono);font-size:14px;border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:3px 10px;cursor:pointer}
+.moe-toks button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.ex{fill:var(--surface);stroke:var(--line);transition:fill .25s}
+.ex.on{fill:var(--amber-soft);stroke:var(--amber);stroke-width:2}
+.ex-t{font-size:12px;fill:var(--ink);text-anchor:middle}
+.ex-w{font-family:var(--mono);font-size:11px;fill:var(--amber);text-anchor:middle;font-weight:600}
+.rt{stroke:var(--line);stroke-width:1.2;fill:none;transition:stroke .25s,stroke-width .25s}
+.rt.on{stroke:var(--amber);stroke-width:2.5}
+
+/* GRPO */
+.grpo{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:14px}
+@media (max-width:640px){.grpo{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.att{border:1px solid var(--line);border-radius:8px;padding:10px 10px 8px;background:var(--bg);font-size:13px;line-height:1.55;display:grid;gap:4px;align-content:start}
+.att .h{font-family:var(--mono);font-size:11px;color:var(--muted);display:flex;justify-content:space-between}
+.att .ans{font-family:var(--mono);font-size:14px;color:var(--ink)}
+.att.ok{border-color:var(--good)} .att.no{border-color:var(--line)}
+.att .adv{font-family:var(--mono);font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.att.ok .adv{color:var(--good)} .att.no .adv{color:var(--bad)}
+.att .step{color:var(--ink2);font-size:12.5px}
+
+/* thinking demo */
+.think{font-family:var(--mono);font-size:13px;line-height:1.75;background:var(--sunk);border-radius:8px;padding:12px 14px;color:var(--ink2);min-height:120px;white-space:pre-wrap}
+.think .t{color:var(--muted)}
+.think .fin{color:var(--ink);font-weight:700;font-family:var(--sans);font-size:15px}
+.think .wrong{color:var(--bad)}
+.think .right{color:var(--good)}
+
+/* agent loop */
+.ag-grid{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:28px;align-items:start}
+@media (max-width:760px){.ag-grid{grid-template-columns:minmax(0,1fr)}}
+.ag-log{display:grid;gap:6px;font-size:13.5px;min-height:260px;align-content:start}
+.ag-log div{display:grid;grid-template-columns:4.5em minmax(0,1fr);gap:10px;padding:6px 10px;border-radius:6px;background:var(--bg);border:1px solid var(--line2);animation:fadein .3s ease-out}
+.ag-log .k{font-family:var(--mono);font-size:11.5px;padding-top:2px}
+.ag-log code{font-family:var(--mono);font-size:12.5px;background:var(--sunk);padding:0 4px;border-radius:3px;word-break:break-all}
+.ag-log .think-k{color:var(--accent)} .ag-log .act-k{color:var(--amber)} .ag-log .obs-k{color:var(--good)} .ag-log .done-k{color:var(--ink)}
+@keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.loopc .node{fill:var(--surface);stroke:var(--line);stroke-width:1.5;transition:fill .25s,stroke .25s}
+.loopc .node.on{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2.5}
+.loopc text{font-size:13px;fill:var(--ink);text-anchor:middle}
+.loopc .sub{font-size:11px;fill:var(--muted)}
+.loopc .ar{stroke:var(--ink2);stroke-width:1.5;fill:none}
+
+/* three-way comparison */
+.tri{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface);margin:24px 0}
+@media (max-width:820px){.tri{grid-template-columns:minmax(0,1fr)}}
+.tri > div{padding:18px 18px 20px;border-right:1px solid var(--line)}
+.tri > div:last-child{border-right:0}
+@media (max-width:820px){.tri > div{border-right:0;border-bottom:1px solid var(--line)}.tri > div:last-child{border-bottom:0}}
+.tri h4{font-family:var(--serif);font-size:19px;margin:4px 0 10px}
+.tri .k{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em}
+.tri dl{margin:0;display:grid;gap:10px}
+.tri dt{font-size:12px;color:var(--muted)}
+.tri dd{margin:0;font-size:14px;color:var(--ink2);line-height:1.65}
+
+/* glossary */
+details.gl{border-bottom:1px solid var(--line2);padding:10px 0;max-width:46em}
+details.gl summary{cursor:pointer;font-weight:700;list-style:none;display:flex;gap:10px;align-items:baseline}
+details.gl summary::-webkit-details-marker{display:none}
+details.gl summary::before{content:"+";font-family:var(--mono);color:var(--accent);width:1em}
+details.gl[open] summary::before{content:"−"}
+details.gl p{margin:6px 0 0 1.6em;font-size:15px;color:var(--ink2)}
+.src{font-size:13px;color:var(--muted);columns:2 22em;column-gap:32px;padding-left:1.2em}
+.src li{margin:3px 0;break-inside:avoid}
+.src a{color:var(--muted)}
+.map-box{position:relative}
+#map-lanes{position:absolute;left:0;top:0;width:104px;pointer-events:none;z-index:2;background:linear-gradient(90deg,var(--surface) 78%,transparent)}
+#map-lanes div{position:absolute;left:0;display:grid;line-height:1.3}
+#map-lanes b{font-size:12.5px}
+#map-lanes small{font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+</style>
+
+<div class="wrap">
+<nav class="rail" aria-label="目录">
+  <p class="rail-h">八年，七次换挡</p>
+  <ol id="rail">
+    <li><a href="#map"><span class="n">0</span><span>全景图谱<small>2017 → 2026</small></span></a></li>
+    <li><a href="#scale"><span class="n">1</span><span>越大越聪明<small>2018–2020 · scale</small></span></a></li>
+    <li><a href="#align"><span class="n">2</span><span>学会听话<small>2021–2022 · alignment</small></span></a></li>
+    <li><a href="#open"><span class="n">3</span><span>百花齐放<small>2023 · GPT-4 · LLaMA</small></span></a></li>
+    <li><a href="#long"><span class="n">4</span><span>更长、更全、更省<small>2024 · context · MoE</small></span></a></li>
+    <li><a href="#reason"><span class="n">5</span><span>先想再答<small>2024.9–2025 · reasoning</small></span></a></li>
+    <li><a href="#agent"><span class="n">6</span><span>动手做事<small>2025 · agents</small></span></a></li>
+    <li><a href="#now"><span class="n">7</span><span>今天的格局<small>2026 · frontier</small></span></a></li>
+    <li><a href="#threads"><span class="n">+</span><span>主线与误区<small>threads · myths</small></span></a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="hero" id="map">
+  <p class="eyebrow">给新人的大模型发展史 · 续篇</p>
+  <h1>从 GPT-1 到今天：<br><em>八年，七次换挡</em></h1>
+  <p class="lead">上一篇讲的是「一个模型内部怎么运转」。这一篇讲「这台机器这八年是怎么被一步步改造的」。好消息是：核心几乎没变——直到 2026 年，最强的模型仍然是 Transformer，仍然在猜下一个 token。变的是<b>喂给它什么、怎么训练它、让它花多少力气想、以及允许它动手做什么</b>。</p>
+
+  <div class="fig">
+    <div class="fig-h">
+      <span class="fig-t">全景图谱：四条泳道，一百个节点</span>
+      <span class="fig-note">点任意圆点看详情 · 图可以左右拖动</span>
+    </div>
+    <div class="legend" style="margin-bottom:12px">
+      <span><i class="c-oa"></i>OpenAI / ChatGPT</span>
+      <span><i class="c-an"></i>Anthropic / Claude</span>
+      <span><i class="c-os"></i>开源（开放权重）</span>
+      <span><i class="c-gg"></i>谷歌与学术界的关键论文</span>
+    </div>
+    <div class="chips" id="map-chips" role="group" aria-label="按技术主线筛选"></div>
+    <div class="map-box" style="margin-top:14px"><div class="map-scroll" id="map-scroll"><svg class="map-svg" id="map-svg" role="img" aria-label="2017 到 2026 年大模型时间线"></svg></div></div>
+    <div class="card" id="map-card" aria-live="polite"></div>
+    <p class="cap">横轴不是匀速的：2022 年以前事件少，被压缩了；2022 年之后每一年都拉得更宽。大圆点是「换挡」级别的里程碑，读完全文你应该能说出每个大圆点改变了什么。</p>
+  </div>
+
+  <div class="prose">
+    <p>如果只记一件事，记这张表：八年里模型「变强」的来源一共换了七次挡，每一挡都是在前一挡快用完时接上的。</p>
+  </div>
+  <div class="myths" style="margin-top:8px">
+    <div class="myth"><div><b>① 放大</b> <span class="en">2018–2020</span></div><div class="yes">同一个结构，参数、数据、算力一起放大一千倍，能力自己冒出来。</div></div>
+    <div class="myth"><div><b>② 对齐</b> <span class="en">2022</span></div><div class="yes">不再只是变大，而是用人类反馈教它「当个助手」——ChatGPT 由此诞生。</div></div>
+    <div class="myth"><div><b>③ 开放</b> <span class="en">2023</span></div><div class="yes">权重被公开，全世界都能在自家显卡上微调模型，技术扩散加速。</div></div>
+    <div class="myth"><div><b>④ 更长、更全、更省</b> <span class="en">2024</span></div><div class="yes">上下文从几千到一百万 token；能直接听、说、看；混合专家让成本骤降。</div></div>
+    <div class="myth"><div><b>⑤ 先想再答</b> <span class="en">2024.9–2025</span></div><div class="yes">用强化学习训练它先写一长段思考再作答：多花算力想，就答得更准。</div></div>
+    <div class="myth"><div><b>⑥ 动手做事</b> <span class="en">2025</span></div><div class="yes">给它工具和循环：读文件、跑命令、点鼠标，从「回答问题」变成「完成任务」。</div></div>
+    <div class="myth"><div><b>⑦ 能力分级</b> <span class="en">2026</span></div><div class="yes">最强模型强到能自己找网络漏洞，于是出现「公开版 + 受限版」分级发布，安全成了发布流程的一部分。</div></div>
+  </div>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="stop" id="scale">
+  <p class="eyebrow">第 1 挡 · 2018–2020 · Scale</p>
+  <h2>越大越聪明：GPT-1 到 GPT-3</h2>
+  <div class="prose">
+    <p>2017 年谷歌发表 Transformer（你在上一篇第 3、4 站见过它）。OpenAI 做了一个当时看起来很朴素的决定：<b>只拿 Transformer 的「解码器」那半边，在海量文本上练「猜下一个词」</b>，然后不断放大。</p>
+  </div>
+  <div class="ms">
+    <div class="m"><div class="d"><i class="c-oa"></i>2018.06</div><div><h4>GPT-1 · 1.17 亿参数</h4><p>证明了一个范式：先在大量书籍上<b>预训练</b>，再为具体任务（分类、问答）做少量<b>微调</b>。上下文只有 512 个 token。</p></div></div>
+    <div class="m"><div class="d"><i class="c-gg"></i>2018.10</div><div><h4>BERT（谷歌）</h4><p>同期另一条路线：用 Transformer 的「编码器」做「完形填空」。它擅长理解，但不擅长写作，后来生成式路线胜出。</p></div></div>
+    <div class="m"><div class="d"><i class="c-oa"></i>2019.02</div><div><h4>GPT-2 · 15 亿参数</h4><p>放大 10 倍后，出现了<b>零样本</b>能力：不做任何微调，只要把任务写成文字（比如在文章末尾加「TL;DR:」），它就会做摘要。OpenAI 因担心被滥用而分阶段公开权重，这是「AI 安全发布」争论的开端。</p></div></div>
+    <div class="m"><div class="d"><i class="c-gg"></i>2020.01</div><div><h4>缩放定律（Scaling Laws）</h4><p>OpenAI 的 Kaplan 等人发现：模型的损失（上一篇第 7 站的「罚分」）随参数、数据、算力增加，按一条<b>非常规律的幂律曲线</b>下降。这等于说：「砸钱放大」的收益可以提前算出来。</p></div></div>
+    <div class="m"><div class="d"><i class="c-oa"></i>2020.05</div><div><h4>GPT-3 · 1750 亿参数</h4><p>又放大 100 多倍。最大的惊喜叫<b>上下文学习（in-context learning）</b>：在提示里给它看几个例子，它就能照着做，不需要改任何参数。「提示词工程」从这里开始。</p></div></div>
+  </div>
+
+  <div class="fig">
+    <div class="fig-h">
+      <span class="fig-t">参数量：公开过的数字摆在一起</span>
+      <div class="seg" role="group" aria-label="刻度"><button class="btn" id="pc-lin" aria-pressed="true">真实比例</button><button class="btn" id="pc-log" aria-pressed="false">对数刻度</button></div>
+    </div>
+    <div class="scroll-x"><svg class="lc" id="pc-svg" viewBox="0 0 760 330" style="min-width:560px;width:100%"></svg></div>
+    <p class="cap">切到「真实比例」时 GPT-1、GPT-2 几乎看不见——这正是那几年的感受。注意 2023 年起，OpenAI 和 Anthropic 都<b>不再公布参数量</b>（GPT-4「1.8 万亿」只是传闻），所以图里 2023 年后的条目全是开源模型。浅色部分是混合专家模型的总参数，深色是每个 token 实际用到的「激活参数」（第 4 章细讲）。</p>
+  </div>
+
+  <div class="callout"><b>新人要点：</b>这一挡的全部秘诀就是「更大」。结构几乎没改，GPT-3 和 GPT-1 的零件你在上一篇都认识。但也埋下了问题：GPT-3 是个续写高手，不是助手——你问它问题，它可能接着出更多问题（上一篇第 7 站的「番茄炒蛋」例子）。</div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="stop" id="align">
+  <p class="eyebrow">第 2 挡 · 2021–2022 · Alignment</p>
+  <h2>学会听话：从续写机器到 ChatGPT</h2>
+  <div class="prose">
+    <p>上一篇第 7 站讲过「预训练 → 指令微调 → RLHF」三阶段。这三个阶段不是一开始就有的，<b>后两步正是 2022 年才被做成熟的</b>，而它们带来的变化，比 GPT-2 到 GPT-3 的放大还要直观。</p>
+  </div>
+  <div class="ms">
+    <div class="m"><div class="d"><i class="c-an"></i>2021</div><div><h4>Anthropic 成立</h4><p>一批前 OpenAI 研究员（Dario 和 Daniela Amodei 等）出走创立，定位是「AI 安全公司」。这决定了 Claude 后来很多技术选择的底色。</p></div></div>
+    <div class="m"><div class="d"><i class="c-oa"></i>2021.08</div><div><h4>Codex</h4><p>在 GitHub 代码上继续训练 GPT-3，驱动了 GitHub Copilot。第一次证明「会写代码」是大模型的杀手级用途。</p></div></div>
+    <div class="m"><div class="d"><i class="c-gg"></i>2022.01</div><div><h4>思维链提示（Chain-of-Thought）</h4><p>谷歌发现：在例子里写出解题步骤，模型就会模仿「一步步推」，数学题正确率大涨。记住这个发现——它是第 5 章推理模型的种子。</p></div></div>
+    <div class="m"><div class="d"><i class="c-oa"></i>2022.01</div><div><h4>InstructGPT · RLHF</h4><p>人类标注员对模型的多个回答排序，训练出一个「打分模型」，再用强化学习让 GPT-3 朝高分方向调整。结果：<b>13 亿参数的 InstructGPT，比 1750 亿参数的 GPT-3 更受评估者喜欢</b>——小 100 多倍，却更好用。</p></div></div>
+    <div class="m"><div class="d"><i class="c-gg"></i>2022.03</div><div><h4>Chinchilla（DeepMind）</h4><p>修正了缩放定律：之前的模型「参数太多、数据太少」。算力固定时，每个参数大约配 20 个训练 token 最划算。此后各家都开始拼命找更多数据。</p></div></div>
+    <div class="m"><div class="d"><i class="c-oa"></i>2022.11.30</div><div><h4>ChatGPT</h4><p>把 RLHF 用在对话上，再套一个免费的聊天网页。技术上不是最大的跃进，产品上却是引爆点：据报道约两个月达到 1 亿用户。<b>ChatGPT 是产品名</b>，它背后的模型之后换过很多代。</p></div></div>
+    <div class="m"><div class="d"><i class="c-an"></i>2022.12</div><div><h4>宪法 AI（Constitutional AI）</h4><p>Anthropic 的答案：与其让人给每个回答打分，不如写一份「宪法」（一组原则），让 AI 按原则批评、修改自己的回答，再用 AI 的评判做强化学习（RLAIF）。这是 Claude 的训练底座。</p></div></div>
+  </div>
+
+  <div class="fig">
+    <div class="fig-h">
+      <span class="fig-t">两种「教它听话」的流水线</span>
+      <div class="seg" role="group" aria-label="流水线"><button class="btn" id="al-rlhf" aria-pressed="true">RLHF（人来评）</button><button class="btn" id="al-cai" aria-pressed="false">宪法 AI（AI 按原则评）</button></div>
+    </div>
+    <div class="phases" id="al-steps" style="margin:0"></div>
+    <p class="cap" id="al-cap"></p>
+  </div>
+
+  <div class="callout"><b>新人要点：</b>这一挡证明了「怎么训」和「多大」一样重要。从此每家公司的核心竞争力，一半在预训练，一半在<b>后训练</b>（post-training）——而后训练恰恰是外界最看不到的部分。</div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="stop" id="open">
+  <p class="eyebrow">第 3 挡 · 2023 · GPT-4 · Claude · LLaMA</p>
+  <h2>百花齐放：闭源冲顶，开源破圈</h2>
+  <div class="prose">
+    <p>ChatGPT 之后的 2023 年，行业分成了两个阵营。<b>闭源</b>：只能通过网页或 API 使用，模型文件不公开（OpenAI、Anthropic、谷歌）。<b>开放权重</b>：把训练好的参数文件公开，谁都能下载、在自己的电脑上运行和改造（Meta、Mistral、阿里等）。</p>
+  </div>
+  <h3>闭源阵营</h3>
+  <div class="ms">
+    <div class="m"><div class="d"><i class="c-oa"></i>2023.03.14</div><div><h4>GPT-4</h4><p>能力大跳跃：模拟律师资格考试成绩进入前 10%（GPT-3.5 在后 10%）。能<b>看图</b>（先对部分用户开放）。上下文 8K / 32K。技术报告几乎不披露任何架构和规模——从这里开始，前沿模型进入「黑盒」时代。</p></div></div>
+    <div class="m"><div class="d"><i class="c-an"></i>2023.03.14</div><div><h4>Claude 1</h4><p>和 GPT-4 同一天发布，第一个用宪法 AI 训练的公开模型，同时有一个更快更便宜的 Claude Instant。</p></div></div>
+    <div class="m"><div class="d"><i class="c-an"></i>2023.05</div><div><h4>Claude 上下文 → 10 万 token</h4><p>一次能读进一整本长篇小说。当时 GPT-4 最多 3.2 万。Claude 从此以「长上下文」出名。</p></div></div>
+    <div class="m"><div class="d"><i class="c-oa"></i>2023.06</div><div><h4>函数调用（Function Calling）</h4><p>API 允许模型输出一段结构化的「我要调用某个函数，参数是……」，由程序去真的执行。这是第 6 章「智能体」的地基。</p></div></div>
+    <div class="m"><div class="d"><i class="c-an"></i>2023.07</div><div><h4>Claude 2 → 2.1（11 月）</h4><p>推出 claude.ai 网页；2.1 把上下文翻倍到 <b>20 万</b>，幻觉减半，并开始支持工具调用。</p></div></div>
+    <div class="m"><div class="d"><i class="c-oa"></i>2023.11</div><div><h4>GPT-4 Turbo</h4><p>12.8 万上下文、价格大降。同年 9 月 ChatGPT 已能看图、听说语音。</p></div></div>
+    <div class="m"><div class="d"><i class="c-gg"></i>2023.12</div><div><h4>Gemini 1.0（谷歌）</h4><p>谷歌第一个「从一开始就同时学文字、图像、音频」的原生多模态模型家族。</p></div></div>
+  </div>
+
+  <h3>开源阵营：一次泄露引发的浪潮</h3>
+  <div class="ms">
+    <div class="m"><div class="d"><i class="c-os"></i>2023.02</div><div><h4>LLaMA（Meta）</h4><p>70 亿到 650 亿参数，只对研究者开放，但一周后权重就在网上泄露。关键发现：<b>130 亿参数的 LLaMA 在多数测试上超过 1750 亿的 GPT-3</b>——因为它按 Chinchilla 的思路，用了多得多的数据。</p></div></div>
+    <div class="m"><div class="d"><i class="c-os"></i>2023.03</div><div><h4>Alpaca / Vicuna</h4><p>斯坦福用不到 600 美元，拿 GPT-3.5 生成的 5.2 万条指令数据微调 LLaMA-7B，得到一个「像 ChatGPT」的小模型。人人都能做微调的时代开始了。</p></div></div>
+    <div class="m"><div class="d"><i class="c-gg"></i>2023.05</div><div><h4>QLoRA / DPO</h4><p>QLoRA 让一张 48GB 显卡就能微调 650 亿参数的模型；DPO 把 RLHF 简化成一步普通训练，不再需要单独的打分模型——开源社区终于也能做「对齐」。</p></div></div>
+    <div class="m"><div class="d"><i class="c-os"></i>2023.07</div><div><h4>Llama 2</h4><p>Meta 正式开放，并且<b>允许商用</b>，附带 RLHF 训练好的聊天版。企业从此可以合法地私有部署大模型。</p></div></div>
+    <div class="m"><div class="d"><i class="c-os"></i>2023.08–09</div><div><h4>通义千问 Qwen · Mistral 7B</h4><p>阿里的 Qwen 开始开源（后来成为全球下载量最大的开源家族之一）；法国的 Mistral 7B 用更聪明的注意力设计，以 70 亿参数打败 Llama 2 的 130 亿。</p></div></div>
+    <div class="m"><div class="d"><i class="c-os"></i>2023.12</div><div><h4>Mixtral 8×7B</h4><p>把<b>混合专家（MoE）</b>带进开源：总参数 467 亿，但每个 token 只动用约 130 亿。第 4 章你会亲手操作它。</p></div></div>
+  </div>
+
+  <div class="fig">
+    <div class="fig-h">
+      <span class="fig-t">LoRA：为什么普通人也能微调大模型</span>
+      <span class="fig-note">真实算术 · 一个 4096×4096 的权重矩阵</span>
+    </div>
+    <div class="lay-grid">
+      <svg class="dg" id="lora-svg" viewBox="0 0 360 250" style="width:100%;max-width:420px"></svg>
+      <div>
+        <label class="ctl" for="lora-r">秩 r（小矩阵的「宽度」） <input type="range" id="lora-r" min="1" max="64" value="8"> <output id="lora-r-o">8</output></label>
+        <div class="stats" id="lora-stats"></div>
+        <p class="cap">微调时不改原来那块巨大的矩阵 W（灰色，冻结），只在旁边训练两块又细又长的小矩阵 A 和 B，二者相乘就是对 W 的修正。r = 8 时要训练的数字只有原来的 0.4%，显存和训练成本随之骤降。LoRA 论文是 2021 年的，但真正火起来是在 2023 年的 LLaMA 浪潮里。</p>
+      </div>
+    </div>
+  </div>
+  <div class="callout"><b>新人要点：</b>「开源模型」通常指<b>开放权重</b>：参数文件公开，但训练数据和训练代码往往不公开。像菜谱没给，但做好的菜可以随便拿回家加工。</div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="stop" id="long">
+  <p class="eyebrow">第 4 挡 · 2024 · Context · Multimodal · Efficiency</p>
+  <h2>更长、更全、更省</h2>
+  <div class="prose">
+    <p>2024 年没有一个像 ChatGPT 那样的单点爆炸，而是三条线同时推进：<b>能读的更长</b>（上下文窗口），<b>能处理的更全</b>（图像、语音原生进出），<b>用起来更便宜</b>（混合专家、蒸馏、小模型）。</p>
+  </div>
+
+  <div class="fig">
+    <div class="fig-h">
+      <span class="fig-t">上下文窗口：一次能「看见」多少 token</span>
+      <span class="fig-note">对数刻度 · 每格 ×10</span>
+    </div>
+    <div class="scroll-x"><svg class="lc" id="ctx-svg" viewBox="0 0 760 420" style="min-width:560px;width:100%"></svg></div>
+    <p class="cap">回忆上一篇第 6 站：模型「记得」的只是窗口里的内容。窗口从 512 涨到一百万，约 2000 倍。换算参考：1 万 token 约等于 7500 个英文单词；10 万 token 大约是一本长篇小说；100 万 token 能装下一个中型代码仓库。窗口变长靠的是注意力算法的优化（如 FlashAttention）和位置编码的外推（如 RoPE 的扩展技巧）。</p>
+  </div>
+
+  <div class="ms">
+    <div class="m"><div class="d"><i class="c-gg"></i>2024.02</div><div><h4>Gemini 1.5 · 100 万 token</h4><p>第一个把百万级上下文做成产品的模型，打开了长上下文竞赛。</p></div></div>
+    <div class="m"><div class="d"><i class="c-an"></i>2024.03</div><div><h4>Claude 3 家族：Haiku / Sonnet / Opus</h4><p>第一次把模型按「小快便宜 / 均衡 / 最强」分成三档，全部能看图、20 万上下文。之后各家都采用了这种分档做法。</p></div></div>
+    <div class="m"><div class="d"><i class="c-oa"></i>2024.05</div><div><h4>GPT-4o（o = omni，全能）</h4><p>之前的语音模式是三段拼接：语音转文字 → GPT-4 → 文字转语音，平均延迟好几秒，还丢了语气。GPT-4o 是<b>一个模型端到端</b>直接吃进声音、吐出声音，平均响应约 320 毫秒，接近人类对话节奏，还能听出情绪、被打断。</p></div></div>
+    <div class="m"><div class="d"><i class="c-an"></i>2024.05</div><div><h4>「百万特征」可解释性研究</h4><p>Anthropic 从 Claude 3 Sonnet 内部提取出数百万个人类可理解的「特征」（比如一个专门对应「金门大桥」的方向），第一次在大模型里大规模看清「它在想什么」。</p></div></div>
+    <div class="m"><div class="d"><i class="c-an"></i>2024.06</div><div><h4>Claude 3.5 Sonnet + Artifacts</h4><p>中档价格超过自家顶档 Opus，编程能力大幅领先；「Artifacts」让代码和网页直接在对话旁边运行——你正在看的这种页面，就是这个功能的后代。</p></div></div>
+    <div class="m"><div class="d"><i class="c-oa"></i>2024.07</div><div><h4>GPT-4o mini</h4><p>每百万输入 token 0.15 美元。对比 2023 年 GPT-4 刚发布时的 30 美元，同级能力的价格一年多降了约 200 倍。</p></div></div>
+    <div class="m"><div class="d"><i class="c-os"></i>2024.07</div><div><h4>Llama 3.1 · 4050 亿参数</h4><p>第一个在主要测试上接近 GPT-4 的开源模型，开源与闭源的差距从「一年多」缩到「几个月」。</p></div></div>
+    <div class="m"><div class="d"><i class="c-os"></i>2024.05 / 12</div><div><h4>DeepSeek-V2 → V3</h4><p>V2 发明了<b>多头潜在注意力（MLA）</b>，把推理时占显存最多的 KV 缓存大幅压缩，引发中国大模型 API 价格战。V3：6710 亿总参数、每个 token 只激活 370 亿，用 FP8 低精度训练，论文称最终一轮训练只花了约 558 万美元（不含前期研究）。</p></div></div>
+  </div>
+
+  <div class="fig">
+    <div class="fig-h">
+      <span class="fig-t">混合专家（MoE）：参数很多，每次只用一小部分</span>
+      <span class="fig-note">示意 · 8 个专家选 2 个</span>
+    </div>
+    <div class="moe-grid">
+      <div>
+        <div class="gen-q">点一个 token，看路由器把它派给谁</div>
+        <div class="moe-toks" id="moe-toks"></div>
+        <svg id="moe-svg" viewBox="0 0 440 250" style="width:100%"></svg>
+      </div>
+      <div>
+        <div class="stats" id="moe-stats" style="margin-top:0"></div>
+        <div class="prose" style="font-size:15px">
+          <p>上一篇第 4 站里，每层有一个「前馈网络」负责消化信息。MoE 把它拆成很多个并排的<b>专家</b>，再加一个小小的<b>路由器</b>：每来一个 token，路由器只挑分数最高的 2 个专家干活，其余的休息。</p>
+          <p>好处：模型「知道」的东西由总参数决定，计算成本却只由激活参数决定。2025–2026 年几乎所有大型开源模型都是 MoE。</p>
+          <p style="color:var(--muted);font-size:13.5px">专家的分工是训练中自发形成的，通常不是「数学专家」「诗歌专家」这种人能读懂的分类，而更像按标点、代码语法、某类词形分工。图中的分工是简化示意。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ms">
+    <div class="m"><div class="d"><i class="c-an"></i>2024.10</div><div><h4>Computer Use（电脑操作）</h4><p>升级版 Claude 3.5 Sonnet 能看屏幕截图、移动鼠标、敲键盘，第一次让通用模型直接「用电脑」。很笨很慢，但方向是对的——见第 6 章。</p></div></div>
+    <div class="m"><div class="d"><i class="c-an"></i>2024.11</div><div><h4>MCP（模型上下文协议）</h4><p>Anthropic 开源的一个统一「插头标准」，让任何模型都能用同一种方式连接任何工具和数据源。后来 OpenAI、谷歌都采用了它，2025 年底被捐给 Linux 基金会。</p></div></div>
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="stop" id="reason">
+  <p class="eyebrow">第 5 挡 · 2024.09–2025 · Reasoning</p>
+  <h2>先想再答：推理模型</h2>
+  <div class="prose">
+    <p>到 2024 年，「继续放大预训练」的收益开始变贵：好的文本数据快用完了，训练一次要上亿美元。于是出现了一个新方向——<b>让模型在回答之前，先花更多 token 思考</b>。这叫<b>测试时计算</b>（test-time compute）：算力不只花在训练时，也花在每次回答时。</p>
+    <p>关键是：结构没变，它仍然只是在猜下一个 token。只不过它被训练成先写出一长段「草稿」（思考过程），再写答案。草稿里的每一步，都成了后面 token 能「看见」的上下文。</p>
+  </div>
+
+  <div class="fig">
+    <div class="fig-h">
+      <span class="fig-t">同一道题：直接答 vs 先想再答</span>
+      <span class="fig-note">示意 · 经典的「球拍和球」陷阱题</span>
+    </div>
+    <p style="margin:0 0 12px;font-weight:700">球拍和球一共 1.10 元，球拍比球贵 1 元。球多少钱？</p>
+    <div class="controls" style="margin-bottom:12px">
+      <button class="btn" id="th-fast">直接答</button>
+      <button class="btn primary" id="th-slow">先想再答</button>
+    </div>
+    <div class="think" id="th-out" aria-live="polite"><span class="t">点上面任一按钮</span></div>
+    <div class="stats" id="th-stats"></div>
+    <p class="cap">直觉答案「0.10 元」是错的（那样球拍 1.10、合计 1.20）。直接答时，模型必须在写下第一个数字时就「一步到位」；先想再答时，前面写下的每一步都在帮它算后面的步骤。多出来的那几十个 token，就是测试时计算的全部含义。</p>
+  </div>
+
+  <div class="ms">
+    <div class="m"><div class="d"><i class="c-oa"></i>2024.09.12</div><div><h4>o1-preview：第一个推理模型</h4><p>OpenAI 用强化学习训练模型产生长长的内部思维链。在数学竞赛和编程题上大幅超过 GPT-4o，而且<b>思考时间越长越准</b>。思考过程默认对用户隐藏。</p></div></div>
+    <div class="m"><div class="d"><i class="c-oa"></i>2024.12</div><div><h4>o3 预告</h4><p>在专门测试「举一反三」的 ARC-AGI 上拿到高分，显示推理这条路还远没到头。2025 年 4 月正式发布，并能在思考过程中<b>调用工具</b>（搜索、运行代码、看图）。</p></div></div>
+    <div class="m"><div class="d"><i class="c-os"></i>2025.01.20</div><div><h4>DeepSeek-R1：把配方公开</h4><p>性能接近 o1，但<b>权重和方法全部公开</b>（MIT 协议）。最震撼的是 R1-Zero：跳过人写的示范，<b>只用强化学习</b>——做对数学题就给奖励——模型自己学会了反思、检查、推翻重来。一周后英伟达单日市值蒸发约 5890 亿美元，创美股纪录。</p></div></div>
+    <div class="m"><div class="d"><i class="c-an"></i>2025.02.24</div><div><h4>Claude 3.7 Sonnet：混合推理</h4><p>第一个「一个模型两种模式」的推理模型：可以秒答，也可以打开<b>扩展思考</b>并看到它的思考过程，开发者还能设定思考预算。2026 年演进为「自适应思考」——由模型自己决定这题要想多久。</p></div></div>
+    <div class="m"><div class="d"><i class="c-gg"></i>2025.03</div><div><h4>Gemini 2.5 · Qwen3（4 月）</h4><p>推理成为标配。Qwen3 在开源模型里也做了「思考 / 不思考」一键切换。</p></div></div>
+    <div class="m"><div class="d"><i class="c-oa"></i>2025.08.07</div><div><h4>GPT-5：把两种模型合成一个系统</h4><p>用户不再需要在「GPT-4o」和「o3」之间自己挑。一个<b>实时路由器</b>判断问题难度，简单的交给快模型，难的交给会深思的模型。</p></div></div>
+  </div>
+
+  <div class="fig">
+    <div class="fig-h">
+      <span class="fig-t">推理能力怎么「练」出来的：可验证奖励 + 组内比较</span>
+      <span class="fig-note">GRPO 的简化示意 · 数据随机生成</span>
+    </div>
+    <p style="margin:0 0 8px">题目：<b>12 × 15 = ?</b> 让模型对同一道题写 8 份解答，程序自动核对最终答案。</p>
+    <div class="controls">
+      <button class="btn primary" id="gr-sample">采样一组 8 份</button>
+      <button class="btn" id="gr-train">用这组更新模型</button>
+      <button class="btn" id="gr-reset">重来</button>
+    </div>
+    <div class="grpo" id="gr-grid"></div>
+    <div class="stats" id="gr-stats"></div>
+    <p class="cap">每份解答的「优势」= 它的得分 − 这一组的平均分（再除以标准差）。高于平均的解答里的每一个 token 被调高概率，低于平均的被调低。注意：如果 8 份<b>全对或全错</b>，优势全是 0，这一组什么都学不到——所以训练题要选「有时做得对、有时做不对」的难度。这类方法统称 <b>RLVR</b>（可验证奖励的强化学习），适合数学、代码这种能自动判对错的领域。</p>
+  </div>
+  <div class="callout"><b>新人要点：</b>2022 年的 RLHF 靠「人觉得哪个好」打分，2025 年的推理训练靠「答案对不对」打分。后者可以无限自动化、不需要人，所以才能练出长达几万 token 的推理。</div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="stop" id="agent">
+  <p class="eyebrow">第 6 挡 · 2025 · Agents</p>
+  <h2>动手做事：从聊天到智能体</h2>
+  <div class="prose">
+    <p><b>智能体（agent）不是一种新模型</b>，而是一种用法：把模型放进一个循环里——它想一步，输出一个「调用工具」的指令，程序真的去执行（跑命令、读文件、搜网页、点鼠标），把结果塞回上下文，它再想下一步——直到任务完成。</p>
+    <p>这个循环 2022 年就有论文（ReAct）和 2023 年的业余尝试（AutoGPT），但那时的模型跑十几步就会迷路。<b>推理能力 + 长上下文 + 专门的工具使用训练</b>凑齐之后，2025 年它才真正可用。</p>
+  </div>
+
+  <div class="fig">
+    <div class="fig-h">
+      <span class="fig-t">一个编程智能体修 bug 的全过程</span>
+      <span class="fig-note">示意 · 类似 Claude Code / Codex 的工作方式</span>
+    </div>
+    <p style="margin:0 0 12px">任务：<b>「测试挂了，帮我修好。」</b></p>
+    <div class="ag-grid">
+      <div>
+        <svg class="loopc" id="ag-svg" viewBox="0 0 280 250" style="width:100%;max-width:320px"></svg>
+        <div class="controls" style="margin-top:10px">
+          <button class="btn primary" id="ag-next">下一步</button>
+          <button class="btn" id="ag-all">全部播放</button>
+          <button class="btn" id="ag-reset">重来</button>
+        </div>
+      </div>
+      <div class="ag-log" id="ag-log" aria-live="polite"></div>
+    </div>
+    <p class="cap">每一个「行动」都是模型输出的一段结构化文字，由外面的程序执行；每一个「观察」都是程序把结果写回上下文。模型本身从头到尾只做一件事：猜下一个 token。</p>
+  </div>
+
+  <div class="ms">
+    <div class="m"><div class="d"><i class="c-oa"></i>2025.01–02</div><div><h4>Operator · Deep Research</h4><p>OpenAI 的浏览器智能体（替你在网页上点击填表）和深度研究（自己搜几十个网页、写成报告）。</p></div></div>
+    <div class="m"><div class="d"><i class="c-an"></i>2025.02 / 05</div><div><h4>Claude Code</h4><p>在终端里运行的编程智能体：读整个代码库、改文件、跑测试、提交代码。2 月预览，5 月随 <b>Claude 4</b>（Opus 4 / Sonnet 4）正式发布。Claude 4 专门为「连续工作几小时」的长任务训练，Opus 4 也是 Anthropic 第一个按更高安全等级（ASL-3）防护发布的模型。</p></div></div>
+    <div class="m"><div class="d"><i class="c-oa"></i>2025.05 / 07</div><div><h4>Codex 智能体 · ChatGPT agent</h4><p>Codex 在云端沙盒里并行处理编程任务（和 2021 年的 Codex 模型同名但是两回事）；ChatGPT agent 把网页操作和深度研究合并，给模型一台自己的虚拟电脑。</p></div></div>
+    <div class="m"><div class="d"><i class="c-os"></i>2025.07–08</div><div><h4>Kimi K2 · GLM-4.5 · gpt-oss</h4><p>开源模型也转向智能体：月之暗面的 Kimi K2（1 万亿总参数）、智谱的 GLM-4.5 都主打工具调用和编程。OpenAI 发布 gpt-oss，这是它自 GPT-2 以来第一次开放权重，1170 亿参数的版本一张 80GB 显卡就能跑。</p></div></div>
+    <div class="m"><div class="d"><i class="c-an"></i>2025.09–11</div><div><h4>Sonnet 4.5 · Haiku 4.5 · Agent Skills · Opus 4.5</h4><p>Sonnet 4.5 主打长时间自主工作和电脑操作；<b>Agent Skills</b> 把「怎么做某类任务」的说明和脚本打包成文件夹，模型需要时再加载，而不是全塞进提示词；Opus 4.5 成为第一个在 SWE-bench Verified（真实 GitHub 问题修复）上超过 80% 的模型，价格却降了约三分之二。</p></div></div>
+    <div class="m"><div class="d"><i class="c-oa"></i>2025.11–12</div><div><h4>GPT-5.1 · GPT-5.2</h4><p>OpenAI 改为高频小版本迭代：更好的表格、幻灯片、长上下文与多步工作。</p></div></div>
+  </div>
+
+  <div class="fig">
+    <div class="fig-h">
+      <span class="fig-t">MCP 解决的问题：插头标准</span>
+      <div class="seg" role="group" aria-label="是否使用 MCP"><button class="btn" id="mcp-off" aria-pressed="true">没有 MCP</button><button class="btn" id="mcp-on" aria-pressed="false">有了 MCP</button></div>
+    </div>
+    <div class="scroll-x"><svg class="dg" id="mcp-svg" viewBox="0 0 640 250" style="min-width:480px;width:100%"></svg></div>
+    <p class="cap" id="mcp-cap"></p>
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="stop" id="now">
+  <p class="eyebrow">第 7 挡 · 2026 · Frontier</p>
+  <h2>今天的格局：强到需要分级发布</h2>
+  <div class="prose">
+    <p>2026 年的主旋律有三个：<b>百万 token 成为标配</b>；<b>智能体从写代码扩展到操作整台电脑</b>；以及一个全新的现象——最强模型的网络攻防能力强到公司不敢直接公开，于是出现了「<b>公开版 + 受限版</b>」的分级发布。</p>
+  </div>
+  <div class="ms">
+    <div class="m"><div class="d"><i class="c-an"></i>2026.01–02</div><div><h4>Cowork · Opus 4.6 · Sonnet 4.6</h4><p>Cowork 是给非程序员的桌面智能体；Opus 4.6 第一次给 Opus 带来 100 万上下文，并加入「智能体团队」：多个智能体分工协作同一个任务。</p></div></div>
+    <div class="m"><div class="d"><i class="c-oa"></i>2026.03</div><div><h4>GPT-5.4：原生电脑操作</h4><p>第一个自带电脑操作能力的主线 GPT，在 OSWorld-Verified 上得分 75.0%，超过 72.4% 的人类基线。之后 4 月的 GPT-5.5 在智能体编程和知识工作上继续提升。</p></div></div>
+    <div class="m"><div class="d"><i class="c-an"></i>2026.04.07</div><div><h4>Claude Mythos Preview · Glasswing 计划</h4><p>比 Opus 更高一级的模型，能自主发现并利用软件的零日漏洞。Anthropic 没有公开它，只提供给 AWS、苹果、谷歌、微软、Linux 基金会等合作方去<b>修</b>漏洞。「能力太强所以暂不公开」第一次真正发生。</p></div></div>
+    <div class="m"><div class="d"><i class="c-os"></i>2026.02–04</div><div><h4>Qwen3.5 · DeepSeek-V4 · Gemma 4</h4><p>开源模型开始动注意力本身：Qwen3.5 混用线性注意力，DeepSeek-V4 用压缩稀疏注意力，在 100 万上下文下只需 V3.2 约 27% 的计算量和 10% 的 KV 缓存。Meta 则把最前沿模型改为闭源，开源侧的领跑者换成了中国实验室。</p></div></div>
+    <div class="m"><div class="d"><i class="c-an"></i>2026.06.09</div><div><h4>Claude Fable 5 / Mythos 5</h4><p>同一个底层模型的两个版本：<b>Fable 5</b> 对公众开放，内置安全分类器，遇到高风险的网络攻击、生物化学请求时改由 Opus 4.8 回答；<b>Mythos 5</b> 去掉这些限制，只给经过审核的用户。</p></div></div>
+    <div class="m"><div class="d"><i class="c-an"></i>2026.06–07</div><div><h4>Sonnet 5 · Opus 5</h4><p>Sonnet 5 以中档价格接近 Opus 4.8；Opus 5 带来 100 万上下文、12.8 万输出和<b>自适应思考</b>。</p></div></div>
+    <div class="m"><div class="d"><i class="c-oa"></i>2026.07.09</div><div><h4>GPT-5.6 Sol / Terra / Luna</h4><p>OpenAI 也改为「大中小」三档同时发布；因美国商务部审查，先对受信任伙伴开放两周。</p></div></div>
+    <div class="m"><div class="d"><i class="c-os"></i>2026.07</div><div><h4>Kimi K3 · 2.8 万亿参数</h4><p>迄今最大的开放权重模型（MoE），100 万上下文。</p></div></div>
+    <div class="m"><div class="d"><i class="c-oa"></i>2026.09.03</div><div><h4>GPT-6 Astra：循环深度</h4><p>OpenAI 第一个在自家准备框架里被评为网络安全「关键」风险级别的模型，最敏感的能力需申请开放。技术上的新东西是<b>循环深度</b>（looped transformer）：同一组层对每个 token 反复走几遍，在内部「多想几轮」，而不全靠写出来的思维链。这引发了争议：推理藏进模型内部，人类就更难监督它在想什么。</p></div></div>
+    <div class="m"><div class="d"><i class="c-an"></i>2026.09</div><div><h4>Fable 5.1 · Opus 5.5</h4><p>9 月 22 日发布的 Opus 5.5 在多数工作上达到 Fable 5.1 的水平，典型工作负载成本比 Opus 5 低约 40%，速度快约 30%；Sonnet 5.5 与 Haiku 5.5 预告将在几周内推出。</p></div></div>
+  </div>
+
+  <div class="fig">
+    <div class="fig-h">
+      <span class="fig-t">三种「多想一会儿」的方式</span>
+      <span class="fig-note">示意</span>
+    </div>
+    <div class="scroll-x"><svg class="dg" id="loop-svg" viewBox="0 0 720 250" style="min-width:600px;width:100%"></svg></div>
+    <p class="cap">左：普通模型，每个 token 走一遍所有层（上一篇第 4 站）。中：推理模型，把思考写成可见的 token，算力花在「更长」。右：循环深度，把同一组层反复使用，算力花在「更深」，思考不留下文字痕迹。</p>
+  </div>
+
+  <h3>ChatGPT、Claude、开源：三条路线</h3>
+  <div class="tri">
+    <div>
+      <span class="k t-oa">OPENAI · CHATGPT</span>
+      <h4>面向所有人的全能产品</h4>
+      <dl>
+        <dt>招牌技术</dt><dd>缩放定律与 GPT-3；RLHF 聊天；GPT-4o 原生语音；o1 开创推理模型；GPT-5 路由；GPT-6 Astra 循环深度</dd>
+        <dt>2026 年的样子</dt><dd>GPT-5.6 Sol / Terra / Luna 三档 + GPT-6 Astra；ChatGPT agent 和 Codex 负责动手做事</dd>
+        <dt>命名怎么读</dt><dd>数字是代际（GPT-4 → 5 → 6）；o 系列是早期推理线，已并入 GPT-5；mini / nano 是小号</dd>
+      </dl>
+    </div>
+    <div>
+      <span class="k t-an">ANTHROPIC · CLAUDE</span>
+      <h4>安全优先，专攻编程与智能体</h4>
+      <dl>
+        <dt>招牌技术</dt><dd>宪法 AI；长上下文先行者；可解释性研究；Computer Use；MCP；Claude Code；Agent Skills</dd>
+        <dt>2026 年的样子</dt><dd>Fable 5.1 / Mythos 5.1（同模型两种安全配置）、Opus 5.5、Sonnet 5；Cowork 把智能体带给非程序员</dd>
+        <dt>命名怎么读</dt><dd>Haiku（小）/ Sonnet（中）/ Opus（大）是档位，数字是代际；Fable / Mythos 是更高一级的前沿档</dd>
+      </dl>
+    </div>
+    <div>
+      <span class="k t-os">开放权重阵营</span>
+      <h4>可下载、可改造、可私有部署</h4>
+      <dl>
+        <dt>招牌技术</dt><dd>LLaMA + LoRA 的微调浪潮；MoE 普及；MLA 与稀疏注意力；R1 公开推理配方；FP8 低成本训练</dd>
+        <dt>2026 年的样子</dt><dd>DeepSeek、Qwen、Kimi、GLM、MiniMax 领跑，万亿级 MoE + 100 万上下文；Meta 前沿转闭源；OpenAI 有 gpt-oss</dd>
+        <dt>和闭源的差距</dt><dd>通常落后前沿几个月，但便宜得多，且数据不出自己的服务器</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<!-- ============ + ============ -->
+<section class="stop" id="threads">
+  <p class="eyebrow">附 · Threads &amp; Myths</p>
+  <h2>七条主线，一张表收拢</h2>
+  <div class="prose"><p>按年份读是「故事」，按主线读是「框架」。下表每一行是一条技术主线，深色格表示那一年这条线发生了换挡级别的变化。建议读完后对着这张表，试着给别人讲一遍每一行。</p></div>
+  <div class="fig">
+    <div class="scroll-x"><table class="thr" id="thr"></table></div>
+  </div>
+
+  <h3>新人最常见的几个误解</h3>
+  <div class="myths">
+    <div class="myth"><div class="no">ChatGPT 就是一个模型</div><div class="yes">ChatGPT 是产品名。它背后的模型从 GPT-3.5 换到 GPT-4、4o、5、5.x，现在还会按问题难度自动路由。Claude 也一样，「Claude」是家族名。</div></div>
+    <div class="myth"><div class="no">新一代一定比上一代大很多倍</div><div class="yes">2023 年后前沿模型不再公布参数量。近几年的进步大多来自后训练、推理训练、工具使用和数据质量，而不只是变大。GPT-4.5（2025）这种「纯放大」的模型反而因为太贵被撤下了 API。</div></div>
+    <div class="myth"><div class="no">推理模型是一种新结构</div><div class="yes">o1、R1、Claude 的扩展思考，结构都还是 Transformer 猜下一个 token，只是用强化学习训练它先写思考再作答。2026 年的循环深度才第一次在结构上动了刀。</div></div>
+    <div class="myth"><div class="no">开源模型 = 所有东西都公开</div><div class="yes">绝大多数只公开权重。训练数据、数据清洗方法、完整训练代码通常不公开，所以你能用它、改它，但很难从零复现它。</div></div>
+    <div class="myth"><div class="no">上下文一百万，就能完美记住一百万</div><div class="yes">窗口越长，模型越可能漏掉中间的细节，成本和延迟也随长度上升。「装得下」和「用得好」是两回事，这也是各家持续优化的地方。</div></div>
+    <div class="myth"><div class="no">智能体是一个会自己思考的新 AI</div><div class="yes">智能体 = 模型 + 工具 + 循环。模型负责决定下一步，外面的程序负责真的执行。能力边界取决于给了它哪些工具、允许它做什么。</div></div>
+  </div>
+
+  <h3>术语小词典</h3>
+  <div id="gloss"></div>
+
+  <h3>回到开头</h3>
+  <p class="recap"><a href="#scale">放大</a><span class="arr">→</span><a href="#align">对齐</a><span class="arr">→</span><a href="#open">开放</a><span class="arr">→</span><a href="#long">更长·更全·更省</a><span class="arr">→</span><a href="#reason">先想再答</a><span class="arr">→</span><a href="#agent">动手做事</a><span class="arr">→</span><a href="#now">分级发布</a></p>
+  <div class="prose"><p>每一挡都没有取代前一挡，而是叠在上面：今天的模型仍然要大规模预训练，仍然要对齐，仍然要便宜，然后再学会推理、再学会用工具。下一次你看到一个新模型发布，可以问自己：它在哪一条主线上往前走了？</p></div>
+
+  <footer>
+    <p><b>关于本页数据：</b>时间与数字来自各公司官方公告、论文及主要科技媒体报道，截至 2026 年 9 月 23 日。闭源模型的参数量均未公开，本页没有引用任何传闻数字。MoE 路由、GRPO 采样、智能体日志、思考过程等交互图为手写示意，用来展示机制的形状，不是真实模型的输出。</p>
+    <p><b>主要来源：</b></p>
+    <ul class="src" id="src"></ul>
+  </footer>
+</section>
+
+</main>
+</div>
+<script>
+(function(){
+"use strict";
+const $ = s => document.querySelector(s);
+const el = (tag, attrs={}, html) => { const e=document.createElement(tag); for(const k in attrs) e.setAttribute(k, attrs[k]); if(html!=null) e.innerHTML=html; return e; };
+const svgEl = (tag, attrs={}, txt) => { const e=document.createElementNS("http://www.w3.org/2000/svg", tag); for(const k in attrs) e.setAttribute(k, attrs[k]); if(txt!=null) e.textContent=txt; return e; };
+const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- rail highlighting ---------- */
+const links=[...document.querySelectorAll("#rail a")];
+const secs=links.map(a=>document.querySelector(a.getAttribute("href")));
+function onScroll(){
+  let cur=0; const y=window.innerHeight*0.35;
+  secs.forEach((s,i)=>{ if(s.getBoundingClientRect().top < y) cur=i; });
+  links.forEach((a,i)=>a.classList.toggle("on", i===cur));
+  if(window.innerWidth<=900){ const a=links[cur]; const ol=a.closest("ol"); const l=a.offsetLeft-ol.clientWidth/2+a.clientWidth/2; if(Math.abs(ol.scrollLeft-l)>40) ol.scrollTo({left:l,behavior:"smooth"}); }
+}
+window.addEventListener("scroll", onScroll, {passive:true}); onScroll();
+
+/* =========== 0. the map =========== */
+const LANES=[
+  {k:"oa", t:"OpenAI", s:"ChatGPT"},
+  {k:"an", t:"Anthropic", s:"Claude"},
+  {k:"os", t:"开源", s:"open weights"},
+  {k:"gg", t:"谷歌与论文", s:"Gemini · papers"},
+];
+const THEMES={scale:"规模", align:"对齐与安全", ctx:"长上下文", mm:"多模态", eff:"效率与开源", reason:"推理", agent:"工具与智能体"};
+const CH={scale:"第 1 章 · 越大越聪明", align:"第 2 章 · 学会听话", open:"第 3 章 · 百花齐放", long:"第 4 章 · 更长、更全、更省", reason:"第 5 章 · 先想再答", agent:"第 6 章 · 动手做事", now:"第 7 章 · 今天的格局"};
+// d: yyyy-mm, l: lane, n: name, b: milestone, t: themes, c: chapter, s: one line, x: detail
+const N=[
+ {d:"2017-06",l:"gg",n:"Transformer",b:1,t:["scale"],c:"scale",s:"《Attention Is All You Need》",x:"谷歌提出的新结构，用注意力取代循环网络，能并行训练。之后所有模型的骨架都是它——你在上一篇第 3、4 站拆过的就是它。"},
+ {d:"2018-06",l:"oa",n:"GPT-1",b:1,t:["scale"],c:"scale",s:"1.17 亿参数 · 预训练 + 微调",x:"只用 Transformer 的解码器，在约 7000 本书上练「猜下一个词」，再针对具体任务微调。上下文 512 token。"},
+ {d:"2018-10",l:"gg",n:"BERT",t:["scale"],c:"scale",s:"编码器路线 · 完形填空",x:"谷歌用 Transformer 编码器做「遮词猜词」，擅长理解类任务，统治了 2019 年的 NLP 排行榜，但不擅长生成。"},
+ {d:"2019-02",l:"oa",n:"GPT-2",t:["scale","align"],c:"scale",s:"15 亿参数 · 零样本 · 分阶段公开",x:"放大 10 倍后，不微调也能按文字提示做任务。因担心被用来批量造假新闻，OpenAI 分阶段公开权重，11 月才放出完整模型。"},
+ {d:"2020-01",l:"gg",n:"缩放定律",b:1,t:["scale"],c:"scale",s:"损失随规模按幂律下降",x:"Kaplan 等人发现参数、数据、算力与损失之间的规律曲线：放大的收益可以提前预测。这给了各家「砸钱放大」的底气。"},
+ {d:"2020-05",l:"gg",n:"RAG",t:["ctx"],c:"scale",s:"检索增强生成",x:"先从资料库里检索相关段落，再塞进上下文让模型据此回答。今天的「联网搜索」「知识库问答」都是这个思路。"},
+ {d:"2020-05",l:"oa",n:"GPT-3",b:1,t:["scale"],c:"scale",s:"1750 亿参数 · 上下文学习",x:"在提示里给几个例子，它就能照着做，不需要改参数。约 3000 亿训练 token，上下文 2048。「提示词工程」由此诞生。"},
+ {d:"2021-03",l:"an",n:"Anthropic 成立",t:["align"],c:"align",s:"前 OpenAI 成员创立的 AI 安全公司",x:"Dario 和 Daniela Amodei 等人创立，研究方向从一开始就包括对齐与可解释性。"},
+ {d:"2021-06",l:"gg",n:"LoRA",t:["eff"],c:"open",s:"只训练两块小矩阵",x:"微软提出的低成本微调法：冻结原权重，只训练两个细长的小矩阵。2023 年成为开源微调的标准工具。"},
+ {d:"2021-08",l:"oa",n:"Codex",t:["agent"],c:"align",s:"会写代码的 GPT-3",x:"在 GitHub 代码上继续训练，驱动了 GitHub Copilot。和 2025 年的 Codex 智能体同名但不是一回事。"},
+ {d:"2022-01",l:"gg",n:"思维链提示",t:["reason"],c:"align",s:"让模型写出步骤",x:"在示例里写出解题过程，模型就会模仿逐步推理，数学题正确率大涨。2024 年的推理模型把这件事「训练进」了模型。"},
+ {d:"2022-01",l:"oa",n:"InstructGPT",b:1,t:["align"],c:"align",s:"RLHF · 13 亿 > 1750 亿",x:"人对回答排序 → 训练打分模型 → 强化学习。13 亿参数的 InstructGPT 比 1750 亿的 GPT-3 更受评估者青睐。"},
+ {d:"2022-03",l:"gg",n:"Chinchilla",t:["scale"],c:"align",s:"数据要跟上参数",x:"DeepMind 发现此前模型数据太少：算力固定时，每个参数约配 20 个 token 最优。影响了 LLaMA 等后续模型。"},
+ {d:"2022-05",l:"gg",n:"FlashAttention",t:["eff","ctx"],c:"long",s:"更快、更省显存的注意力",x:"不改变注意力的数学结果，只重新安排显存读写，让注意力快好几倍，是长上下文的工程基础之一。"},
+ {d:"2022-07",l:"os",n:"BLOOM",t:["eff"],c:"open",s:"1760 亿 · 千人协作",x:"BigScience 项目约 1000 名研究者共同训练的多语言开放模型，第一个 GPT-3 级别的开放权重模型。"},
+ {d:"2022-10",l:"gg",n:"ReAct",t:["agent"],c:"agent",s:"「想一步、做一步」",x:"让模型交替输出「思考」和「行动」，行动结果再喂回去。今天所有智能体的循环结构都源自这个思路。"},
+ {d:"2022-11",l:"oa",n:"ChatGPT",b:1,t:["align"],c:"align",s:"RLHF + 聊天界面 = 引爆点",x:"2022 年 11 月 30 日发布，基于 GPT-3.5。据报道约两个月达到 1 亿用户，把大模型带进了大众生活。"},
+ {d:"2022-12",l:"an",n:"宪法 AI",b:1,t:["align"],c:"align",s:"AI 按原则评判 · RLAIF",x:"写一份原则清单，让模型自我批评、修改，再用 AI 的比较结果做强化学习，减少对人工标注的依赖。Claude 的训练底座。"},
+ {d:"2023-02",l:"os",n:"LLaMA",b:1,t:["eff"],c:"open",s:"70 亿–650 亿 · 权重泄露",x:"Meta 只给研究者的模型一周后泄露到网上。130 亿参数版在多数测试上超过 GPT-3，引爆开源微调浪潮。"},
+ {d:"2023-03",l:"oa",n:"GPT-4",b:1,t:["scale","mm"],c:"open",s:"能力跃升 · 能看图 · 不再公开细节",x:"律师资格模拟考进入前 10%；支持图像输入；上下文 8K/32K。技术报告不披露规模和结构，前沿进入黑盒时代。"},
+ {d:"2023-03",l:"an",n:"Claude 1",t:["align"],c:"open",s:"首个公开 Claude",x:"与 GPT-4 同一天发布，另有更快更便宜的 Claude Instant。"},
+ {d:"2023-03",l:"os",n:"Alpaca / Vicuna",t:["eff"],c:"open",s:"600 美元复刻聊天能力",x:"用 GPT-3.5 生成的指令数据微调 LLaMA，花费极低就得到像样的聊天模型。"},
+ {d:"2023-05",l:"an",n:"100K 上下文",b:1,t:["ctx"],c:"open",s:"一次读完一本小说",x:"Claude 的上下文从约 9000 扩到 10 万 token，远超当时 GPT-4 的 3.2 万。"},
+ {d:"2023-05",l:"gg",n:"QLoRA · DPO",t:["eff","align"],c:"open",s:"单卡微调 · 简化版对齐",x:"QLoRA：4-bit 量化 + LoRA，一张 48GB 显卡微调 650 亿模型。DPO：不需要打分模型就能做偏好对齐。"},
+ {d:"2023-06",l:"oa",n:"函数调用",t:["agent"],c:"open",s:"模型输出结构化的工具调用",x:"API 支持模型输出「调用哪个函数、参数是什么」的 JSON，由程序执行。智能体的地基。"},
+ {d:"2023-07",l:"an",n:"Claude 2",t:["ctx"],c:"open",s:"claude.ai 上线",x:"编程与数学提升，面向公众推出网页版。"},
+ {d:"2023-07",l:"os",n:"Llama 2",t:["eff"],c:"open",s:"允许商用",x:"70 亿 / 130 亿 / 700 亿，附带 RLHF 聊天版，企业可以合法私有部署。"},
+ {d:"2023-08",l:"os",n:"Qwen",t:["eff"],c:"open",s:"阿里通义千问开源",x:"从 70 亿、140 亿开始，后续成为下载量最大的开源模型家族之一。"},
+ {d:"2023-09",l:"os",n:"Mistral 7B",t:["eff"],c:"open",s:"小模型打大模型",x:"用分组查询注意力和滑动窗口注意力，70 亿参数胜过 Llama 2 的 130 亿。Apache 2.0 协议。"},
+ {d:"2023-09",l:"oa",n:"GPT-4V",t:["mm"],c:"open",s:"ChatGPT 能看、能说",x:"图像输入与语音对话在 ChatGPT 中上线。"},
+ {d:"2023-11",l:"oa",n:"GPT-4 Turbo",t:["ctx","eff"],c:"open",s:"128K · 更便宜",x:"上下文 12.8 万，价格大幅下调，改进 JSON 输出与函数调用。"},
+ {d:"2023-11",l:"an",n:"Claude 2.1",t:["ctx","agent"],c:"open",s:"200K 上下文",x:"上下文翻倍到 20 万，幻觉减半，开始支持工具调用（测试版）和系统提示词。"},
+ {d:"2023-12",l:"os",n:"Mixtral 8×7B",b:1,t:["eff"],c:"long",s:"混合专家进入开源",x:"总参数 467 亿，每个 token 只激活约 130 亿，以更低成本达到更大模型的水平。"},
+ {d:"2023-12",l:"gg",n:"Gemini 1.0",t:["mm"],c:"open",s:"原生多模态",x:"谷歌从训练一开始就混合文字、图像、音频、视频的模型家族。"},
+ {d:"2024-02",l:"gg",n:"Gemini 1.5",b:1,t:["ctx"],c:"long",s:"100 万 token 上下文",x:"第一个把百万级上下文做成产品的模型，后来扩到 200 万。"},
+ {d:"2024-02",l:"gg",n:"GRPO",t:["reason"],c:"reason",s:"DeepSeekMath 提出",x:"组内相对策略优化：同题多答、组内比较，不需要单独的价值模型。一年后成为 R1 的核心训练方法。"},
+ {d:"2024-03",l:"an",n:"Claude 3 家族",b:1,t:["mm"],c:"long",s:"Haiku / Sonnet / Opus 三档",x:"第一次按「小快 / 均衡 / 最强」分档发布，全部支持看图、20 万上下文。"},
+ {d:"2024-04",l:"os",n:"Llama 3",t:["eff","scale"],c:"long",s:"15 万亿 token 训练",x:"80 亿 / 700 亿，训练数据远超 Chinchilla 建议——小模型「多喂数据」同样有效。"},
+ {d:"2024-05",l:"oa",n:"GPT-4o",b:1,t:["mm"],c:"long",s:"一个模型直接听、说、看",x:"端到端处理文本、图像、音频，平均语音响应约 320 毫秒，能听出语气、可被打断。"},
+ {d:"2024-05",l:"an",n:"百万特征",t:["align"],c:"long",s:"可解释性：看清模型内部",x:"从 Claude 3 Sonnet 中提取出数百万个可理解的特征，比如「金门大桥」特征，放大后模型会三句不离金门大桥。"},
+ {d:"2024-05",l:"os",n:"DeepSeek-V2",t:["eff"],c:"long",s:"MLA 压缩 KV 缓存",x:"多头潜在注意力大幅降低推理显存，2360 亿总参 / 210 亿激活，引发国内 API 价格战。"},
+ {d:"2024-06",l:"an",n:"Claude 3.5 Sonnet",b:1,t:["agent"],c:"long",s:"中档超顶档 · Artifacts",x:"以中档价格超过 Claude 3 Opus，编程能力领先；Artifacts 让代码和网页在对话旁直接运行。"},
+ {d:"2024-07",l:"oa",n:"GPT-4o mini",t:["eff"],c:"long",s:"每百万输入 0.15 美元",x:"对比 2023 年 GPT-4 的 30 美元，同级能力价格一年多降约 200 倍。"},
+ {d:"2024-07",l:"os",n:"Llama 3.1 405B",t:["scale","eff"],c:"long",s:"开源追近 GPT-4",x:"4050 亿参数稠密模型，128K 上下文，开源与闭源的差距缩到几个月。"},
+ {d:"2024-09",l:"oa",n:"o1",b:1,t:["reason"],c:"reason",s:"第一个推理模型",x:"用强化学习训练长思维链，想得越久答得越准。开启「测试时计算」时代。12 月发布正式版。"},
+ {d:"2024-09",l:"os",n:"Qwen2.5",t:["eff"],c:"long",s:"0.5B–72B 全尺寸",x:"18 万亿 token 训练，覆盖从手机到服务器的各种尺寸。"},
+ {d:"2024-10",l:"an",n:"Computer Use",b:1,t:["agent"],c:"long",s:"看屏幕、动鼠标",x:"升级版 Claude 3.5 Sonnet 通过截图理解屏幕并操作鼠标键盘，同时发布 Claude 3.5 Haiku。"},
+ {d:"2024-11",l:"an",n:"MCP",b:1,t:["agent"],c:"agent",s:"连接工具的开放标准",x:"模型上下文协议：任何应用用同一种方式接入任何工具和数据。OpenAI、谷歌先后采用，2025 年 12 月捐给 Linux 基金会。"},
+ {d:"2024-11",l:"gg",n:"RLVR",t:["reason"],c:"reason",s:"可验证奖励的强化学习",x:"AI2 的 Tülu 3 给这类方法命名：用程序能自动判对错的任务（数学、代码）做奖励。"},
+ {d:"2024-12",l:"oa",n:"o3 预告",t:["reason"],c:"reason",s:"ARC-AGI 高分",x:"在测试举一反三能力的 ARC-AGI 上取得高分；2025 年 4 月正式发布。"},
+ {d:"2024-12",l:"os",n:"DeepSeek-V3",b:1,t:["eff","scale"],c:"long",s:"6710 亿 / 激活 370 亿 · FP8",x:"低精度训练 + 多 token 预测 + MoE，论文称最终训练约 558 万美元（不含前期研究），性能对标顶级闭源模型。"},
+ {d:"2025-01",l:"os",n:"DeepSeek-R1",b:1,t:["reason","eff"],c:"reason",s:"公开推理配方 · 纯 RL 涌现反思",x:"R1-Zero 只用强化学习就学会了反思与验证；R1 接近 o1 且 MIT 开源。英伟达随后单日市值蒸发约 5890 亿美元。"},
+ {d:"2025-01",l:"oa",n:"Operator",t:["agent"],c:"agent",s:"浏览器智能体",x:"用专门训练的电脑操作模型，在浏览器里替用户点击、输入、完成任务。"},
+ {d:"2025-02",l:"oa",n:"Deep Research",t:["agent","reason"],c:"agent",s:"自动深度调研",x:"自行搜索、阅读几十个网页，写成带引用的报告。"},
+ {d:"2025-02",l:"an",n:"Claude 3.7 · Claude Code",b:1,t:["reason","agent"],c:"reason",s:"混合推理 · 终端编程智能体",x:"一个模型既能秒答也能扩展思考；同日发布 Claude Code 预览版。"},
+ {d:"2025-02",l:"oa",n:"GPT-4.5",t:["scale"],c:"reason",s:"最大的非推理模型",x:"纯预训练放大的产物，更自然但极其昂贵，后来从 API 下线——「只靠放大」的边际收益变低的信号。"},
+ {d:"2025-03",l:"gg",n:"Gemini 2.5",t:["reason"],c:"reason",s:"谷歌的思考模型",x:"推理成为各家旗舰的标配能力。"},
+ {d:"2025-03",l:"an",n:"追踪模型思路",t:["align"],c:"reason",s:"电路追踪可解释性",x:"研究显示 Claude 写诗时会提前规划押韵词，做多步推理时内部确有中间步骤。"},
+ {d:"2025-04",l:"oa",n:"o3 · GPT-4.1",t:["reason","agent","ctx"],c:"reason",s:"思考中用工具 · 100 万上下文",x:"o3 / o4-mini 能在思维链里搜索、跑代码、看图；GPT-4.1 是 OpenAI 首个 100 万上下文模型。"},
+ {d:"2025-04",l:"os",n:"Llama 4 · Qwen3",t:["eff","reason"],c:"reason",s:"MoE 普及 · 思考可切换",x:"Llama 4 转向 MoE 但口碑不佳；Qwen3 从 0.6B 到 235B，支持思考 / 不思考模式切换。"},
+ {d:"2025-05",l:"an",n:"Claude 4",b:1,t:["agent","align"],c:"agent",s:"为长任务而生 · ASL-3",x:"Opus 4 / Sonnet 4 能连续工作数小时；Claude Code 正式发布；Opus 4 首次在 ASL-3 安全标准下部署。"},
+ {d:"2025-05",l:"oa",n:"Codex 智能体",t:["agent"],c:"agent",s:"云端并行编程",x:"在云沙盒中处理编程任务并提交修改。"},
+ {d:"2025-07",l:"oa",n:"ChatGPT agent",t:["agent"],c:"agent",s:"自己的虚拟电脑",x:"合并 Operator 与 Deep Research，让模型在虚拟电脑里完成多步任务。"},
+ {d:"2025-07",l:"os",n:"Kimi K2 · GLM-4.5",t:["agent","eff"],c:"agent",s:"开源转向智能体",x:"Kimi K2：1 万亿总参 / 320 亿激活，训练全程无损失尖峰；GLM-4.5 主打编程与工具调用。"},
+ {d:"2025-08",l:"os",n:"gpt-oss",t:["eff","reason"],c:"agent",s:"OpenAI 重新开放权重",x:"GPT-2 之后首次开放权重，Apache 2.0。1170 亿参数版每 token 激活 51 亿，单张 80GB 显卡可运行。"},
+ {d:"2025-08",l:"oa",n:"GPT-5",b:1,t:["reason"],c:"reason",s:"快模型 + 深思模型 + 路由器",x:"实时路由器按难度分配问题，用户不再手动选模型；幻觉明显减少。"},
+ {d:"2025-08",l:"an",n:"Opus 4.1 · 1M",t:["ctx"],c:"agent",s:"Sonnet 4 支持 100 万上下文",x:"Opus 4.1 提升编程；Sonnet 4 的上下文扩到 100 万（测试版）。"},
+ {d:"2025-09",l:"an",n:"Sonnet 4.5",t:["agent"],c:"agent",s:"长时间自主工作",x:"主打智能体、编程与电脑操作。"},
+ {d:"2025-09",l:"os",n:"DeepSeek-V3.2",t:["eff","ctx"],c:"agent",s:"稀疏注意力",x:"用轻量「索引器」挑出值得关注的 token，长文本成本大降，API 降价超过一半。"},
+ {d:"2025-10",l:"an",n:"Haiku 4.5 · Skills",t:["agent","eff"],c:"agent",s:"小模型近前沿 · 技能包",x:"Haiku 4.5 以低价提供接近前沿的编程能力；Agent Skills 把任务说明和脚本打包，按需加载。"},
+ {d:"2025-11",l:"an",n:"Opus 4.5",t:["agent"],c:"agent",s:"SWE-bench 首破 80%",x:"真实代码问题修复率首次超过 80%，价格降约三分之二。"},
+ {d:"2025-11",l:"oa",n:"GPT-5.1 / 5.2",t:["agent"],c:"agent",s:"高频迭代",x:"5.1（11 月）更温和可调的风格；5.2（12 月）加强表格、幻灯片、长上下文与多步工作。"},
+ {d:"2025-11",l:"gg",n:"Gemini 3",t:["reason","mm"],c:"agent",s:"谷歌新旗舰",x:"2026 年 2 月跟进 3.1 Pro，5 月发布 3.5 系列首个模型。"},
+ {d:"2025-12",l:"os",n:"Mistral Large 3",t:["eff","mm"],c:"agent",s:"6750 亿 MoE · Apache 2.0",x:"欧洲最大的开放权重模型之一，多模态、256K 上下文。"},
+ {d:"2026-01",l:"an",n:"Cowork",t:["agent"],c:"now",s:"给非程序员的桌面智能体",x:"把 Claude Code 式的能力做成图形界面，处理文件、文档等日常工作。"},
+ {d:"2026-02",l:"an",n:"Opus 4.6 · Sonnet 4.6",t:["ctx","agent"],c:"now",s:"Opus 首个 1M · 智能体团队",x:"多个智能体分工协作一个任务；Sonnet 4.6 成为免费用户默认模型。"},
+ {d:"2026-02",l:"oa",n:"GPT-5.3-Codex",t:["agent"],c:"now",s:"智能体编程专用",x:"专为在代码库中搜索、运行终端命令、调试而优化。"},
+ {d:"2026-02",l:"os",n:"Qwen3.5 · GLM-5",t:["eff","mm"],c:"now",s:"线性注意力混合",x:"Qwen3.5 旗舰为原生视觉语言模型，混用线性注意力与稀疏 MoE。"},
+ {d:"2026-03",l:"oa",n:"GPT-5.4",b:1,t:["agent"],c:"now",s:"原生电脑操作 · 超人类基线",x:"OSWorld-Verified 75.0%，超过 72.4% 的人类基线；API 支持约 100 万上下文。"},
+ {d:"2026-04",l:"an",n:"Mythos Preview",b:1,t:["align"],c:"now",s:"强到不公开",x:"能自主发现并利用零日漏洞，只提供给安全合作方修补漏洞（Glasswing 计划）。同月发布 Opus 4.7，5 月 Opus 4.8。"},
+ {d:"2026-04",l:"oa",n:"GPT-5.5",t:["agent"],c:"now",s:"智能体编程与知识工作",x:"与 5.4 相同的单 token 延迟下更强；API 100 万上下文。"},
+ {d:"2026-04",l:"os",n:"DeepSeek-V4",b:1,t:["eff","ctx"],c:"now",s:"1.6 万亿 · 1M · 压缩稀疏注意力",x:"V4-Pro 1.6 万亿总参 / 490 亿激活；在 100 万上下文下计算量约为 V3.2 的 27%，KV 缓存约 10%。同月 Gemma 4 转为 Apache 2.0。"},
+ {d:"2026-06",l:"an",n:"Fable 5 / Mythos 5",b:1,t:["align"],c:"now",s:"同一模型 · 公开版与受限版",x:"Fable 5 带安全分类器对公众开放，高风险请求改由 Opus 4.8 回答；Mythos 5 仅对审核用户开放。月底 Sonnet 5 发布。"},
+ {d:"2026-06",l:"os",n:"MiniMax-M3 · GLM-5.2",t:["eff","ctx"],c:"now",s:"1M 上下文成开源标配",x:"MiniMax-M3 原生多模态；GLM-5.2 以 MIT 协议开放。"},
+ {d:"2026-07",l:"oa",n:"GPT-5.6",t:["eff"],c:"now",s:"Sol / Terra / Luna 三档",x:"因美国商务部审查先对受信任伙伴开放；约 105 万上下文。"},
+ {d:"2026-07",l:"an",n:"Opus 5",t:["reason","ctx"],c:"now",s:"自适应思考",x:"100 万上下文、12.8 万输出；模型自己决定每题思考多久。"},
+ {d:"2026-07",l:"os",n:"Kimi K3",t:["scale"],c:"now",s:"2.8 万亿参数",x:"迄今最大的开放权重模型，100 万上下文。"},
+ {d:"2026-08",l:"os",n:"Muse Glimmer",t:["eff","agent"],c:"now",s:"Meta 的小型开放模型",x:"300 亿参数稠密模型，由闭源的 Muse Spark 蒸馏而来，单张消费级显卡可运行，面向本地智能体。"},
+ {d:"2026-09",l:"oa",n:"GPT-6 Astra",b:1,t:["reason","align"],c:"now",s:"循环深度 · 网络安全「关键」级",x:"同一组层反复使用以加深内部推理；首个被 OpenAI 评为网络安全关键风险级的模型，敏感能力需申请。"},
+ {d:"2026-09",l:"an",n:"Opus 5.5",t:["eff"],c:"now",s:"Fable 级能力、成本降约 40%",x:"9 月 22 日发布，5.5 家族首个模型；此前 9 月 1 日发布 Fable 5.1 / Mythos 5.1。"},
+];
+const LC={oa:"var(--oa)",an:"var(--an)",os:"var(--os)",gg:"var(--gg)"};
+const LNAME={oa:"OpenAI · ChatGPT",an:"Anthropic · Claude",os:"开源 / 开放权重",gg:"谷歌与学术界"};
+const X0=2017.35, XB=2022.0, X1=2026.95, PA=92, PB=300, GUT=118;
+const tOf=d=>{const [y,m]=d.split("-").map(Number); return y+(m-0.5)/12;};
+const xOf=t=> t<XB ? GUT+(t-X0)*PA : GUT+(XB-X0)*PA+(t-XB)*PB;
+const tw=s=>{let w=0; for(const ch of s) w+= /[⺀-￿]/.test(ch)?11.2:6.4; return w;};
+const svg=$("#map-svg");
+let selNode=null, theme=null;
+function drawMap(){
+  svg.innerHTML="";
+  const W=Math.ceil(xOf(X1)+10);
+  const rowH=21, top=52;
+  let y=top; const laneY={};
+  const nodes=N.map((n,i)=>({...n,i,t:tOf(n.d)}));
+  // pack each lane into rows
+  for(const L of LANES){
+    const ls=nodes.filter(n=>n.l===L.k).sort((a,b)=>a.t-b.t);
+    const ends=[];
+    for(const n of ls){
+      const x=xOf(n.t); const w=(n.b?20:14)+tw(n.n)*(n.b?1.12:1);
+      let r=ends.findIndex(e=>e<x-4); if(r<0){ r=ends.length; ends.push(0); }
+      ends[r]=x+w; n.x=x; n.r=r;
+    }
+    const rows=Math.max(ends.length,2);
+    laneY[L.k]={y, h:rows*rowH+14};
+    ls.forEach(n=>n.y=y+10+n.r*rowH+rowH/2);
+    y+=rows*rowH+14+8;
+  }
+  const H=y+4;
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`); svg.style.width=W+"px"; svg.style.minWidth=W+"px";
+  // lane backgrounds
+  for(const L of LANES){ const ly=laneY[L.k]; svg.append(svgEl("rect",{x:0,y:ly.y,width:W,height:ly.h,rx:6,class:"lane-bg"})); }
+  // year ticks
+  for(let yr=2018; yr<=2026; yr++){
+    const x=xOf(yr);
+    svg.append(svgEl("line",{x1:x,x2:x,y1:22,y2:H,class:"tick"}));
+    svg.append(svgEl("text",{x:x+4,y:16,class:"tick-t"},String(yr)));
+  }
+  // compressed-axis mark
+  const xb=xOf(XB); svg.append(svgEl("path",{d:`M${xb-10} 26 l4 -6 l4 12 l4 -6`,class:"zig"}));
+  // eras
+  const ERAS=[[2017.35,2021,"① 放大","scale"],[2021,2023,"② 对齐","align"],[2023,2024,"③ 开放","open"],[2024,2024.7,"④ 更长更全更省","long"],[2024.7,2025.3,"⑤ 先想再答","reason"],[2025.3,2026,"⑥ 动手做事","agent"],[2026,X1,"⑦ 分级发布","now"]];
+  ERAS.forEach(([a,b,t])=>{ const xa=xOf(a); svg.append(svgEl("text",{x:xa+5,y:40,class:"era-t"},t)); if(a>X0) svg.append(svgEl("line",{x1:xa,x2:xa,y1:30,y2:H,class:"era-l"})); });
+  // lane titles (they scroll with the map; a sticky copy sits in the overlay)
+  // nodes
+  for(const n of nodes){
+    const g=svgEl("g",{class:"nd"+(n.b?" big":""),tabindex:"0",role:"button","aria-label":`${n.d} ${n.n}：${n.s}`,"data-i":n.i});
+    g.append(svgEl("circle",{cx:n.x,cy:n.y,r:n.b?7:4.5,style:`fill:${LC[n.l]}`}));
+    g.append(svgEl("text",{x:n.x+(n.b?11:8),y:n.y+4},n.n));
+    g.addEventListener("click",()=>select(n.i));
+    g.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); select(n.i);} });
+    svg.append(g);
+  }
+  // lane label overlay
+  let ov=document.getElementById("map-lanes");
+  if(!ov){ ov=el("div",{id:"map-lanes"}); $("#map-scroll").parentNode.insertBefore(ov,$("#map-scroll")); }
+  ov.innerHTML="";
+  ov.style.height=H+"px";
+  for(const L of LANES){ const ly=laneY[L.k]; const d=el("div",{},`<b style="color:${LC[L.k]}">${L.t}</b><small>${L.s}</small>`); d.style.top=(ly.y+6)+"px"; ov.append(d); }
+  applyFilter(); markSel();
+}
+function select(i){ selNode=i; markSel(); renderCard(N[i]); }
+function markSel(){ svg.querySelectorAll(".nd").forEach(g=>g.classList.toggle("sel", +g.dataset.i===selNode)); }
+function applyFilter(){ svg.querySelectorAll(".nd").forEach(g=>{ const n=N[+g.dataset.i]; g.classList.toggle("dim", !!theme && !n.t.includes(theme)); }); }
+function renderCard(n){
+  const [y,m]=n.d.split("-");
+  $("#map-card").innerHTML=`<div><div class="who" style="color:${LC[n.l]}">${LNAME[n.l]}</div><h4>${n.n}</h4><div class="date">${y} 年 ${+m} 月</div></div>
+  <div><p><b>${n.s}</b></p><p>${n.x}</p><div class="tags">${n.t.map(t=>`<span class="tag">${THEMES[t]}</span>`).join("")}</div><p class="go" style="margin-top:10px"><a href="#${n.c}">去${CH[n.c]}细看 →</a></p></div>`;
+}
+const chips=$("#map-chips");
+[["",`全部`],...Object.entries(THEMES)].forEach(([k,v])=>{
+  const b=el("button",{class:"chip","aria-pressed":k===""?"true":"false"},v);
+  b.addEventListener("click",()=>{ theme=k||null; chips.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed", c===b?"true":"false")); applyFilter(); });
+  chips.append(b);
+});
+drawMap(); select(N.findIndex(n=>n.n==="ChatGPT"));
+
+/* =========== 1. parameter chart =========== */
+const PC=[
+ ["GPT-1","2018",1.17,null,"oa"],["GPT-2","2019",15,null,"oa"],["GPT-3","2020",1750,null,"oa"],["BLOOM","2022",1760,null,"os"],
+ ["LLaMA","2023",650,null,"os"],["Mixtral 8×7B","2023",467,129,"os"],["Llama 3.1","2024",4050,null,"os"],["DeepSeek-V3","2024",6710,370,"os"],
+ ["gpt-oss-120b","2025",1170,51,"os"],["Kimi K2","2025",10000,320,"os"],["DeepSeek-V4-Pro","2026",16000,490,"os"],["Kimi K3","2026",28000,null,"os"]
+];
+const fmtYi=v=> v>=10000 ? (v/10000).toLocaleString("zh-CN",{maximumFractionDigits:2})+" 万亿" : (v<10? v.toLocaleString("zh-CN") : Math.round(v).toLocaleString("zh-CN"))+" 亿";
+let pcLog=false;
+function drawPC(){
+  const s=$("#pc-svg"); s.innerHTML="";
+  const L=150, R=640, top=26, rh=24;
+  const sc = pcLog ? (v=>L+(Math.log10(v)-0)/(Math.log10(50000)-0)*(R-L)) : (v=>L+v/30000*(R-L));
+  const ticks = pcLog ? [1,10,100,1000,10000] : [0,5000,10000,15000,20000,25000,30000];
+  ticks.forEach(t=>{ const x=sc(t||0.0001); const xx= pcLog?x:L+t/30000*(R-L);
+    s.append(svgEl("line",{x1:xx,x2:xx,y1:top-6,y2:top+PC.length*rh,class:"grid"}));
+    s.append(svgEl("text",{x:xx,y:top-10,class:"ax","text-anchor":"middle"}, t===0?"0":fmtYi(t))); });
+  PC.forEach((p,i)=>{
+    const y=top+i*rh;
+    s.append(svgEl("text",{x:8,y:y+15,class:"lbl"},p[0]));
+    s.append(svgEl("text",{x:L-8,y:y+15,class:"ax","text-anchor":"end"},p[1]));
+    const x0=pcLog?sc(1):L;
+    const wT=Math.max(1,sc(p[2])-x0);
+    s.append(svgEl("rect",{x:x0,y:y+5,width:wT,height:13,rx:2,style:`fill:${LC[p[4]]};opacity:${p[3]?0.3:1}`}));
+    if(p[3]) s.append(svgEl("rect",{x:x0,y:y+5,width:Math.max(1,sc(p[3])-x0),height:13,rx:2,style:`fill:${LC[p[4]]}`}));
+    s.append(svgEl("text",{x:x0+wT+6,y:y+15,class:"val"}, fmtYi(p[2])+(p[3]?` · 激活 ${fmtYi(p[3])}`:"")));
+  });
+}
+const setSeg=(a,b,on)=>{ a.setAttribute("aria-pressed",on?"true":"false"); b.setAttribute("aria-pressed",on?"false":"true"); };
+$("#pc-lin").onclick=()=>{ pcLog=false; setSeg($("#pc-lin"),$("#pc-log"),true); drawPC(); };
+$("#pc-log").onclick=()=>{ pcLog=true; setSeg($("#pc-lin"),$("#pc-log"),false); drawPC(); };
+drawPC();
+
+/* =========== 2. alignment pipelines =========== */
+const AL={
+ rlhf:{steps:[["步骤 1 · SFT","人写示范","标注员针对各种问题亲手写出好回答，用来做指令微调。","几万条示范"],["步骤 2 · 奖励模型","人来排序","模型对同一问题写出 4–9 个回答，标注员从好到差排序，训练出一个会打分的「奖励模型」。","几万组排序"],["步骤 3 · 强化学习","朝高分调","模型不断写回答、奖励模型打分，用强化学习（PPO）把参数往高分方向推。","InstructGPT，2022"]],
+   cap:"瓶颈在人：每一条偏好都要人读、人比较，贵、慢，而且标注员之间标准不一。"},
+ cai:{steps:[["步骤 1 · 自我修改","按原则改稿","模型先回答，再按「宪法」里的某条原则批评自己的回答并重写，用改好的版本做微调。","原则清单替代部分示范"],["步骤 2 · AI 反馈","AI 来比较","让 AI 按原则判断两个回答哪个更好，用这些判断训练奖励模型——即 RLAIF。","人只需写原则"],["步骤 3 · 强化学习","朝高分调","和 RLHF 的第三步相同。","Constitutional AI，2022"]],
+   cap:"好处是规则写在明处、可以大规模自动化；代价是 AI 评判本身可能有偏差，所以仍需要人检查。2023 年起，各家的后训练实际都混用人类反馈与 AI 反馈。"}
+};
+function drawAL(k){
+  const d=AL[k]; $("#al-steps").innerHTML=d.steps.map(s=>`<div class="phase"><div class="k">${s[0]}</div><h4>${s[1]}</h4><p>${s[2]}</p><div class="data">${s[3]}</div></div>`).join("");
+  $("#al-cap").textContent=d.cap;
+}
+$("#al-rlhf").onclick=()=>{ setSeg($("#al-rlhf"),$("#al-cai"),true); drawAL("rlhf"); };
+$("#al-cai").onclick=()=>{ setSeg($("#al-rlhf"),$("#al-cai"),false); drawAL("cai"); };
+drawAL("rlhf");
+
+/* =========== 3. LoRA =========== */
+function drawLoRA(){
+  const r=+$("#lora-r").value; $("#lora-r-o").textContent=r;
+  const s=$("#lora-svg"); s.innerHTML=""; s.setAttribute("viewBox","0 0 450 240");
+  const S=170, y0=34, k=S/4096, w=Math.max(2,r*k*8); // A/B thickness exaggerated 8× so r is visible
+  s.append(svgEl("rect",{x:6,y:y0,width:S,height:S,class:"box g"}));
+  s.append(svgEl("text",{x:6+S/2,y:y0+S/2-4,"text-anchor":"middle"},"W"));
+  s.append(svgEl("text",{x:6+S/2,y:y0+S/2+14,"text-anchor":"middle",class:"sub"},"4096×4096 · 冻结"));
+  s.append(svgEl("text",{x:6,y:y0-12,class:"sub"},"原权重"));
+  s.append(svgEl("text",{x:192,y:y0+S/2+5,"font-size":"20"},"+"));
+  const bx=214;
+  s.append(svgEl("rect",{x:bx,y:y0,width:w,height:S,class:"box b"}));
+  s.append(svgEl("text",{x:bx,y:y0-12,class:"sub"},`B 4096×${r}`));
+  s.append(svgEl("text",{x:bx+w+8,y:y0+S/2+5,"font-size":"16"},"×"));
+  const ax=bx+w+24;
+  s.append(svgEl("rect",{x:ax,y:y0,width:S,height:w,class:"box b"}));
+  s.append(svgEl("text",{x:ax,y:y0+w+16,class:"sub"},`A ${r}×4096`));
+  s.append(svgEl("text",{x:6,y:y0+S+26,class:"sub"},"A、B 的厚度放大 8 倍显示，否则细到看不见"));
+  const full=4096*4096, lo=2*4096*r;
+  $("#lora-stats").innerHTML=`<span><b>${full.toLocaleString()}</b>全量微调要改的数字</span><span><b>${lo.toLocaleString()}</b>LoRA 要训练的数字</span><span><b>${(lo/full*100).toFixed(lo/full<0.01?2:1)}%</b>占比</span>`;
+}
+$("#lora-r").addEventListener("input",drawLoRA); drawLoRA();
+
+/* =========== 4. context chart =========== */
+const CX=[["GPT-1","2018",512,"oa"],["GPT-2","2019",1024,"oa"],["GPT-3","2020",2048,"oa"],["ChatGPT (GPT-3.5)","2022",4096,"oa"],["GPT-4 (32K)","2023.03",32768,"oa"],["Claude","2023.05",100000,"an"],["GPT-4 Turbo","2023.11",128000,"oa"],["Claude 2.1","2023.11",200000,"an"],["Gemini 1.5","2024.02",1000000,"gg"],["GPT-4.1","2025.04",1000000,"oa"],["Claude Sonnet 4","2025.08",1000000,"an"],["DeepSeek-V4","2026.04",1000000,"os"],["GPT-6 Astra","2026.09",1050000,"oa"]];
+(function drawCX(){
+  const s=$("#ctx-svg"), L=190, R=650, top=28, rh=28;
+  const lo=Math.log10(100), hi=Math.log10(3e6), sc=v=>L+(Math.log10(v)-lo)/(hi-lo)*(R-L);
+  [[100,"100"],[1000,"1千"],[10000,"1万"],[100000,"10万"],[1000000,"100万"]].forEach(([v,t])=>{ const x=sc(v); s.append(svgEl("line",{x1:x,x2:x,y1:top-6,y2:top+CX.length*rh,class:"grid"})); s.append(svgEl("text",{x,y:top-10,class:"ax","text-anchor":"middle"},t)); });
+  const fmt=v=> v>=10000 ? (v/10000).toLocaleString("zh-CN",{maximumFractionDigits:1})+" 万" : v.toLocaleString();
+  CX.forEach((c,i)=>{ const y=top+i*rh;
+    s.append(svgEl("text",{x:8,y:y+17,class:"lbl"},c[0]));
+    s.append(svgEl("text",{x:L-8,y:y+17,class:"ax","text-anchor":"end"},c[1]));
+    const w=sc(c[2])-sc(100);
+    s.append(svgEl("rect",{x:sc(100),y:y+6,width:w,height:15,rx:2,style:`fill:${LC[c[3]]}`}));
+    s.append(svgEl("text",{x:sc(100)+w+6,y:y+18,class:"val"},fmt(c[2])));
+  });
+})();
+
+/* =========== 4b. MoE =========== */
+const EXN=["专家 1","专家 2","专家 3","专家 4","专家 5","专家 6","专家 7","专家 8"];
+const MOE={"def":[.2,3.1,.4,-.5,2.6,.1,-.2,.3],"猫":[1.9,-.3,.2,2.4,.1,-.4,.6,.2],"2026":[.1,.4,2.8,.2,-.1,2.2,.3,-.5],"，":[-.2,.1,.3,.2,.4,-.3,2.9,2.1],"sin":[.3,2.2,2.5,-.2,.6,.4,.1,-.1],"了":[2.3,.2,-.1,.4,.3,.2,.5,2.0]};
+let moeTok="猫";
+const mt=$("#moe-toks");
+Object.keys(MOE).forEach(k=>{ const b=el("button",{"aria-pressed":k===moeTok?"true":"false"},k); b.onclick=()=>{ moeTok=k; mt.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b?"true":"false")); drawMoE(); }; mt.append(b); });
+function drawMoE(){
+  const s=$("#moe-svg"); s.innerHTML="";
+  const sc=MOE[moeTok], idx=sc.map((v,i)=>i).sort((a,b)=>sc[b]-sc[a]).slice(0,2);
+  const e0=Math.exp(sc[idx[0]]), e1=Math.exp(sc[idx[1]]), wts=[e0/(e0+e1), e1/(e0+e1)];
+  const ty=125;
+  s.append(svgEl("rect",{x:6,y:ty-16,width:64,height:32,rx:6,class:"ex on"}));
+  s.append(svgEl("text",{x:38,y:ty+5,class:"ex-t"},moeTok));
+  s.append(svgEl("line",{x1:70,y1:ty,x2:108,y2:ty,class:"rt on"}));
+  s.append(svgEl("path",{d:`M108 ${ty} l22 -22 l22 22 l-22 22 z`,class:"ex"}));
+  s.append(svgEl("text",{x:130,y:ty+4,class:"ex-t","font-size":"11"},"路由"));
+  EXN.forEach((n,i)=>{
+    const y=8+i*30, on=idx.includes(i);
+    s.append(svgEl("path",{d:`M152 ${ty} C 220 ${ty}, 230 ${y+12}, 290 ${y+12}`,class:"rt"+(on?" on":"")}));
+    s.append(svgEl("rect",{x:290,y:y,width:110,height:24,rx:5,class:"ex"+(on?" on":"")}));
+    s.append(svgEl("text",{x:345,y:y+16,class:"ex-t"},n));
+    if(on) s.append(svgEl("text",{x:422,y:y+16,class:"ex-w"},Math.round(wts[idx.indexOf(i)]*100)+"%"));
+  });
+  $("#moe-stats").innerHTML=`<span><b>8</b>专家总数</span><span><b>2</b>本 token 用到</span><span><b>25%</b>前馈层激活比例</span>`;
+}
+drawMoE();
+
+/* =========== 5. thinking demo =========== */
+let thTimer=null;
+function runThink(slow){
+  clearInterval(thTimer);
+  const out=$("#th-out");
+  const parts = slow
+    ? [["t","思考中…\n"],["","设球 x 元，那么球拍是 x + 1 元。\n"],["","两者之和：x + (x + 1) = 1.10\n"],["","2x + 1 = 1.10 → 2x = 0.10 → x = 0.05\n"],["","验证：球 0.05 + 球拍 1.05 = 1.10 ✓ 差价 1.00 ✓\n"],["fin right","答：球 0.05 元。"]]
+    : [["fin wrong","答：球 0.10 元。"],["t","\n（验算：0.10 + 1.10 = 1.20，错了）"]];
+  const toks = slow ? 62 : 8;
+  out.innerHTML="";
+  let i=0, c=0;
+  const spans=parts.map(([cls])=>{ const sp=el("span",cls?{class:cls}:{}); out.append(sp); return sp; });
+  const step=()=>{ if(i>=parts.length){ clearInterval(thTimer); return; } const txt=parts[i][1]; spans[i].textContent=txt.slice(0,++c); if(c>=txt.length){ i++; c=0; } };
+  if(reduced){ parts.forEach((p,k)=>spans[k].textContent=p[1]); } else thTimer=setInterval(step, 18);
+  $("#th-stats").innerHTML=`<span><b>≈${toks}</b>输出 token（示意）</span><span><b>${slow?"对":"错"}</b>结果</span>`;
+}
+$("#th-fast").onclick=()=>runThink(false); $("#th-slow").onclick=()=>runThink(true);
+
+/* =========== 5b. GRPO =========== */
+const GOOD=["12×15 = 12×10 + 12×5 = 120 + 60 = 180","15×12 = 15×10 + 15×2 = 150 + 30 = 180","12×15 = 6×30 = 180","10×15 = 150，再加 2×15 = 30，共 180"];
+const BAD=[["12×15 = 12×10 + 5 = 125","125"],["12×15 = 120 + 50 = 170","170"],["12×15 ≈ 12×16 = 192","192"],["15×12 = 150 + 12 = 162","162"],["12×15 = 12+15 = 27… 不对，是 190","190"]];
+let gp=0.3, round=0, group=null;
+function grStats(msg){
+  const acc = group ? group.filter(g=>g.r).length+"/8" : "—";
+  $("#gr-stats").innerHTML=`<span><b>${round}</b>已更新轮数</span><span><b>${acc}</b>这组答对</span><span><b>${Math.round(gp*100)}%</b>模型单次答对的概率（示意）</span>`+(msg?`<span style="flex-basis:100%;color:var(--ink2)">${msg}</span>`:"");
+}
+function sample(){
+  group=Array.from({length:8},()=>{ const ok=Math.random()<gp; if(ok) return {r:1,txt:GOOD[Math.floor(Math.random()*GOOD.length)],ans:"180"}; const b=BAD[Math.floor(Math.random()*BAD.length)]; return {r:0,txt:b[0],ans:b[1]}; });
+  const m=group.reduce((a,g)=>a+g.r,0)/8, sd=Math.sqrt(group.reduce((a,g)=>a+(g.r-m)**2,0)/8);
+  group.forEach(g=>g.adv= sd>0 ? (g.r-m)/sd : 0);
+  $("#gr-grid").innerHTML=group.map((g,i)=>`<div class="att ${g.r?"ok":"no"}"><div class="h"><span>#${i+1}</span><span>${g.r?"✓ 奖励 1":"✗ 奖励 0"}</span></div><div class="step">${g.txt}</div><div class="adv">优势 ${g.adv>=0?"+":""}${g.adv.toFixed(2)}</div></div>`).join("");
+  grStats(sd===0 ? (m===1?"8 份全对：优势全为 0，这组没有学习信号。":"8 份全错：优势全为 0，这组没有学习信号。") : `平均分 ${m.toFixed(2)}，标准差 ${sd.toFixed(2)}。`);
+}
+$("#gr-sample").onclick=sample;
+$("#gr-train").onclick=()=>{
+  if(!group){ grStats("先采样一组。"); return; }
+  const m=group.reduce((a,g)=>a+g.r,0)/8;
+  if(m===0||m===1){ grStats("这组优势全为 0，更新后模型没有变化。再采样一组试试。"); group=null; return; }
+  round++; gp=Math.min(0.97, gp+(1-gp)*0.28*(0.5+m)); group=null;
+  $("#gr-grid").innerHTML=""; grStats("已按优势更新：答对的写法被加强，答错的被削弱。再采样一组看看。");
+};
+$("#gr-reset").onclick=()=>{ gp=0.3; round=0; group=null; $("#gr-grid").innerHTML=""; grStats(); };
+grStats();
+
+/* =========== 6. agent loop =========== */
+const AG=[
+ ["think","先看看是哪个测试失败了。"],
+ ["act","运行 <code>npm test</code>"],
+ ["obs","1 个失败：<code>formatPrice(0.1, 0.2)</code> 期望 <code>\"0.30\"</code>，实际 <code>\"0.30000000000000004\"</code>"],
+ ["think","浮点数误差。去看 formatPrice 的实现。"],
+ ["act","读取文件 <code>src/price.js</code>"],
+ ["obs","<code>return String(a + b)</code>"],
+ ["think","价格应该固定保留两位小数。"],
+ ["act","修改 <code>src/price.js</code>：改为 <code>(a + b).toFixed(2)</code>"],
+ ["act","再次运行 <code>npm test</code>"],
+ ["obs","全部 42 个测试通过"],
+ ["done","向用户汇报：修复了 price.js 的浮点格式问题，测试已全部通过。"],
+];
+const AGK={think:["思考","think-k"],act:["行动","act-k"],obs:["观察","obs-k"],done:["完成","done-k"]};
+let agI=0, agTimer=null;
+function drawLoop(k){
+  const s=$("#ag-svg"); s.innerHTML="";
+  const P={think:[140,40],act:[235,190],obs:[45,190]};
+  s.appendChild(svgEl("defs",{})).innerHTML=`<marker id="agm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--ink2)"/></marker>`;
+  [["think","act"],["act","obs"],["obs","think"]].forEach(([a,b])=>{ const [x1,y1]=P[a],[x2,y2]=P[b]; const dx=x2-x1, dy=y2-y1, L=Math.hypot(dx,dy), ux=dx/L, uy=dy/L;
+    s.append(svgEl("line",{x1:x1+ux*42,y1:y1+uy*30,x2:x2-ux*42,y2:y2-uy*30,class:"ar","marker-end":"url(#agm)"})); });
+  const lab={think:["思考","模型"],act:["行动","调用工具"],obs:["观察","结果写回上下文"]};
+  Object.entries(P).forEach(([key,[x,y]])=>{ s.append(svgEl("rect",{x:x-42,y:y-24,width:84,height:48,rx:24,class:"node"+(k===key||k==="done"?" on":"")}));
+    s.append(svgEl("text",{x,y:y-2},lab[key][0])); s.append(svgEl("text",{x,y:y+14,class:"sub"},lab[key][1])); });
+}
+function agStep(){
+  if(agI>=AG.length){ clearInterval(agTimer); return false; }
+  const [k,t]=AG[agI++]; const d=el("div",{},`<span class="k ${AGK[k][1]}">${AGK[k][0]}</span><span>${t}</span>`); $("#ag-log").append(d);
+  drawLoop(k); if(agI>=AG.length){ $("#ag-next").disabled=true; $("#ag-all").disabled=true; } return true;
+}
+function agReset(){ clearInterval(agTimer); agI=0; $("#ag-log").innerHTML=""; $("#ag-next").disabled=false; $("#ag-all").disabled=false; drawLoop(null); }
+$("#ag-next").onclick=()=>{ clearInterval(agTimer); agStep(); };
+$("#ag-all").onclick=()=>{ clearInterval(agTimer); if(reduced){ while(agStep()); return; } agTimer=setInterval(()=>{ if(!agStep()) clearInterval(agTimer); },700); };
+$("#ag-reset").onclick=agReset;
+agReset(); agStep(); agStep(); agStep();
+
+/* =========== 6b. MCP =========== */
+function drawMCP(on){
+  const s=$("#mcp-svg"); s.innerHTML="";
+  const apps=["Claude","ChatGPT","你的编辑器"], tools=["GitHub","数据库","Slack","日历"];
+  const ay=i=>40+i*70, ty=i=>22+i*56;
+  const hub=[320,125];
+  if(on){
+    apps.forEach((a,i)=>s.append(svgEl("line",{x1:130,y1:ay(i)+16,x2:hub[0]-50,y2:hub[1],class:"hl"})));
+    tools.forEach((t,i)=>s.append(svgEl("line",{x1:hub[0]+50,y1:hub[1],x2:500,y2:ty(i)+16,class:"hl"})));
+    s.append(svgEl("rect",{x:hub[0]-50,y:hub[1]-22,width:100,height:44,rx:8,class:"box a"}));
+    s.append(svgEl("text",{x:hub[0],y:hub[1]+5,"text-anchor":"middle","font-weight":"700"},"MCP"));
+  } else {
+    apps.forEach((a,i)=>tools.forEach((t,j)=>s.append(svgEl("line",{x1:130,y1:ay(i)+16,x2:500,y2:ty(j)+16,class:"ar",style:"stroke:var(--muted);stroke-width:1"}))));
+  }
+  apps.forEach((a,i)=>{ s.append(svgEl("rect",{x:10,y:ay(i),width:120,height:32,rx:6,class:"box"})); s.append(svgEl("text",{x:70,y:ay(i)+21,"text-anchor":"middle"},a)); });
+  tools.forEach((t,i)=>{ s.append(svgEl("rect",{x:500,y:ty(i),width:120,height:32,rx:6,class:"box b"})); s.append(svgEl("text",{x:560,y:ty(i)+21,"text-anchor":"middle"},t)); });
+  $("#mcp-cap").innerHTML = on
+    ? "有了 MCP：每个工具只要写一个 MCP「服务器」，每个 AI 应用只要支持一次 MCP，<b>3 + 4 = 7</b> 份工作。新增一个工具，所有应用立刻都能用。"
+    : "没有统一标准时：3 个 AI 应用 × 4 个工具，每一对都要单独写对接代码，<b>3 × 4 = 12</b> 份工作，而且每家格式都不一样。";
+}
+$("#mcp-off").onclick=()=>{ setSeg($("#mcp-off"),$("#mcp-on"),true); drawMCP(false); };
+$("#mcp-on").onclick=()=>{ setSeg($("#mcp-off"),$("#mcp-on"),false); drawMCP(true); };
+drawMCP(false);
+
+/* =========== 7. three ways to think longer =========== */
+(function(){
+  const s=$("#loop-svg");
+  s.appendChild(svgEl("defs",{})).innerHTML=`<marker id="lpm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--ink2)"/></marker>`;
+  const panel=(x,title,sub)=>{ s.append(svgEl("text",{x,y:18,"font-weight":"700"},title)); s.append(svgEl("text",{x,y:34,class:"sub"},sub)); };
+  const stack=(x,y,n,w,h,cls)=>{ for(let i=0;i<n;i++){ const yy=y-(i+1)*(h+4); s.append(svgEl("rect",{x,y:yy,width:w,height:h,rx:4,class:"box "+cls})); s.append(svgEl("text",{x:x+w/2,y:yy+h/2+4,"text-anchor":"middle","font-size":"11"},`第 ${i+1} 层`)); } };
+  // 1 standard
+  panel(10,"普通","每个 token 走一遍");
+  s.append(svgEl("rect",{x:40,y:214,width:120,height:24,rx:5,class:"box g"})); s.append(svgEl("text",{x:100,y:230,"text-anchor":"middle","font-size":"12"},"输入 token"));
+  stack(40,210,5,120,24,"a");
+  // 2 reasoning
+  panel(250,"推理模型","思考写成 token：更长");
+  const toks=["想","想","想","想","想","想","答"];
+  toks.forEach((t,i)=>{ const x=250+i*32; s.append(svgEl("rect",{x,y:110,width:28,height:28,rx:5,class:"box "+(t==="答"?"a":"b")})); s.append(svgEl("text",{x:x+14,y:129,"text-anchor":"middle","font-size":"12"},t)); });
+  s.append(svgEl("text",{x:250,y:165,class:"sub"},"每个方块都完整走一遍所有层"));
+  s.append(svgEl("text",{x:250,y:182,class:"sub"},"思考过程人能读到（可监督）"));
+  // 3 looped
+  panel(500,"循环深度","同一组层反复用：更深");
+  s.append(svgEl("rect",{x:520,y:214,width:120,height:24,rx:5,class:"box g"})); s.append(svgEl("text",{x:580,y:230,"text-anchor":"middle","font-size":"12"},"输入 token"));
+  stack(520,210,2,120,28,"a");
+  s.append(svgEl("path",{d:"M640 196 C 690 196, 690 150, 640 150",class:"ar","marker-end":"url(#lpm)"}));
+  s.append(svgEl("text",{x:668,y:176,"font-size":"12","font-weight":"700"},"×N"));
+  s.append(svgEl("text",{x:520,y:120,class:"sub"},"参数不变，计算加深"));
+  s.append(svgEl("text",{x:520,y:104,class:"sub"},"思考留在内部，难以直接读到"));
+})();
+
+/* =========== + threads table =========== */
+const COLS=["2018–20","2021–22","2023","2024","2025","2026"];
+const THR=[
+ ["规模",[[2,"GPT-1→3 放大千倍"],[1,"Chinchilla：数据要够"],[1,"GPT-4 起不再公开"],[1,"Llama 3.1 405B"],[1,"GPT-4.5：纯放大变贵"],[1,"Kimi K3 2.8 万亿（开源）"]]],
+ ["对齐与安全",[[0,""],[2,"InstructGPT · ChatGPT · 宪法 AI"],[1,"DPO · Llama 2-Chat"],[1,"百万特征可解释性"],[1,"ASL-3 · 电路追踪"],[2,"Mythos / Fable 分级发布 · Astra 受限"]]],
+ ["长上下文",[[1,"512 → 2K"],[0,"4K"],[2,"100K → 200K"],[2,"Gemini 1.5：1M"],[1,"1M 进入主力模型"],[1,"1M 成标配 · 稀疏注意力"]]],
+ ["多模态",[[0,""],[0,""],[1,"GPT-4 看图"],[2,"GPT-4o 原生语音 · Claude 3 视觉"],[1,"思考中看图"],[1,"开源原生多模态"]]],
+ ["效率与开源",[[0,""],[1,"LoRA · BLOOM"],[2,"LLaMA 浪潮 · Mixtral MoE"],[2,"DeepSeek MLA · V3 低成本"],[2,"R1 · gpt-oss · Kimi K2"],[1,"V4 压缩注意力 · Qwen3.5"]]],
+ ["推理",[[0,""],[1,"思维链提示"],[0,""],[2,"o1 · 测试时计算"],[2,"R1 · Claude 3.7 · o3 · GPT-5"],[1,"自适应思考 · 循环深度"]]],
+ ["工具与智能体",[[0,""],[1,"Codex · ReAct"],[1,"函数调用"],[2,"Computer Use · MCP"],[2,"Claude Code · Codex · ChatGPT agent"],[2,"原生电脑操作 · Cowork · 智能体团队"]]],
+];
+$("#thr").innerHTML=`<thead><tr><th>主线</th>${COLS.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>${THR.map(([n,cs])=>`<tr><td>${n}</td>${cs.map(([lv,t])=>`<td class="${lv===2?"hot":lv===1?"on":""}">${t?`<small>${t}</small>`:""}</td>`).join("")}</tr>`).join("")}</tbody>`;
+
+/* =========== glossary =========== */
+const GL=[
+ ["预训练 / 后训练","pretraining / post-training","预训练：在海量文本上猜下一个词，学会语言和知识。后训练：之后所有让它变成好助手的步骤（指令微调、RLHF、推理训练、工具使用训练）。近几年的进步越来越多来自后训练。"],
+ ["RLHF / RLAIF","reinforcement learning from human / AI feedback","用人（或按原则打分的 AI）对回答的偏好做奖励，强化学习让模型朝更受欢迎的方向调整。"],
+ ["RLVR","reinforcement learning with verifiable rewards","用能自动判对错的任务（数学答案、代码测试）做奖励的强化学习。推理模型的主要训练方法。"],
+ ["上下文窗口","context window","模型一次能「看见」的 token 数量上限，包括你的输入和它的输出。"],
+ ["混合专家","MoE, mixture of experts","把前馈层拆成很多专家，每个 token 只用其中几个。总参数决定「知道多少」，激活参数决定「算得多贵」。"],
+ ["开放权重","open weights","公开训练好的参数文件，可下载运行和微调；训练数据与代码通常不公开。"],
+ ["蒸馏","distillation","用大模型的输出训练小模型，让小模型学到大模型的部分能力。DeepSeek-R1 的小型版本就是这样得到的。"],
+ ["量化","quantization","用更少的比特存参数（如 16 位 → 4 位），模型变小变快，精度略降。普通电脑能跑大模型主要靠它。"],
+ ["测试时计算","test-time compute","在回答时多花算力（多写思考 token、多次采样），换取更高的准确率。"],
+ ["智能体","agent","模型 + 工具 + 循环：模型决定下一步，外部程序执行，结果写回上下文，直到完成任务。"],
+ ["MCP","Model Context Protocol","连接 AI 应用与外部工具、数据的开放协议，相当于统一的插头标准。"],
+ ["多模态 / 原生多模态","multimodal / native","能处理文字以外的输入输出。「原生」指一个模型从训练起就同时学多种模态，而不是把几个模型拼接起来。"],
+];
+$("#gloss").innerHTML=GL.map(([a,b,c])=>`<details class="gl"><summary>${a}<span class="en">${b}</span></summary><p>${c}</p></details>`).join("");
+
+/* =========== sources =========== */
+const SRC=[
+ ["Radford et al. 2018 · GPT-1","https://cdn.openai.com/research-covers/language-unsupervised/language_understanding_paper.pdf"],
+ ["Kaplan et al. 2020 · Scaling Laws","https://arxiv.org/abs/2001.08361"],
+ ["Brown et al. 2020 · GPT-3","https://arxiv.org/abs/2005.14165"],
+ ["Ouyang et al. 2022 · InstructGPT","https://arxiv.org/abs/2203.02155"],
+ ["Hoffmann et al. 2022 · Chinchilla","https://arxiv.org/abs/2203.15556"],
+ ["Bai et al. 2022 · Constitutional AI","https://arxiv.org/abs/2212.08073"],
+ ["Hu et al. 2021 · LoRA","https://arxiv.org/abs/2106.09685"],
+ ["OpenAI · GPT-4 Technical Report","https://arxiv.org/abs/2303.08774"],
+ ["OpenAI · Hello GPT-4o","https://openai.com/index/hello-gpt-4o/"],
+ ["OpenAI · Learning to reason with LLMs (o1)","https://openai.com/index/learning-to-reason-with-llms/"],
+ ["OpenAI · Introducing GPT-5","https://openai.com/index/introducing-gpt-5/"],
+ ["OpenAI · Introducing gpt-oss","https://openai.com/index/introducing-gpt-oss/"],
+ ["OpenAI · GPT-5.6","https://openai.com/index/gpt-5-6/"],
+ ["OpenAI · GPT-6 Astra","https://openai.com/index/gpt-6-astra/"],
+ ["Anthropic · Claude 3 family","https://www.anthropic.com/news/claude-3-family"],
+ ["Anthropic · Scaling Monosemanticity","https://transformer-circuits.pub/2024/scaling-monosemanticity/"],
+ ["Anthropic · 3.5 models and computer use","https://www.anthropic.com/news/3-5-models-and-computer-use"],
+ ["Anthropic · Model Context Protocol","https://www.anthropic.com/news/model-context-protocol"],
+ ["Anthropic · Claude Opus 4.5","https://www.anthropic.com/news/claude-opus-4-5"],
+ ["Anthropic · Project Glasswing","https://www.anthropic.com/glasswing"],
+ ["Anthropic · Claude Fable 5 and Mythos 5","https://www.anthropic.com/news/claude-fable-5-mythos-5"],
+ ["Anthropic · Claude Opus 5.5","https://www.anthropic.com/claude-opus-5-5"],
+ ["DeepSeek-V3 Technical Report","https://arxiv.org/abs/2412.19437"],
+ ["DeepSeek-R1","https://arxiv.org/abs/2501.12948"],
+ ["DeepSeekMath · GRPO","https://arxiv.org/abs/2402.03300"],
+ ["DeepSeek-V4 preview","https://api-docs.deepseek.com/news/news260424/"],
+ ["Kimi K2","https://arxiv.org/abs/2507.20534"],
+ ["Qwen3","https://qwenlm.github.io/blog/qwen3/"],
+ ["MCP joins the Agentic AI Foundation","https://blog.modelcontextprotocol.io/posts/2025-12-09-mcp-joins-agentic-ai-foundation/"],
+ ["CNBC · Nvidia record one-day loss","https://www.cnbc.com/2025/01/27/nvidia-sheds-almost-600-billion-in-market-cap-biggest-drop-ever.html"],
+ ["CNBC · GPT-6 Astra rollout","https://www.cnbc.com/2026/09/03/open-ai-astra-gpt-6-cyber.html"],
+ ["Interconnects · Kimi K3","https://www.interconnects.ai/p/kimi-k3-the-open-weights-escalation"],
+];
+$("#src").innerHTML=SRC.map(([t,u])=>`<li><a href="${u}" target="_blank" rel="noopener">${t}</a></li>`).join("");
+
+})();
+</script>
