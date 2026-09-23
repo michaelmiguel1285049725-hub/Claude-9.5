@@ -181,7 +181,7 @@ svg text{font-family:var(--sans)}
 .heat .c.off{background:transparent;cursor:default;border:1px dashed var(--line2)}
 .heat .rl{font-family:var(--sans);font-size:11px;color:var(--ink2);text-align:right;padding-right:4px;white-space:nowrap;overflow:hidden}
 .heat .row.sel .rl{color:var(--accent);font-weight:700}
-.heat .cl{font-size:11px;line-height:1.15;color:var(--ink2);writing-mode:vertical-rl;justify-self:center;padding-top:3px}
+.heat .cl{font-size:11px;color:var(--ink2);text-align:center;padding-top:2px}
 table{border-collapse:collapse;width:100%;font-size:13.5px}
 th{font-weight:500;color:var(--muted);text-align:left;font-size:12px;padding:4px 6px;border-bottom:1px solid var(--line)}
 td{padding:4px 6px;border-bottom:1px solid var(--line2);font-variant-numeric:tabular-nums}
@@ -194,6 +194,53 @@ td .mini{display:inline-block;height:8px;background:var(--accent);border-radius:
 canvas{display:block;max-width:100%}
 .pe-wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:24px;align-items:center}
 @media (max-width:760px){.pe-wrap{grid-template-columns:minmax(0,1fr)}}
+
+
+/* attention walkthrough */
+.lib{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0;max-width:46em}
+@media (max-width:600px){.lib{grid-template-columns:minmax(0,1fr)}}
+.lib div{border-top:2px solid var(--ink);padding-top:8px;font-size:14.5px;color:var(--ink2);line-height:1.65}
+.lib b{display:block;font-family:var(--mono);font-size:15px;color:var(--ink)}
+.lib i{font-style:normal;display:block;font-size:13px;color:var(--muted);margin-top:4px}
+.steps{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.steps .btn{display:flex;gap:8px;align-items:center}
+.steps .btn .sn{width:20px;height:20px;border-radius:50%;border:1px solid currentColor;display:grid;place-items:center;font-family:var(--mono);font-size:11px}
+.walk-say{font-size:15.5px;line-height:1.8;background:var(--bg);border-radius:8px;padding:12px 16px;margin:0 0 16px;min-height:5.4em}
+.walk-say b{color:var(--accent)}
+.walk-q{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;border:1px dashed var(--accent);border-radius:10px;padding:12px 14px;margin-bottom:14px}
+.walk-q .ql{font-size:14px}
+.walk-q .ql b{color:var(--accent)}
+.vcells{display:inline-flex;gap:3px;vertical-align:middle}
+.vcells span{min-width:30px;height:26px;padding:0 4px;border-radius:4px;display:grid;place-items:center;font-family:var(--mono);font-size:12.5px;color:var(--ink);font-variant-numeric:tabular-nums}
+.vcells.big span{min-width:38px;height:30px;font-size:13.5px}
+.dimlbl{display:inline-flex;gap:3px;vertical-align:middle}
+.dimlbl span{min-width:38px;text-align:center;font-size:11px;color:var(--muted)}
+.walk-legend{font-size:12.5px;color:var(--muted);margin-bottom:8px}
+.walk-cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.wc{border:1px solid var(--line);border-radius:10px;padding:10px 8px;display:grid;gap:8px;justify-items:center;text-align:center;align-content:start;background:var(--surface)}
+.wc.me{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.wc .w{font-family:var(--serif);font-size:20px;font-weight:600;line-height:1.2}
+.wc .role{font-size:11.5px;color:var(--muted);line-height:1.3;min-height:2.6em}
+.wc .tag{font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.06em}
+.wc .vcells span{min-width:0;width:22px;height:22px;font-size:11px;padding:0}
+.wc .calc{font-family:var(--mono);font-size:11px;color:var(--ink2);line-height:1.5}
+.wc .calc b{display:block;font-size:17px;color:var(--ink);margin-top:2px}
+.wc .wbar{width:28px;height:72px;background:var(--sunk);border-radius:4px;display:flex;align-items:flex-end;overflow:hidden}
+.wc .wbar i{display:block;width:100%;background:var(--accent);transition:height .35s ease}
+.wc .wpct{font-family:var(--mono);font-size:15px;font-weight:600}
+.wc .give{font-size:11.5px;color:var(--ink2);line-height:1.35}
+.wc .dim{opacity:.25}
+@media (max-width:560px){.walk-cards{grid-template-columns:repeat(3,minmax(0,1fr))}.wc .vcells span{width:24px}}
+.walk-out{margin-top:16px;border-top:1px solid var(--line2);padding-top:14px}
+.stackbar{display:flex;height:34px;border-radius:6px;overflow:hidden;margin:8px 0}
+.stackbar span{display:grid;place-items:center;font-size:12.5px;color:var(--surface);font-weight:500;white-space:nowrap;overflow:hidden;transition:flex-basis .35s}
+.walk-nav{display:flex;justify-content:space-between;gap:8px;margin-top:16px;flex-wrap:wrap}
+.att-legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12.5px;color:var(--ink2);margin-bottom:10px}
+.att-legend span{display:inline-flex;align-items:center;gap:6px}
+.att-legend .sw{display:inline-block;width:26px;height:16px;border-radius:4px}
+.att-read{font-size:15px;line-height:1.8;background:var(--bg);border-radius:8px;padding:12px 16px}
+.att-read b{color:var(--accent)}
+.att-read .row-bars{display:grid;gap:4px;margin-top:10px}
 
 /* layers */
 .lay-grid{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:28px;align-items:start}
@@ -380,24 +427,55 @@ footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);paddin
   <p class="eyebrow">第 3 站 · Self-Attention</p>
   <h2>让词与词互相看：注意力</h2>
   <div class="prose">
-    <p>到这里，每个 token 的向量还是孤立的：「它」的向量并不知道「它」指的是谁。<b>注意力机制</b>让每个 token 回头看前面所有 token，决定从谁那里拿多少信息。这是 2017 年论文《Attention Is All You Need》提出的 Transformer 架构的核心。</p>
-    <p>做法是：每个 token 从自己的向量算出三样东西——</p>
+    <p>第 2 站结束时，每个词都有了自己的向量，但它们<b>彼此不知道对方</b>。看这句话：</p>
+    <p style="font-family:var(--serif);font-size:20px;font-weight:600;margin:10px 0">小猫喝完牛奶，<span style="color:var(--accent)">它</span>……</p>
+    <p>单看「它」自己的向量，只知道「我是一个代词」，不知道指的是谁。人一眼就能看出「它」是小猫，模型得<b>回头看前面的词，把有用的信息拿过来</b>。这个「回头看、拿信息」的动作，就叫<b>注意力</b>。</p>
+    <p>它的做法很像在图书馆里查资料：</p>
   </div>
-  <div class="qkv">
-    <div><b>Q 查询</b>我在找什么样的信息？</div>
-    <div><b>K 键</b>我身上有什么样的信息？</div>
-    <div><b>V 值</b>如果你关注我，我交给你的内容。</div>
+  <div class="lib">
+    <div><b>Q 查询</b>你在搜索框里输入的关键词。<i>「它」的 Q：我要找一个名词，最好是活的东西。</i></div>
+    <div><b>K 键</b>每本书封面上的标签。<i>「小猫」的 K：我是名词，而且是活的。</i></div>
+    <div><b>V 值</b>书里的内容，匹配上了才去读。<i>「小猫」的 V：一只猫的各种特征。</i></div>
   </div>
-  <div class="prose">
-    <p>拿我的 Q 和每个人的 K 做点积，得到「匹配分」；用 softmax 把分数变成加起来是 100% 的权重；最后按权重把大家的 V 加起来，作为我的新信息。</p>
+  <div class="prose"><p>用关键词去对比每本书的标签，越对得上的书读得越多，最后把读到的内容汇总起来。下面把这件事一步一步算给你看。</p></div>
+
+  <div class="fig" id="walk">
+    <div class="fig-h">
+      <span class="fig-t">一步一步算：读到「它」时，模型怎么知道它指谁？</span>
+      <span class="fig-note">3 维玩具向量 · 数字为演示编造</span>
+    </div>
+    <div class="steps" id="walk-steps" role="group" aria-label="计算步骤">
+      <button class="btn" data-step="1"><span class="sn">1</span>发出 Q，亮出 K</button>
+      <button class="btn" data-step="2"><span class="sn">2</span>对比打分</button>
+      <button class="btn" data-step="3"><span class="sn">3</span>变成百分比</button>
+      <button class="btn" data-step="4"><span class="sn">4</span>按比例拿 V</button>
+    </div>
+    <p class="walk-say" id="walk-say" aria-live="polite"></p>
+    <div class="walk-q">
+      <div class="ql"><b>「它」的查询 Q</b>　<span class="dimlbl"><span>名词?</span><span>活物?</span><span>动作?</span></span><br><span style="display:inline-block;width:6.2em"></span><span class="vcells big" id="walk-qv"></span></div>
+      <label class="ctl" for="walk-alive">「活物」这一格：它有多在意对方是不是活的
+        <input type="range" id="walk-alive" min="0" max="3" step="0.5" value="2"><output id="walk-alive-o">2</output></label>
+    </div>
+    <div class="walk-legend" id="walk-legend">每个词下面的三个格子依次是：名词? / 活物? / 动作?（1 = 是，0 = 不是）</div>
+    <div class="walk-cards" id="walk-cards"></div>
+    <div class="walk-out" id="walk-out" hidden></div>
+    <div class="walk-nav">
+      <button class="btn" id="walk-prev">← 上一步</button>
+      <button class="btn primary" id="walk-next">下一步 →</button>
+    </div>
+    <p class="cap">真实模型里，Q、K、V 都是用训练出来的矩阵从词向量算出来的，每个头大约 128 维（GPT-3），而且每一维不会有「名词?」「活物?」这么清楚的名字，分数还要先除以 √维数 再做 softmax。这里只用 3 维，并给每一维起了名字，是为了能看懂。</p>
   </div>
 
+  <h3>整句话：每个词都在同时做刚才那件事</h3>
+  <div class="prose">
+    <p>刚才只算了「它」这一个词。实际上<b>句子里每个词都会发出自己的 Q</b>，把前面所有词都查一遍，而且是同时进行的。下面换一个长一点的句子，点任意一个词，看它把注意力分给了谁。</p>
+  </div>
   <div class="fig">
     <div class="fig-h">
-      <span class="fig-t">点任意一个词，看它在关注谁</span>
+      <span class="fig-t">小猫没跳上桌子，因为它太累了</span>
       <span class="fig-note">权重为示意</span>
     </div>
-    <div class="controls" style="margin-bottom:12px;gap:12px 20px">
+    <div class="controls" style="margin-bottom:14px;gap:12px 20px">
       <div class="seg" role="group" aria-label="注意力头">
         <button class="btn" data-head="coref" aria-pressed="true">头 A：找指代</button>
         <button class="btn" data-head="prev" aria-pressed="false">头 B：看前一个词</button>
@@ -407,29 +485,33 @@ footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);paddin
         <button class="btn" data-var="gao" aria-pressed="false">…太<b>高</b>了</button>
       </div>
     </div>
+    <div class="att-legend">
+      <span><i class="sw" style="background:var(--accent)"></i>正在「提问」的词（点别的词可以切换）</span>
+      <span><i class="sw" style="background:transparent;border:1px dashed var(--line)"></i>后面的词：还没写出来，看不到</span>
+      <span>弧线 = 它在看谁，越粗越关注；下面的百分比就是第 3 步算出的权重</span>
+    </div>
     <div class="scroll-x"><svg id="att-svg" class="att-svg" viewBox="0 0 680 210" role="img" aria-label="注意力连线图"></svg></div>
+    <div class="att-read" id="att-read" aria-live="polite"></div>
     <div class="att-lower">
       <div>
-        <div class="gen-q">完整的注意力矩阵：每一行是一个词在看谁（右上角空着：不能偷看未来）</div>
+        <div class="gen-q"><b style="color:var(--ink)">全部一起看：</b>把每个词的那组百分比排成一行，就得到这张表。第几行 = 哪个词在提问，颜色越深 = 越关注那一列的词。右上角是空的，因为不能看后面的词。点格子可以切换提问的词。</div>
         <div class="heat" id="att-heat"></div>
       </div>
-      <div>
-        <div class="gen-q" id="att-tbl-h"></div>
-        <div class="scroll-x"><table id="att-tbl"></table></div>
+      <div class="prose" style="font-size:15px">
+        <p style="margin-top:0"><b>两个值得试的操作：</b></p>
+        <ul>
+          <li>保持头 A，点「累」，再切到「高」。「累」看向「小猫」（累的是小猫），「高」看向「桌子」（高的是桌子）。前面的词一个都没变，只改了一个字，注意力的方向就跟着改了。</li>
+          <li>点「它」。两个名词的权重差不多，因为这时后面的「累 / 高」还没出现，模型也拿不准。这个歧义要到后面的词才能解开。</li>
+        </ul>
+        <p><b>什么是「头」？</b>一层里有很多组独立的 Q/K/V 同时工作，每组叫一个头（GPT-3 每层 96 个）。每个头学会查找不同的东西：头 A 找「指的是谁」，头 B 只盯前一个词，负责词语搭配。没人给它们分工，这是训练中自己形成的。所有头拿到的信息最后合并，一起送进下一步。</p>
       </div>
     </div>
-  </div>
-
-  <div class="callout"><b>试试切换「累 / 高」。</b>在「累」这个位置，头 A 主要看向「小猫」；换成「高」，它转而看向「桌子」。而在「它」这个位置，两个名词的权重差不多——因为此时后文还没出现，模型也拿不准。「它」指谁，是在读到后面的词时才解决的。</div>
-
-  <div class="prose">
-    <p>一层里有许多个这样的「头」并行工作（GPT-3 每层 96 个）。训练中它们各自分工：有的盯住前一个词，有的负责指代，有的追踪句法结构——没有人规定分工，这是自己长出来的。</p>
   </div>
 
   <h3>注意力不知道先后顺序</h3>
   <div class="pe-wrap">
     <div class="prose">
-      <p>单看点积，「狗咬人」和「人咬狗」算出来的东西一模一样。所以在第 2 站的向量上还要再叠加一份<b>位置信号</b>。原始 Transformer 用不同频率的正弦波，让每个位置拥有一种独一无二的「波纹指纹」（右图每一行是一个位置）。</p>
+      <p>回看第 2 步：打分只比较 Q 和 K 的内容，完全不管词的位置。所以「狗咬人」和「人咬狗」在这里算出来一模一样。为此，第 2 站的向量上还要再叠加一份<b>位置信号</b>。原始 Transformer 用不同频率的正弦波，让每个位置拥有一种独一无二的「波纹指纹」（右图每一行是一个位置）。</p>
       <p>现在的模型多用<b>旋转位置编码</b> <span class="term">RoPE</span>，思路一样：把「我在第几个」写进向量里。</p>
     </div>
     <div>
@@ -774,6 +856,60 @@ $("#emb-analogy").onclick=()=>{ selA=WORDS.find(o=>o.w==="国王"); selB=WORDS.f
 drawEmb(); renderVec();
 
 /* =========== 3. attention =========== */
+/* --- walkthrough: one query, four steps --- */
+const WT=[
+  {w:"小猫",role:"会动的名词",k:[1,1,0],v:[1,0,0],give:"动物特征",col:"--accent"},
+  {w:"喝完",role:"动作",k:[0,0,1],v:[0,0,1],give:"动作特征",col:"--muted"},
+  {w:"牛奶",role:"不会动的名词",k:[1,0,0],v:[0,1,0],give:"食物特征",col:"--amber"},
+  {w:"，",role:"标点",k:[0,0,0],v:[0,0,0],give:"几乎没有",col:"--line"},
+  {w:"它",role:"代词（就是我自己）",k:[0.5,0.5,0],v:[0.1,0.1,0],give:"一点点",col:"--good"},
+];
+let wStep=1;
+const fmt=x=>Number.isInteger(x)?String(x):x.toFixed(1);
+const cellsHTML=(vec,max=2)=>vec.map(x=>`<span style="background:color-mix(in srgb, var(--accent) ${Math.round(Math.min(1,Math.abs(x)/max)*55)}%, var(--sunk))">${fmt(x)}</span>`).join("");
+function walk(){
+  const alive=+$("#walk-alive").value; $("#walk-alive-o").textContent=fmt(alive);
+  const Q=[1,alive,0];
+  const sc=WT.map(t=>t.k.reduce((a,k,i)=>a+k*Q[i],0));
+  const wt=softmax(sc);
+  const out=[0,1,2].map(i=>WT.reduce((a,t,j)=>a+wt[j]*t.v[i],0));
+  $("#walk-qv").innerHTML=cellsHTML(Q,3);
+  document.querySelectorAll("#walk-steps .btn").forEach(b=>b.setAttribute("aria-pressed", +b.dataset.step===wStep));
+  $("#walk-legend").textContent = wStep<4 ? "每个词下面的三个格子是它的 K，依次表示：名词? / 活物? / 动作?（1 = 是，0 = 不是）" : "第 4 步里每个词交出的是 V，三个格子依次表示：动物特征 / 食物特征 / 动作特征";
+  $("#walk-cards").innerHTML=WT.map((t,j)=>{
+    let h=`<div class="wc${j===4?" me":""}"><div class="w">${t.w}</div><div class="role">${t.role}</div>`;
+    if(wStep<4) h+=`<div class="tag">K</div><div class="vcells">${cellsHTML(t.k,1)}</div>`;
+    if(wStep===2) h+=`<div class="calc">${t.k.map((k,i)=>`${fmt(Q[i])}×${fmt(k)}`).join("+<br>")}<b>= ${fmt(sc[j])}</b></div>`;
+    if(wStep===3) h+=`<div class="calc">分数 ${fmt(sc[j])}</div><div class="wbar"><i style="height:${(wt[j]*100).toFixed(1)}%"></i></div><div class="wpct">${Math.round(wt[j]*100)}%</div>`;
+    if(wStep===4) h+=`<div class="wpct">${Math.round(wt[j]*100)}%</div><div class="tag">V</div><div class="vcells">${cellsHTML(t.v,1)}</div><div class="give">交出：${t.give}</div>`;
+    return h+`</div>`;
+  }).join("");
+  const P=j=>Math.round(wt[j]*100)+"%";
+  const tie = Math.abs(sc[0]-sc[2])<1e-9;
+  const say={
+    1:`每个词都带着一个 <b>K</b>，说明「我是什么」。现在轮到「它」提问，它发出一个 <b>Q</b>，说明「我在找什么」：Q 的三个格子是 [${Q.map(fmt).join(", ")}]，意思是${alive>0?`「要找名词，${alive>=2?"而且特别在意对方是不是活物":"稍微在意是不是活物"}」`:"「要找名词，不在乎是不是活物」"}。下一步拿 Q 去和每个 K 对比。`,
+    2:`把 Q 和每个 K <b>对应格子相乘，再加起来</b>（这叫点积），得到匹配分。两边都是「1」的格子越多，分数越高。「小猫」既是名词又是活物，得 <b>${fmt(sc[0])}</b> 分；「牛奶」只对上「名词」这一格，得 <b>${fmt(sc[2])}</b> 分；「喝完」一格都没对上，得 0 分。${tie?"<br>现在 Q 不在乎是不是活物，小猫和牛奶打成平手，模型就分不清「它」指谁了。":""}`,
+    3:`用 softmax（上一个问题讲过：先取 e 的次方，再除以总和）把分数变成加起来是 100% 的<b>注意力权重</b>：小猫 <b>${P(0)}</b>，自己 ${P(4)}，牛奶 ${P(2)}，其余各 ${P(1)}。高分被放大，低分被压小。${tie?"<br>分数打平，权重也打平。":""}`,
+    4:`每个词交出自己的 <b>V</b>（能提供的内容），按刚才的百分比混合，得到「它」的<b>新向量</b>。结果里约 <b>${P(0)}</b> 来自「小猫」。从这一层往后，模型再处理「它」时，手里拿着的就是「一只猫」的信息，所以后面更可能接「睡着了」「喵喵叫」，而不是「变酸了」。`,
+  };
+  $("#walk-say").innerHTML=say[wStep];
+  const O=$("#walk-out"); O.hidden = wStep!==4;
+  if(wStep===4){
+    O.innerHTML=`<div class="gen-q" style="margin:0">「它」的新向量是由这些部分组成的：</div>
+      <div class="stackbar">${WT.map((t,j)=>`<span style="flex-basis:${(wt[j]*100).toFixed(2)}%;background:var(${t.col})" title="${t.w} ${P(j)}">${wt[j]>0.1?t.w+" "+P(j):""}</span>`).join("")}</div>
+      <div class="fig-note" style="line-height:1.9">新向量 = ${WT.map((t,j)=>`${wt[j].toFixed(2)}×[${t.v.map(fmt).join(",")}]`).join(" + ")}<br>　　　 = <span class="dimlbl" style="vertical-align:0"><span>动物</span><span>食物</span><span>动作</span></span> <span class="vcells" style="vertical-align:middle">${cellsHTML(out.map(x=>+x.toFixed(2)),1)}</span></div>`;
+    O.querySelectorAll(".vcells span").forEach((sp,i)=>sp.textContent=out[i].toFixed(2));
+  }
+  $("#walk-prev").disabled = wStep===1;
+  $("#walk-next").textContent = wStep===4 ? "从头再看一遍 ↺" : "下一步 →";
+}
+document.querySelectorAll("#walk-steps .btn").forEach(b=>b.onclick=()=>{ wStep=+b.dataset.step; walk(); });
+$("#walk-prev").onclick=()=>{ if(wStep>1){ wStep--; walk(); } };
+$("#walk-next").onclick=()=>{ wStep = wStep===4 ? 1 : wStep+1; walk(); };
+$("#walk-alive").addEventListener("input", walk);
+walk();
+
+/* --- whole sentence --- */
 let head="coref", variant="lei", q=8;
 const toks=()=>["小猫","没","跳上","桌子","，","因为","它","太",variant==="lei"?"累":"高","了"];
 function weights(){
@@ -791,20 +927,27 @@ function weights(){
   }
   return W;
 }
+function attRead(T,row){
+  const top=row.slice(0,q+1).map((w,j)=>({w,j})).sort((a,b)=>b.w-a.w);
+  const name=j=>j===q?"自己":`「${T[j]}」`;
+  let why="";
+  if(head==="prev") why = q===0 ? "第一个词前面没有别的词，只能看自己。" : `这个头几乎只看紧挨着的前一个词${name(q-1)}。它负责记住「前面紧挨着的是什么」，这对词语搭配很有用，比如「跳」后面接「上」。`;
+  else if(q===8) why = variant==="lei" ? "「累」主要看向「小猫」，其次是「它」：模型在这一步把「累的是谁」和小猫连了起来。" : "换成「高」以后，主要看向「桌子」：高的是桌子。前面的词一个都没变，只改了一个字，注意力就换了方向。";
+  else if(q===6) why = "「小猫」和「桌子」的权重差不多：读到「它」时后文还没出现，模型也拿不准指的是谁。";
+  else if(q===9) why = "「了」主要看紧挨着的「累 / 高」，它在确认前面是一个完整的状态描述。";
+  else why = "这个位置没有什么需要特别找的，所以大部分权重给了自己和句子里的名词。点「它」「累」试试更有意思的例子。";
+  return `<b>「${T[q]}」</b>把注意力分给了：${top.slice(0,3).map(o=>`${name(o.j)} ${Math.round(o.w*100)}%`).join("，")}${top.length>3?"……":""}<br>${why}<br><span style="color:var(--muted);font-size:13.5px">意思是：「${T[q]}」的新向量里，${Math.round(top[0].w*100)}% 的信息来自${name(top[0].j)}，也就是刚才第 4 步里那条组合条。</span>`;
+}
 function drawAtt(){
   const T=toks(), W=weights(), row=W[q];
   const S=$("#att-svg"); S.innerHTML="";
   const X=i=>40+i*66, Y=170;
-  // arcs first so tokens sit on top
   row.forEach((w,j)=>{
     if(j>q||w<0.015) return;
     const x1=X(q), x2=X(j);
-    if(j===q){
-      const p=svgEl("path",{d:`M${x1-10},${Y-18} C${x1-24},${Y-70} ${x1+24},${Y-70} ${x1+10},${Y-18}`,class:"att-arc","stroke-width":(1+w*16).toFixed(1),opacity:(0.25+w*0.75).toFixed(2)}); S.appendChild(p);
-    } else {
-      const h=Math.min(150, 26+Math.abs(q-j)*17);
-      const p=svgEl("path",{d:`M${x1},${Y-18} Q${(x1+x2)/2},${Y-18-h} ${x2},${Y-18}`,class:"att-arc","stroke-width":(1+w*16).toFixed(1),opacity:(0.25+w*0.75).toFixed(2)}); S.appendChild(p);
-    }
+    const d = j===q ? `M${x1-10},${Y-18} C${x1-24},${Y-70} ${x1+24},${Y-70} ${x1+10},${Y-18}`
+                    : `M${x1},${Y-18} Q${(x1+x2)/2},${Y-18-Math.min(150,26+Math.abs(q-j)*17)} ${x2},${Y-18}`;
+    S.appendChild(svgEl("path",{d,class:"att-arc","stroke-width":(1+w*16).toFixed(1),opacity:(0.25+w*0.75).toFixed(2)}));
     if(w>=0.06){ const t=svgEl("text",{x:X(j),y:Y+34,class:"att-w"}); t.textContent=Math.round(w*100)+"%"; S.appendChild(t); }
   });
   T.forEach((t,i)=>{
@@ -815,27 +958,19 @@ function drawAtt(){
     const f=()=>{ q=i; drawAtt(); }; g.addEventListener("click",f); g.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); f(); } });
     S.appendChild(g);
   });
-  // heatmap
+  $("#att-read").innerHTML=attRead(T,row);
   const H=$("#att-heat"); H.innerHTML=""; const cols=`3.2em repeat(10,minmax(0,1fr))`;
   W.forEach((r,i)=>{
     const R=el("div",{class:"row"+(i===q?" sel":""),style:`grid-template-columns:${cols}`});
     R.appendChild(el("span",{class:"rl"},T[i]));
     r.forEach((w,j)=>{
       if(j>i){ R.appendChild(el("span",{class:"c off"})); return; }
-      const b=el("button",{class:"c",type:"button","aria-label":`${T[i]} → ${T[j]} ${Math.round(w*100)}%`,style:`background:color-mix(in srgb, var(--accent) ${Math.min(100,w*160).toFixed(0)}%, var(--sunk))`+(i===q?";outline:1.5px solid var(--ink)":"")});
+      const b=el("button",{class:"c",type:"button","aria-label":`${T[i]} → ${T[j]} ${Math.round(w*100)}%`,title:`${T[i]} 看 ${T[j]}：${Math.round(w*100)}%`,style:`background:color-mix(in srgb, var(--accent) ${Math.min(100,w*160).toFixed(0)}%, var(--sunk))`+(i===q?";outline:1.5px solid var(--ink)":"")});
       b.onclick=()=>{ q=i; drawAtt(); }; R.appendChild(b);
     });
     H.appendChild(R);
   });
-  const L=el("div",{class:"row",style:`grid-template-columns:${cols}`}); L.appendChild(el("span")); T.forEach(t=>L.appendChild(el("span",{class:"cl"},t))); H.appendChild(L);
-  // table: scores → softmax → weights
-  $("#att-tbl-h").innerHTML=`「${T[q]}」这一行的计算过程：Q·K 匹配分 → softmax → 权重`;
-  const sc=row.slice(0,q+1).map(w=>Math.log(w)); const mx=Math.max(...sc);
-  let h=`<tr><th>被看的词</th><th style="text-align:right">匹配分</th><th>权重</th></tr>`;
-  row.slice(0,q+1).map((w,j)=>({w,j,s:sc[j]-mx+4})).sort((a,b)=>b.w-a.w).forEach(o=>{
-    h+=`<tr><td>${T[o.j]}</td><td class="m" style="text-align:right">${o.s.toFixed(2)}</td><td class="m"><span class="mini" style="width:${(o.w*110).toFixed(0)}px"></span> ${Math.round(o.w*100)}%</td></tr>`;
-  });
-  $("#att-tbl").innerHTML=h;
+  const L=el("div",{class:"row",style:`grid-template-columns:${cols}`}); L.appendChild(el("span")); T.forEach(t=>L.appendChild(el("span",{class:"cl",title:t},[...t][0]))); H.appendChild(L);
 }
 document.querySelectorAll("[data-head]").forEach(b=>b.onclick=()=>{ head=b.dataset.head; document.querySelectorAll("[data-head]").forEach(x=>x.setAttribute("aria-pressed",x===b)); drawAtt(); });
 document.querySelectorAll("[data-var]").forEach(b=>b.onclick=()=>{ variant=b.dataset.var; document.querySelectorAll("[data-var]").forEach(x=>x.setAttribute("aria-pressed",x===b)); q=8; drawAtt(); });
