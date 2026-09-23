@@ -1,0 +1,983 @@
+<meta charset="utf-8">
+<title>下一个词是什么</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f1f3ef; --surface:#ffffff; --sunk:#e7eae3; --ink:#15191e; --ink2:#48505a; --muted:#7a818a;
+  --line:#d4d8d0; --line2:#e3e6df;
+  --accent:#2744d0; --accent-soft:#dce2fb; --amber:#b86e0c; --amber-soft:#f6e5c9;
+  --good:#1d7f55; --bad:#b93a27;
+  --t1:#dce4ff; --t2:#f8e3c3; --t3:#d3efdf; --t4:#f5d7dd; --t5:#e5dcf7; --t6:#d4ecf2;
+  --serif:"Noto Serif SC","Songti SC","Source Han Serif SC",serif;
+  --sans:"Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  --mono:"JetBrains Mono","SFMono-Regular",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0e1115; --surface:#161a20; --sunk:#1e232b; --ink:#e6e9ed; --ink2:#b1b8c2; --muted:#808893;
+    --line:#2c323b; --line2:#232830;
+    --accent:#8a9dff; --accent-soft:#252e57; --amber:#efac48; --amber-soft:#3b2c14;
+    --good:#4cc28c; --bad:#f07c66;
+    --t1:#27305a; --t2:#43321a; --t3:#193b2c; --t4:#46232b; --t5:#322849; --t6:#183a42;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0e1115; --surface:#161a20; --sunk:#1e232b; --ink:#e6e9ed; --ink2:#b1b8c2; --muted:#808893;
+  --line:#2c323b; --line2:#232830;
+  --accent:#8a9dff; --accent-soft:#252e57; --amber:#efac48; --amber-soft:#3b2c14;
+  --good:#4cc28c; --bad:#f07c66;
+  --t1:#27305a; --t2:#43321a; --t3:#193b2c; --t4:#46232b; --t5:#322849; --t6:#183a42;
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.8;-webkit-font-smoothing:antialiased}
+a{color:var(--accent)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;display:grid;grid-template-columns:190px minmax(0,1fr);gap:56px}
+main{min-width:0;padding-block:24px 96px}
+
+/* rail: the 7 stops are a real sequence, so they are numbered */
+.rail{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;padding-block:40px;max-height:100vh;overflow:auto}
+.rail .rail-h{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+.rail ol{list-style:none;margin:0;padding:0;display:grid;gap:2px;position:relative}
+.rail ol::before{content:"";position:absolute;left:11px;top:12px;bottom:12px;width:1px;background:var(--line)}
+.rail a{display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:center;padding:6px 0;text-decoration:none;color:var(--ink2);font-size:14px;line-height:1.35}
+.rail a .n{width:23px;height:23px;border-radius:50%;background:var(--bg);border:1px solid var(--line);display:grid;place-items:center;font-family:var(--mono);font-size:11px;position:relative}
+.rail a:hover{color:var(--ink)}
+.rail a.on{color:var(--ink);font-weight:700}
+.rail a.on .n{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.rail small{display:block;font-family:var(--mono);font-size:10.5px;color:var(--muted);font-weight:400;letter-spacing:.02em}
+
+@media (max-width:900px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:0}
+  .rail{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding-block:8px;margin-inline:-20px;padding-inline:20px;max-height:none}
+  .rail .rail-h{display:none}
+  .rail ol{display:flex;gap:14px;overflow-x:auto;scrollbar-width:none}
+  .rail ol::before{display:none}
+  .rail a{grid-template-columns:22px auto;white-space:nowrap;gap:6px}
+  .rail small{display:none}
+}
+
+/* type */
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:0 0 10px}
+h1,h2,h3{font-family:var(--serif);text-wrap:balance;margin:0}
+h1{font-size:clamp(32px,5.2vw,54px);line-height:1.18;font-weight:900;letter-spacing:-.01em}
+h1 em{font-style:normal;color:var(--accent)}
+h2{font-size:clamp(26px,3.4vw,36px);line-height:1.25;font-weight:900}
+h3{font-size:19px;line-height:1.4;font-weight:600;margin-top:32px}
+.lead{font-size:18px;color:var(--ink2);max-width:36em;margin:18px 0 0}
+.prose{max-width:38em}
+.prose p{margin:14px 0}
+.prose ul{padding-left:1.2em;margin:12px 0}
+.prose li{margin:6px 0}
+b,strong{font-weight:700}
+.term{font-family:var(--mono);font-size:.86em;background:var(--sunk);padding:1px 6px;border-radius:4px;white-space:nowrap}
+.en{font-family:var(--mono);font-size:.82em;color:var(--muted);font-weight:400;margin-left:.4em}
+
+section.stop{padding-block:64px 24px;border-top:1px solid var(--line);scroll-margin-top:56px}
+.hero{padding-block:48px 24px}
+
+/* figures */
+.fig{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:22px;margin-block:26px}
+.fig-h{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between;margin-bottom:16px}
+.fig-t{font-weight:700;font-size:15px}
+.fig-note{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.cap{font-size:13.5px;color:var(--muted);margin:14px 0 0;line-height:1.65}
+.scroll-x{overflow-x:auto}
+
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 14px;font-size:14px;cursor:pointer;line-height:1.4}
+.btn:hover{border-color:var(--ink2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface);font-weight:500}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.btn:disabled{opacity:.4;cursor:default}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg .btn{border:0;border-radius:0}
+.seg .btn+.btn{border-left:1px solid var(--line)}
+label.ctl{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink2);flex-wrap:wrap}
+label.ctl output{font-family:var(--mono);color:var(--ink);min-width:3.5em;font-variant-numeric:tabular-nums}
+input[type=range]{accent-color:var(--accent);width:180px;max-width:100%}
+
+/* tokens */
+.tok{display:inline-block;font-family:var(--mono);font-size:14.5px;padding:2px 7px;border-radius:5px;background:var(--t1);color:var(--ink);white-space:pre;line-height:1.6}
+.tok:nth-child(6n+2){background:var(--t2)} .tok:nth-child(6n+3){background:var(--t3)} .tok:nth-child(6n+4){background:var(--t4)} .tok:nth-child(6n+5){background:var(--t5)} .tok:nth-child(6n+6){background:var(--t6)}
+.tok-row{display:flex;flex-wrap:wrap;gap:4px}
+
+/* hero generator */
+.gen-text{font-family:var(--serif);font-size:clamp(22px,3vw,30px);line-height:1.6;min-height:1.6em;font-weight:600;word-break:break-all}
+.gen-text .p{color:var(--ink)}
+.gen-text .g{color:var(--accent);border-bottom:2px solid var(--accent-soft)}
+.gen-text .g.new{animation:pop .45s ease-out}
+.gen-text .cursor{display:inline-block;width:3px;height:1em;background:var(--accent);vertical-align:-.12em;margin-left:3px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+@keyframes pop{from{background:var(--accent-soft)}to{background:transparent}}
+.gen-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:720px){.gen-grid{grid-template-columns:minmax(0,1fr)}}
+.gen-q{font-size:13px;color:var(--muted);margin-bottom:8px}
+
+.bars{display:grid;gap:6px}
+.bar{display:grid;grid-template-columns:5.5em minmax(0,1fr) 3.6em;gap:10px;align-items:center;font-size:14px;border:0;background:none;padding:3px 4px;border-radius:6px;text-align:left;width:100%}
+button.bar{cursor:pointer}
+button.bar:hover{background:var(--sunk)}
+.bar .lbl{font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .track{display:block;height:14px;background:var(--sunk);border-radius:3px;overflow:hidden}
+.bar .fill{display:block;height:100%;background:var(--accent);border-radius:3px;transition:width .35s ease}
+.bar .fill.amber{background:var(--amber)}
+.bar .pct{font-family:var(--mono);font-size:13px;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink2)}
+.bar.cut{opacity:.35}
+.bar.hi .lbl{font-weight:600;color:var(--accent)}
+
+.callout{border-left:3px solid var(--amber);background:var(--amber-soft);padding:12px 16px;border-radius:0 8px 8px 0;margin:20px 0;font-size:15px;max-width:40em}
+.callout b{color:var(--ink)}
+
+/* tokenizer */
+textarea{width:100%;font:inherit;font-size:16px;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px 12px;resize:vertical;min-height:64px;line-height:1.6}
+.tk-out{margin-top:14px;display:grid;gap:10px}
+.tk-ids{font-family:var(--mono);font-size:12.5px;color:var(--muted);word-break:break-all;line-height:1.7}
+.stats{display:flex;flex-wrap:wrap;gap:8px 28px;font-size:13.5px;color:var(--ink2);margin-top:12px}
+.stats b{font-family:var(--mono);font-size:17px;color:var(--ink);font-weight:600;margin-right:4px;font-variant-numeric:tabular-nums}
+
+/* embedding */
+.emb-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:24px}
+@media (max-width:760px){.emb-grid{grid-template-columns:minmax(0,1fr)}}
+svg text{font-family:var(--sans)}
+.pt{cursor:pointer}
+.pt circle{fill:var(--surface);stroke:var(--ink2);stroke-width:1.5;transition:r .2s}
+.pt text{font-size:14px;fill:var(--ink)}
+.pt.a circle{fill:var(--accent);stroke:var(--accent)}
+.pt.b circle{fill:var(--amber);stroke:var(--amber)}
+.pt:hover circle{stroke:var(--accent)}
+.clu{font-family:var(--mono);font-size:11px;fill:var(--muted);letter-spacing:.08em}
+.vec{display:grid;grid-template-columns:repeat(24,1fr);gap:2px;margin:6px 0 2px}
+.vec i{display:block;aspect-ratio:1/1.6;border-radius:2px}
+.vec-lbl{font-size:14px;display:flex;justify-content:space-between;gap:8px;margin-top:12px}
+.vec-lbl .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:0}
+.sim{margin-top:16px;padding-top:14px;border-top:1px solid var(--line2);font-size:14px;color:var(--ink2)}
+.sim b{font-family:var(--mono);font-size:22px;color:var(--ink);display:block;font-variant-numeric:tabular-nums}
+
+/* attention */
+.att-svg{display:block;min-width:640px;width:100%}
+.att-tok{cursor:pointer}
+.att-tok rect{fill:var(--sunk);stroke:transparent;stroke-width:1.5}
+.att-tok text{font-size:16px;fill:var(--ink);text-anchor:middle}
+.att-tok.q rect{fill:var(--accent);}
+.att-tok.q text{fill:var(--surface);font-weight:700}
+.att-tok.fut text{fill:var(--muted)}
+.att-tok.fut rect{fill:transparent;stroke:var(--line);stroke-dasharray:3 3}
+.att-arc{fill:none;stroke:var(--accent);stroke-linecap:round;transition:stroke-width .3s,opacity .3s}
+.att-w{font-family:var(--mono);font-size:11px;fill:var(--ink2);text-anchor:middle}
+.att-lower{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;margin-top:18px}
+@media (max-width:760px){.att-lower{grid-template-columns:minmax(0,1fr)}}
+.heat{display:grid;gap:2px}
+.heat .row{display:grid;gap:2px;align-items:center}
+.heat .c{aspect-ratio:1;border-radius:2px;cursor:pointer;border:0;padding:0}
+.heat .c.off{background:transparent;cursor:default;border:1px dashed var(--line2)}
+.heat .rl{font-family:var(--sans);font-size:11px;color:var(--ink2);text-align:right;padding-right:4px;white-space:nowrap;overflow:hidden}
+.heat .row.sel .rl{color:var(--accent);font-weight:700}
+.heat .cl{font-size:11px;line-height:1.15;color:var(--ink2);writing-mode:vertical-rl;justify-self:center;padding-top:3px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{font-weight:500;color:var(--muted);text-align:left;font-size:12px;padding:4px 6px;border-bottom:1px solid var(--line)}
+td{padding:4px 6px;border-bottom:1px solid var(--line2);font-variant-numeric:tabular-nums}
+td.m{font-family:var(--mono)}
+td .mini{display:inline-block;height:8px;background:var(--accent);border-radius:2px;vertical-align:middle}
+.qkv{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0;max-width:44em}
+@media (max-width:600px){.qkv{grid-template-columns:minmax(0,1fr)}}
+.qkv div{border-top:2px solid var(--ink);padding-top:8px;font-size:14.5px;color:var(--ink2)}
+.qkv b{display:block;font-family:var(--mono);font-size:15px;color:var(--ink)}
+canvas{display:block;max-width:100%}
+.pe-wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:24px;align-items:center}
+@media (max-width:760px){.pe-wrap{grid-template-columns:minmax(0,1fr)}}
+
+/* layers */
+.lay-grid{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:28px;align-items:start}
+@media (max-width:760px){.lay-grid{grid-template-columns:minmax(0,1fr)}}
+.stack text{font-size:13px;fill:var(--ink)}
+.stack .sub{font-size:11px;fill:var(--muted);font-family:var(--mono)}
+.stack .blk{fill:var(--surface);stroke:var(--line)}
+.stack .att{fill:var(--accent-soft);stroke:var(--accent)}
+.stack .ffn{fill:var(--amber-soft);stroke:var(--amber)}
+.stack .res{stroke:var(--ink2);stroke-width:2;fill:none}
+.stack .io{fill:var(--sunk);stroke:var(--line)}
+.stack .hl{fill:none;stroke:var(--accent);stroke-width:2.5}
+.lens-ctx{font-family:var(--serif);font-size:20px;font-weight:600;margin-bottom:12px}
+.lens-ctx span{color:var(--accent)}
+
+/* sampling */
+.smp-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
+.logit-row{display:grid;grid-template-columns:4.2em 4em minmax(0,1fr) 3.8em;gap:10px;align-items:center;font-size:14px;padding:2px 0}
+.logit-row .lbl{font-family:var(--mono)}
+.logit-row .z{font-family:var(--mono);font-size:12.5px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.logit-row.cut{opacity:.32}
+.logit-hdr{font-size:12px;color:var(--muted)}
+.formula{font-family:var(--mono);font-size:14px;background:var(--sunk);padding:10px 14px;border-radius:8px;display:inline-block;margin:6px 0;max-width:100%;overflow-x:auto;white-space:nowrap}
+.tally{display:flex;flex-wrap:wrap;gap:6px;min-height:30px;margin-top:10px}
+.tally span{font-family:var(--mono);font-size:13px;background:var(--sunk);border-radius:5px;padding:2px 8px}
+.tally span b{color:var(--accent)}
+
+/* autoregressive */
+.ar-rows{display:grid;gap:8px;margin-top:14px;min-height:220px}
+.ar-row{display:grid;grid-template-columns:3em minmax(0,1fr);gap:10px;align-items:center}
+.ar-row .k{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.ar-row .line{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.ar-row .arrow{font-family:var(--mono);color:var(--muted);margin:0 6px}
+.ar-row .out{background:var(--accent);color:var(--surface);font-weight:600}
+.ar-row.last{animation:fadein .35s ease-out}
+@keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.ar-row .tok{background:var(--sunk)}
+
+/* training */
+.train-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:760px){.train-grid{grid-template-columns:minmax(0,1fr)}}
+.loss-read{display:flex;gap:28px;margin-top:10px;font-size:13px;color:var(--ink2)}
+.loss-read b{display:block;font-family:var(--mono);font-size:22px;color:var(--ink);font-variant-numeric:tabular-nums}
+.phases{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;margin:24px 0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
+@media (max-width:760px){.phases{grid-template-columns:minmax(0,1fr)}}
+.phase{padding:18px 18px 20px;border-right:1px solid var(--line)}
+.phase:last-child{border-right:0}
+@media (max-width:760px){.phase{border-right:0;border-bottom:1px solid var(--line)}.phase:last-child{border-bottom:0}}
+.phase .k{font-family:var(--mono);font-size:11.5px;color:var(--accent);letter-spacing:.08em}
+.phase h4{font-family:var(--serif);font-size:18px;margin:4px 0 8px}
+.phase p{margin:0;font-size:14px;color:var(--ink2);line-height:1.7}
+.phase .data{margin-top:10px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.cmp{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media (max-width:700px){.cmp{grid-template-columns:minmax(0,1fr)}}
+.cmp .col{border:1px solid var(--line);border-radius:10px;padding:14px 16px;background:var(--bg)}
+.cmp .who{font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:6px}
+.cmp .prompt{font-weight:700}
+.cmp .cont{color:var(--accent)}
+.cmp ol{margin:6px 0 0;padding-left:1.3em;color:var(--accent)}
+
+/* scale + myths */
+.spec{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border-top:1px solid var(--line);margin-top:18px}
+@media (max-width:640px){.spec{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.spec div{padding:14px 12px 14px 0;border-bottom:1px solid var(--line)}
+.spec b{display:block;font-family:var(--mono);font-size:26px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.3}
+.spec span{font-size:13px;color:var(--muted)}
+.myths{display:grid;gap:0;margin-top:20px;max-width:46em}
+.myth{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:20px;padding:16px 0;border-bottom:1px solid var(--line)}
+@media (max-width:640px){.myth{grid-template-columns:minmax(0,1fr);gap:4px}}
+.myth .no{color:var(--bad);font-weight:500;text-decoration:line-through;text-decoration-thickness:1px;text-decoration-color:var(--bad)}
+.myth .yes{color:var(--ink2);font-size:15px}
+.recap{font-family:var(--serif);font-size:clamp(17px,2.2vw,21px);line-height:2.1;margin-top:28px;max-width:40em}
+.recap a{text-decoration:none;border-bottom:1px solid var(--accent-soft);white-space:nowrap}
+.recap .arr{color:var(--muted);font-family:var(--mono);margin:0 6px}
+footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:20px;margin-top:56px;max-width:46em}
+</style>
+
+<div class="wrap">
+<nav class="rail" aria-label="目录">
+  <p class="rail-h">数据流经的 7 站</p>
+  <ol id="rail">
+    <li><a href="#start"><span class="n">0</span><span>一件事<small>next token</small></span></a></li>
+    <li><a href="#tokens"><span class="n">1</span><span>切成 token<small>tokenization</small></span></a></li>
+    <li><a href="#embed"><span class="n">2</span><span>变成向量<small>embedding</small></span></a></li>
+    <li><a href="#attention"><span class="n">3</span><span>互相看<small>attention</small></span></a></li>
+    <li><a href="#layers"><span class="n">4</span><span>层层加工<small>transformer ×96</small></span></a></li>
+    <li><a href="#softmax"><span class="n">5</span><span>算出概率<small>softmax</small></span></a></li>
+    <li><a href="#loop"><span class="n">6</span><span>接着写<small>autoregression</small></span></a></li>
+    <li><a href="#train"><span class="n">7</span><span>怎么学会的<small>training</small></span></a></li>
+    <li><a href="#scale"><span class="n">+</span><span>规模与误区<small>scale · myths</small></span></a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="hero" id="start">
+  <p class="eyebrow">给新人的大语言模型拆解</p>
+  <h1>大语言模型只做一件事：<br><em>猜下一个词</em></h1>
+  <p class="lead">ChatGPT、Claude 这类模型写出的每一个字，都是同一个动作重复几百次的结果：看着前面所有的字，给「下一个字可能是什么」打分，挑一个接上去，再重复。先亲手当一次模型——</p>
+
+  <div class="fig">
+    <div class="fig-h">
+      <span class="fig-t">你来当模型</span>
+      <span class="fig-note">玩具模型 · 概率为手写示意</span>
+    </div>
+    <div class="gen-grid">
+      <div>
+        <div class="gen-text" id="gen-text" aria-live="polite"></div>
+        <div class="controls" style="margin-top:18px">
+          <button class="btn primary" id="gen-sample">按概率抽一个</button>
+          <button class="btn" id="gen-greedy">总选第一名</button>
+          <button class="btn" id="gen-undo">退一步</button>
+          <button class="btn" id="gen-reset">重来</button>
+        </div>
+        <p class="cap">也可以直接点右边任意一个候选词。多按几次「按概率抽一个」再重来，每次写出的句子都不一样——这就是同一个问题问两遍，AI 回答不同的原因。</p>
+      </div>
+      <div>
+        <div class="gen-q" id="gen-q">下一个 token 的概率分布</div>
+        <div class="bars" id="gen-bars"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="prose">
+    <p>这个玩具只看<b>最后一个词</b>来决定下一个，所以写长了容易前言不搭后语。真正的模型会同时看前面的<b>全部</b>内容，而且它那张「打分表」不是人手写的，而是从海量文本里<b>学</b>出来的。</p>
+    <p>下面按数据在模型里流动的顺序，一站一站拆开这件事。每一站都有可以动手的图。</p>
+  </div>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="stop" id="tokens">
+  <p class="eyebrow">第 1 站 · Tokenization</p>
+  <h2>把文字切成 token</h2>
+  <div class="prose">
+    <p>模型不认识字，只认识数字。第一步，是用一本固定的<b>词表</b>（通常有 5 万到 20 万个条目）把文本切成小块，每一块叫一个 <span class="term">token</span>，再换成它在词表里的编号。</p>
+    <p>常见的词整块保留，少见的词被拆成碎片：英文 <span class="term">Transformers</span> 可能被切成 <span class="term">Transform</span> + <span class="term">ers</span>。改一改下面的句子试试：</p>
+  </div>
+  <div class="fig">
+    <div class="fig-h"><span class="fig-t">切词器</span><span class="fig-note">示意切法 · 编号为演示用</span></div>
+    <label for="tk-in" class="gen-q" style="display:block">输入任意文字</label>
+    <textarea id="tk-in" rows="2">我喜欢学习人工智能。Transformers are amazing! 2026</textarea>
+    <div class="tk-out">
+      <div class="tok-row" id="tk-chips"></div>
+      <div class="tk-ids" id="tk-ids"></div>
+    </div>
+    <div class="stats" id="tk-stats"></div>
+  </div>
+  <div class="prose">
+    <p>为什么不按字母切？太碎，句子会变得很长，计算很慢。为什么不按整词切？词永远切不完，每天都有新词。切成「子词」是两者之间的折中：真实的词表由一种叫 <span class="term">BPE</span> 的算法从语料里统计出来——哪些字母或汉字组合出现得最频繁，就把它们合并成一个 token。</p>
+    <p>一个副作用：模型看到的是「块」而不是「字母」。这就是为什么早期模型数不清 <span class="term">strawberry</span> 里有几个 r——在它眼里这个词可能只是两三个不透明的编号。</p>
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="stop" id="embed">
+  <p class="eyebrow">第 2 站 · Embedding</p>
+  <h2>每个 token 变成一串数字</h2>
+  <div class="prose">
+    <p>编号本身没有意义——「猫」是 3000 号、「狗」是 3001 号，并不代表它们相似。所以模型给词表里的每个 token 配了一个长长的<b>向量</b>：一串数字，在 GPT-3 里是 <b>12288</b> 个。</p>
+    <p>这些数字一开始是随机的。训练之后，<b>意思相近的词，向量也会靠得近</b>。下面把上万维的空间压扁成 2 维来看。点两个词，比较它们的向量：</p>
+  </div>
+  <div class="fig">
+    <div class="fig-h"><span class="fig-t">词向量空间（压缩到 2 维）</span><span class="fig-note">示意数据</span></div>
+    <div class="emb-grid">
+      <div>
+        <svg id="emb-svg" viewBox="0 0 640 400" role="img" aria-label="词向量二维散点图" style="width:100%;height:auto;display:block"></svg>
+        <div class="controls" style="margin-top:10px">
+          <button class="btn" id="emb-analogy">演示：国王 − 男人 + 女人 = ?</button>
+        </div>
+      </div>
+      <div>
+        <div class="gen-q">每一格是向量里的一个数（只画出前 24 个）<br>蓝 = 正数，橙 = 负数，颜色越深绝对值越大</div>
+        <div id="emb-vecs"></div>
+        <div class="sim" id="emb-sim"></div>
+      </div>
+    </div>
+  </div>
+  <div class="callout"><b>方向也有含义。</b>从「男人」走到「女人」的那一步，和从「国王」走到「王后」几乎是同一个方向。模型没有被告知什么是「性别」，它是从词语在文本里的用法中自己摸索出来的。</div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="stop" id="attention">
+  <p class="eyebrow">第 3 站 · Self-Attention</p>
+  <h2>让词与词互相看：注意力</h2>
+  <div class="prose">
+    <p>到这里，每个 token 的向量还是孤立的：「它」的向量并不知道「它」指的是谁。<b>注意力机制</b>让每个 token 回头看前面所有 token，决定从谁那里拿多少信息。这是 2017 年论文《Attention Is All You Need》提出的 Transformer 架构的核心。</p>
+    <p>做法是：每个 token 从自己的向量算出三样东西——</p>
+  </div>
+  <div class="qkv">
+    <div><b>Q 查询</b>我在找什么样的信息？</div>
+    <div><b>K 键</b>我身上有什么样的信息？</div>
+    <div><b>V 值</b>如果你关注我，我交给你的内容。</div>
+  </div>
+  <div class="prose">
+    <p>拿我的 Q 和每个人的 K 做点积，得到「匹配分」；用 softmax 把分数变成加起来是 100% 的权重；最后按权重把大家的 V 加起来，作为我的新信息。</p>
+  </div>
+
+  <div class="fig">
+    <div class="fig-h">
+      <span class="fig-t">点任意一个词，看它在关注谁</span>
+      <span class="fig-note">权重为示意</span>
+    </div>
+    <div class="controls" style="margin-bottom:12px;gap:12px 20px">
+      <div class="seg" role="group" aria-label="注意力头">
+        <button class="btn" data-head="coref" aria-pressed="true">头 A：找指代</button>
+        <button class="btn" data-head="prev" aria-pressed="false">头 B：看前一个词</button>
+      </div>
+      <div class="seg" role="group" aria-label="句子最后的词">
+        <button class="btn" data-var="lei" aria-pressed="true">…太<b>累</b>了</button>
+        <button class="btn" data-var="gao" aria-pressed="false">…太<b>高</b>了</button>
+      </div>
+    </div>
+    <div class="scroll-x"><svg id="att-svg" class="att-svg" viewBox="0 0 680 210" role="img" aria-label="注意力连线图"></svg></div>
+    <div class="att-lower">
+      <div>
+        <div class="gen-q">完整的注意力矩阵：每一行是一个词在看谁（右上角空着：不能偷看未来）</div>
+        <div class="heat" id="att-heat"></div>
+      </div>
+      <div>
+        <div class="gen-q" id="att-tbl-h"></div>
+        <div class="scroll-x"><table id="att-tbl"></table></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout"><b>试试切换「累 / 高」。</b>在「累」这个位置，头 A 主要看向「小猫」；换成「高」，它转而看向「桌子」。而在「它」这个位置，两个名词的权重差不多——因为此时后文还没出现，模型也拿不准。「它」指谁，是在读到后面的词时才解决的。</div>
+
+  <div class="prose">
+    <p>一层里有许多个这样的「头」并行工作（GPT-3 每层 96 个）。训练中它们各自分工：有的盯住前一个词，有的负责指代，有的追踪句法结构——没有人规定分工，这是自己长出来的。</p>
+  </div>
+
+  <h3>注意力不知道先后顺序</h3>
+  <div class="pe-wrap">
+    <div class="prose">
+      <p>单看点积，「狗咬人」和「人咬狗」算出来的东西一模一样。所以在第 2 站的向量上还要再叠加一份<b>位置信号</b>。原始 Transformer 用不同频率的正弦波，让每个位置拥有一种独一无二的「波纹指纹」（右图每一行是一个位置）。</p>
+      <p>现在的模型多用<b>旋转位置编码</b> <span class="term">RoPE</span>，思路一样：把「我在第几个」写进向量里。</p>
+    </div>
+    <div>
+      <canvas id="pe-canvas" width="512" height="256" aria-label="正弦位置编码热力图" style="width:100%;height:auto;border-radius:6px"></canvas>
+      <p class="cap" style="margin-top:6px">横轴：向量的维度 0 → 127（左边变化快，右边变化慢）　纵轴：位置 0 → 63</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="stop" id="layers">
+  <p class="eyebrow">第 4 站 · Transformer Blocks</p>
+  <h2>一层不够，就叠 96 层</h2>
+  <div class="prose">
+    <p>注意力之后是<b>前馈网络</b>：每个 token 各自单独过一个小型神经网络。如果说注意力是词与词开会交换信息，前馈网络就是每个词回到座位上消化、查阅「记忆」——研究发现大量事实性知识存在这里。GPT-3 大约三分之二的参数都在前馈网络中。</p>
+    <p>「注意力 + 前馈」合起来叫一个 <b>Transformer 块</b>。块与块之间有一条<b>残差通道</b>：每一块不会替换掉向量，而是在它上面<b>加一点修改</b>。于是向量像传送带上的工件，一层层被加工，理解逐步加深。</p>
+  </div>
+  <div class="fig">
+    <div class="fig-h"><span class="fig-t">中途叫停：第 N 层的模型在想什么？</span><span class="fig-note">logit lens · 示意数据</span></div>
+    <div class="lay-grid">
+      <svg id="stack" class="stack" viewBox="0 0 300 470" role="img" aria-label="Transformer 层叠结构图" style="width:100%;max-width:320px;height:auto;display:block;margin:0 auto"></svg>
+      <div>
+        <div class="lens-ctx">法国的首都是<span>＿＿</span></div>
+        <label class="ctl" for="lens-l">在第 <output id="lens-o">1</output> 层叫停
+          <input type="range" id="lens-l" min="1" max="96" value="1"></label>
+        <div class="bars" id="lens-bars" style="margin-top:14px"></div>
+        <p class="cap">研究者发现，可以把中间某一层的向量直接拿去「猜下一个词」（这种方法叫 logit lens）。浅层只会猜「的」「一个」这类常见字；中间层知道答案是个城市；越往后越笃定是巴黎。拖动滑块看它逐层成形。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="stop" id="softmax">
+  <p class="eyebrow">第 5 站 · Softmax &amp; Sampling</p>
+  <h2>把分数变成概率，再挑一个</h2>
+  <div class="prose">
+    <p>最后一层输出的向量，会和词表里的<b>每一个</b> token 比一比，得出一个分数，叫 <span class="term">logit</span>——词表有 10 万个词，就有 10 万个分数。<b>softmax</b> 把它们变成正数、且加起来正好等于 1 的概率：</p>
+    <div class="formula">p(词ᵢ) = e<sup>zᵢ / T</sup> ÷ Σⱼ e<sup>zⱼ / T</sup></div>
+    <p>指数会把差距放大：分数只高 1 分，概率就大约是 2.7 倍。然后从这个分布里挑一个。挑法有两个常见的旋钮：</p>
+    <ul>
+      <li><b>温度 T</b>：先把所有分数除以 T。T 小 → 强者恒强，几乎总选第一名，稳但呆板；T 大 → 分布被摊平，更有创意，也更容易胡说。</li>
+      <li><b>top-p</b>：只在累计概率达到 p 的那几名里挑，把长尾里离谱的选项直接砍掉。</li>
+    </ul>
+  </div>
+  <div class="fig">
+    <div class="fig-h"><span class="fig-t">「我今天早餐吃了＿＿」</span><span class="fig-note">分数为示意</span></div>
+    <div class="controls" style="gap:14px 28px;margin-bottom:16px">
+      <label class="ctl" for="sm-t">温度 T <input type="range" id="sm-t" min="0.1" max="2.5" step="0.05" value="1"><output id="sm-to">1.00</output></label>
+      <label class="ctl" for="sm-p">top-p <input type="range" id="sm-p" min="0.3" max="1" step="0.01" value="1"><output id="sm-po">1.00</output></label>
+    </div>
+    <div class="logit-row logit-hdr"><span>候选</span><span style="text-align:right">分数 z</span><span>概率</span><span></span></div>
+    <div id="sm-rows"></div>
+    <div class="controls" style="margin-top:16px">
+      <button class="btn primary" id="sm-draw">抽样 20 次</button>
+      <button class="btn" id="sm-clear">清空</button>
+    </div>
+    <div class="tally" id="sm-tally" aria-live="polite"></div>
+    <p class="cap">把温度拉到 0.1 再抽样：几乎全是「面包」。拉到 2.5：连「石头」都可能出现——模型写代码时常用低温，写诗时常用高温。</p>
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="stop" id="loop">
+  <p class="eyebrow">第 6 站 · Autoregression</p>
+  <h2>一个 token 接一个 token 地写</h2>
+  <div class="prose">
+    <p>挑出来的 token 被接到输入的末尾，整个模型<b>从头再跑一遍</b>，得到再下一个……直到它挑出一个特殊的「结束」token。这叫<b>自回归生成</b>。聊天界面里文字一截一截冒出来，就是这个原因：它真的是一截一截算出来的。</p>
+  </div>
+  <div class="fig">
+    <div class="fig-h"><span class="fig-t">生成的循环：上一步的输出，是下一步的输入</span></div>
+    <div class="controls">
+      <button class="btn primary" id="ar-next">下一步</button>
+      <button class="btn" id="ar-play">自动播放</button>
+      <button class="btn" id="ar-reset">重来</button>
+    </div>
+    <div class="ar-rows" id="ar-rows"></div>
+  </div>
+  <div class="prose">
+    <ul>
+      <li><b>上下文窗口。</b>模型每一步能看到的总长度有上限。GPT-3 是 2048 个 token；如今的模型可以到几十万甚至上百万。超出窗口的内容，它就看不见了。</li>
+      <li><b>KV 缓存。</b>每生成一个 token 都要把整个模型跑一遍。为了不重复计算前文的 K 和 V（第 3 站），推理时会把它们存起来复用。</li>
+      <li><b>「想」要花 token。</b>模型每输出一个 token，内部的计算量是固定的。让它先一步步写出推理过程，等于给了它更多轮计算——这是「思维链」能提升准确率的原因之一。</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="stop" id="train">
+  <p class="eyebrow">第 7 站 · Training</p>
+  <h2>这些数字是怎么学来的</h2>
+  <div class="prose">
+    <p>前面提到的所有数字——词向量、Q/K/V 的变换矩阵、前馈网络——统称<b>参数</b>。GPT-3 有 <b>1750 亿</b>个。一开始全是随机数，模型只会乱猜。</p>
+    <p>训练的规则简单得惊人：拿一段真实文本，遮住下一个词让模型猜；猜得越离谱罚得越重（惩罚叫<b>损失</b>，等于 −ln(正确答案的概率)）；再用<b>反向传播</b>算出每个参数该往哪个方向挪一点点，让正确答案的概率变大。在几千亿个 token 上重复这件事。</p>
+  </div>
+  <div class="fig">
+    <div class="fig-h"><span class="fig-t">「床前明月＿」训练过程中，模型的猜测怎么变</span><span class="fig-note">示意数据</span></div>
+    <div class="train-grid">
+      <div>
+        <label class="ctl" for="tr-s">训练步数 <input type="range" id="tr-s" min="0" max="100" value="0"><output id="tr-o">0</output></label>
+        <div class="bars" id="tr-bars" style="margin-top:14px"></div>
+      </div>
+      <div>
+        <canvas id="tr-canvas" width="560" height="300" aria-label="损失下降曲线" style="width:100%;height:auto"></canvas>
+        <div class="loss-read">
+          <div>「光」的概率<b id="tr-p">—</b></div>
+          <div>损失 −ln p<b id="tr-l">—</b></div>
+        </div>
+      </div>
+    </div>
+    <p class="cap">留意中途「的」一度冲高：模型往往先学会「哪些字最常见」，之后才学会看上下文。这和第 4 站里浅层先猜「的」是同一种现象。</p>
+  </div>
+
+  <h3>从「续写机器」到「助手」：三个阶段</h3>
+  <div class="phases">
+    <div class="phase"><div class="k">阶段 1 · Pretraining</div><h4>预训练</h4><p>读海量网页、书籍、代码，只练「猜下一个词」。学会了语言、知识和推理的雏形，但它只是一个续写高手。</p><div class="data">几千亿 ~ 十几万亿 token · 算力最贵的一步</div></div>
+    <div class="phase"><div class="k">阶段 2 · Instruction Tuning</div><h4>指令微调</h4><p>用人写的「问题 → 好回答」示范继续训练，让它学会：看到问题，该回答，而不是接着出题。</p><div class="data">几万 ~ 几十万条示范</div></div>
+    <div class="phase"><div class="k">阶段 3 · RLHF 等</div><h4>基于反馈的强化学习</h4><p>让模型写多个回答，由人（或按原则打分的模型）评判哪个更好，再朝更有帮助、更诚实、更安全的方向调整。</p><div class="data">偏好比较数据</div></div>
+  </div>
+  <div class="fig">
+    <div class="fig-h"><span class="fig-t">同一个输入，两个阶段的模型会怎么接？</span><span class="fig-note">示意</span></div>
+    <div class="cmp">
+      <div class="col"><div class="who">只做过预训练</div><span class="prompt">怎么做番茄炒蛋？</span><span class="cont">怎么做红烧肉？怎么做可乐鸡翅？——家常菜做法大全，第 3 页，共 12 页……</span></div>
+      <div class="col"><div class="who">经过微调的助手</div><span class="prompt">怎么做番茄炒蛋？</span><ol><li>鸡蛋打散加少许盐，番茄切块。</li><li>热油先把蛋炒至凝固，盛出。</li><li>再炒番茄出汁，倒回鸡蛋，加盐和少许糖，翻匀出锅。</li></ol></div>
+    </div>
+    <p class="cap">预训练模型并没有错：在它读过的网页里，一个问题后面经常跟着更多问题。微调没有教它新的烹饪知识，而是教它「以助手的身份」使用已有的知识。</p>
+  </div>
+</section>
+
+<!-- ============ + ============ -->
+<section class="stop" id="scale">
+  <p class="eyebrow">附 · Scale &amp; Myths</p>
+  <h2>把尺寸摊开看：GPT-3</h2>
+  <div class="prose"><p>GPT-3（2020）是架构细节公开得比较完整的大模型之一，拿它当标尺。后来的模型更大，但结构基本还是这一套。</p></div>
+  <div class="spec">
+    <div><b>1750 亿</b><span>参数（全部可学习的数字）</span></div>
+    <div><b>96</b><span>层 Transformer 块（第 4 站）</span></div>
+    <div><b>12288</b><span>每个 token 向量的维度（第 2 站）</span></div>
+    <div><b>96</b><span>每层的注意力头数（第 3 站）</span></div>
+    <div><b>2048</b><span>上下文窗口，token（第 6 站）</span></div>
+    <div><b>约 3000 亿</b><span>训练用的 token 数（第 7 站）</span></div>
+  </div>
+  <p class="cap">数据来源：Brown 等，《Language Models are Few-Shot Learners》，2020。按每个参数 2 字节存储，光是参数就约 350 GB。</p>
+
+  <h3>新人最常见的几个误解</h3>
+  <div class="myths">
+    <div class="myth"><div class="no">它在数据库里检索答案</div><div class="yes">没有数据库。知识被「压」进了 1750 亿个参数里，回答是一个 token 一个 token 现场生成的。</div></div>
+    <div class="myth"><div class="no">它不知道时会说不知道</div><div class="yes">第 5 站的 softmax 永远会给出一个分布，总有一个词「最像」。所以它可以流畅地编出不存在的书名——这就是<b>幻觉</b>。「说不知道」本身是后期训练额外教的行为。</div></div>
+    <div class="myth"><div class="no">它记得和你的每次对话</div><div class="yes">参数在训练结束后就固定了。它「记得」的只是当前上下文窗口里的内容；产品里的「记忆」功能，是把旧信息再塞回窗口。</div></div>
+    <div class="myth"><div class="no">它按字或字母读文字</div><div class="yes">它读的是 token（第 1 站）。所以数字母、倒写单词、做长数字的精确运算，对它来说反而比写文章难。</div></div>
+    <div class="myth"><div class="no">它是逐字背下来训练数据</div><div class="yes">参数量远小于训练文本的信息量，它只能学到规律和压缩后的知识；不过特别常见的段落（名言、开源许可证）确实可能被原样记住。</div></div>
+  </div>
+
+  <h3>回到开头</h3>
+  <p class="recap">
+    <a href="#tokens">文字切成 token</a><span class="arr">→</span><a href="#embed">变成向量</a><span class="arr">→</span><a href="#attention">词与词互相看</a><span class="arr">+</span><a href="#layers">各自消化，重复 96 层</a><span class="arr">→</span><a href="#softmax">给 10 万个候选打分、挑一个</a><span class="arr">→</span><a href="#loop">接回末尾，再来一遍</a>
+  </p>
+  <div class="prose"><p>整个过程里没有一条规则是人写的。人只规定了结构和「猜下一个词」这个目标，剩下的——语法、常识、指代、推理——全都是为了猜得更准，从数据里自己长出来的。</p></div>
+
+  <footer>本页所有交互图都使用手写的示意数据，用来展示机制的形状，不是某个真实模型的输出。规格数字（GPT-3）来自原论文。</footer>
+</section>
+
+</main>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $ = s => document.querySelector(s);
+const el = (tag, attrs={}, html) => { const e=document.createElement(tag); for(const k in attrs) e.setAttribute(k, attrs[k]); if(html!=null) e.innerHTML=html; return e; };
+const svgEl = (tag, attrs={}) => { const e=document.createElementNS("http://www.w3.org/2000/svg", tag); for(const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const pct = p => p >= 0.995 ? "100%" : p < 0.001 ? "<0.1%" : (p*100).toFixed(p<0.1?1:0)+"%";
+function softmax(z, T=1){ const m=Math.max(...z); const e=z.map(v=>Math.exp((v-m)/T)); const s=e.reduce((a,b)=>a+b,0); return e.map(v=>v/s); }
+function pick(p){ let r=Math.random(), c=0; for(let i=0;i<p.length;i++){ c+=p[i]; if(r<c) return i; } return p.length-1; }
+function hash(s){ let h=2166136261; for(const ch of s){ h^=ch.codePointAt(0); h=Math.imul(h,16777619); } return h>>>0; }
+function rng(seed){ let s=seed||1; return ()=>{ s=Math.imul(s^(s>>>15),2246822507); s=Math.imul(s^(s>>>13),3266489909); s^=s>>>16; return (s>>>0)/4294967296; }; }
+
+/* ---------- rail highlighting ---------- */
+const links=[...document.querySelectorAll("#rail a")];
+const secs=links.map(a=>document.querySelector(a.getAttribute("href")));
+function onScroll(){
+  let cur=0; const y=window.innerHeight*0.35;
+  secs.forEach((s,i)=>{ if(s.getBoundingClientRect().top < y) cur=i; });
+  links.forEach((a,i)=>a.classList.toggle("on", i===cur));
+  if(window.innerWidth<=900){ const a=links[cur]; const ol=a.closest("ol"); const l=a.offsetLeft-ol.clientWidth/2+a.clientWidth/2; if(Math.abs(ol.scrollLeft-l)>40) ol.scrollTo({left:l,behavior:"smooth"}); }
+}
+window.addEventListener("scroll", onScroll, {passive:true}); onScroll();
+
+/* =========== 0. hero generator (a bigram toy) =========== */
+const P_END=[["。",2.8],["，",2.4],["！",1.4],["啊",0.9]];
+const STOP=[["<结束>",3.0],["明天",1.1],["大家",1.0]];
+const NEXT={
+  "天气":[["很",3.0],["真",2.4],["不错",2.0],["怎么样",1.4],["预报说",1.1],["突然",0.7]],
+  "很":[["好",3.4],["热",2.7],["冷",2.1],["适合",1.5],["闷",1.1]],
+  "真":[["好",3.3],["不错",2.6],["热",2.0],["奇怪",1.2]],
+  "怎么样":[["？",3.6],["呢",1.8],["了",1.1]],
+  "呢":[["？",3.4],["。",1.2]],
+  "预报说":[["会",2.8],["有",2.6],["明天",2.0],["要",1.4]],
+  "突然":[["变",3.0],["下雨",2.4],["降温",2.2]],
+  "变":[["冷",3.0],["热",2.2],["天",1.2]],
+  "会":[["下雨",3.0],["降温",2.3],["转晴",1.6]],
+  "要":[["下雨",2.8],["降温",2.4],["上班",1.4]],
+  "有":[["雨",3.0],["雷阵雨",2.4],["大风",1.9]],
+  "明天":[["会",2.6],["下雨",2.4],["降温",2.0],["要",1.6]],
+  "，":[["我们",2.6],["适合",2.3],["记得",1.9],["可是",1.5],["所以",1.2]],
+  "我们":[["去",2.8],["一起",2.4],["出门",1.8]],
+  "一起":[["去",3.0],["出门",2.0],["散步",1.6]],
+  "去":[["公园",2.8],["爬山",2.4],["海边",2.0],["散步",1.6]],
+  "公园":[["吧",2.6],["。",2.6],["玩",1.8]], "爬山":[["吧",2.6],["。",2.6]], "海边":[["吧",2.4],["。",2.4],["玩",2.0]],
+  "玩":[["吧",2.6],["。",2.4]], "吧":[["。",3.0],["！",2.2]],
+  "适合":[["出门",2.8],["散步",2.4],["晒被子",2.0],["睡觉",1.2]],
+  "记得":[["带伞",2.8],["防晒",2.4],["多喝水",2.0]],
+  "可是":[["我",2.4],["明天",2.2],["有点",1.8]],
+  "我":[["不想",2.4],["要",1.8],["还得",2.0]],
+  "不想":[["出门",2.8],["上班",2.4]], "还得":[["上班",2.8],["加班",2.2],["写作业",2.0]],
+  "有点":[["热",2.6],["冷",2.4],["闷",1.8]],
+  "所以":[["我们",2.6],["适合",2.0],["记得",2.0]],
+  "大家":[["注意",2.4],["记得",2.2]], "注意":[["保暖",2.6],["防晒",2.4],["安全",2.0]],
+  "。":STOP, "！":STOP, "？":STOP,
+};
+const PROMPT=["今天","天气"];
+let gen=[...PROMPT], lastNew=-1;
+function cands(){ const last=gen[gen.length-1]; if(gen.length>=26) return [["<结束>",4],["。",1]]; return NEXT[last]||P_END; }
+function renderGen(){
+  const box=$("#gen-text"); box.innerHTML="";
+  gen.forEach((t,i)=>{ const s=el("span",{class: i<PROMPT.length?"p":"g"+(i===lastNew?" new":"")}); s.textContent=t; box.appendChild(s); });
+  const done=gen[gen.length-1]==="<结束>";
+  if(done){ box.lastChild.textContent=""; } else box.appendChild(el("span",{class:"cursor"}));
+  const c=cands(), p=softmax(c.map(x=>x[1]));
+  const bars=$("#gen-bars"); bars.innerHTML="";
+  $("#gen-q").textContent = done ? "模型输出了「结束」token，这句话写完了。" : "看到「…"+gen.slice(-1)[0]+"」之后，下一个 token 的概率：";
+  if(!done) c.forEach((x,i)=>{
+    const b=el("button",{class:"bar", type:"button", "aria-label":"选择 "+x[0]+"，概率 "+pct(p[i])});
+    b.innerHTML=`<span class="lbl">${x[0]}</span><span class="track"><span class="fill" style="width:${(p[i]*100).toFixed(1)}%"></span></span><span class="pct">${pct(p[i])}</span>`;
+    b.onclick=()=>push(x[0]); bars.appendChild(b);
+  });
+  ["#gen-sample","#gen-greedy"].forEach(s=>$(s).disabled=done);
+  $("#gen-undo").disabled = gen.length<=PROMPT.length;
+}
+function push(t){ gen.push(t); lastNew=gen.length-1; renderGen(); }
+$("#gen-sample").onclick=()=>{ const c=cands(); push(c[pick(softmax(c.map(x=>x[1])))][0]); };
+$("#gen-greedy").onclick=()=>{ const c=cands(); let bi=0; c.forEach((x,i)=>{ if(x[1]>c[bi][1]) bi=i; }); push(c[bi][0]); };
+$("#gen-undo").onclick=()=>{ if(gen.length>PROMPT.length){ gen.pop(); lastNew=-1; renderGen(); } };
+$("#gen-reset").onclick=()=>{ gen=[...PROMPT]; lastNew=-1; renderGen(); };
+renderGen();
+
+/* =========== 1. tokenizer =========== */
+const ZH=["人工智能","大语言模型","语言","模型","我们","喜欢","学习","人工","智能","今天","天气","你好","世界","中国","北京","上海","机器","神经","网络","的","了","是","不是","什么","一个","因为","所以","可以","没有","时候","问题","电脑","手机","朋友"];
+const EN=new Set(["the","a","an","is","are","was","I","you","we","it","love","like","learn","learning","model","models","language","hello","world","to","of","and","in","on","this","that","good","great","token","tokens","AI","cat","dog","is","not","what","how","new"]);
+const EN_P=["Transform","amaz","token","strawber","intell","compu","under","inter","predict","gener","attent"];
+const SUF=["ization","ation","ing","ers","ed","ly","er","est","ry","s"];
+function splitWord(w){
+  if(EN.has(w)||EN.has(w.toLowerCase())) return [w];
+  for(const s of SUF){ if(w.length>s.length+2 && w.endsWith(s)){ const stem=w.slice(0,-s.length); return [...splitStem(stem), s]; } }
+  return splitStem(w);
+}
+function splitStem(w){
+  if(EN.has(w)||EN.has(w.toLowerCase())||w.length<=4) return [w];
+  for(const p of EN_P){ if(w.toLowerCase().startsWith(p.toLowerCase())){ const rest=w.slice(p.length); return rest?[w.slice(0,p.length),...splitStem(rest)]:[w]; } }
+  const out=[]; for(let i=0;i<w.length;i+=4) out.push(w.slice(i,i+4)); return out;
+}
+function tokenize(text){
+  const out=[]; let i=0; const chars=[...text];
+  while(i<chars.length){
+    const ch=chars[i];
+    if(/[一-鿿]/.test(ch)){
+      let hit=null; for(const w of ZH){ if(chars.slice(i,i+[...w].length).join("")===w && (!hit||w.length>hit.length)) hit=w; }
+      if(hit){ out.push(hit); i+=[...hit].length; } else { out.push(ch); i++; }
+    } else if(/\s/.test(ch)){
+      // GPT-style: a leading space sticks to the next word
+      let j=i; while(j<chars.length && /\s/.test(chars[j])) j++;
+      if(j<chars.length && /[A-Za-z0-9]/.test(chars[j])){ const m=chars.slice(j).join("").match(/^[A-Za-z]+|^\d/)[0]; const parts=/\d/.test(m)?[m]:splitWord(m); parts[0]=" "+parts[0]; out.push(...parts); i=j+m.length; }
+      else { out.push(chars.slice(i,j).join("")); i=j; }
+    } else if(/[A-Za-z]/.test(ch)){
+      const m=chars.slice(i).join("").match(/^[A-Za-z]+/)[0]; out.push(...splitWord(m)); i+=m.length;
+    } else if(/\d/.test(ch)){ out.push(ch); i++; }
+    else { out.push(ch); i++; }
+  }
+  return out;
+}
+function renderTok(){
+  const text=$("#tk-in").value; const toks=tokenize(text);
+  const chips=$("#tk-chips"); chips.innerHTML="";
+  toks.forEach(t=>{ const s=el("span",{class:"tok", title:"编号 "+(hash(t)%100000)}); s.textContent=t.replace(/ /g,"␣"); chips.appendChild(s); });
+  $("#tk-ids").textContent = toks.length ? "[" + toks.map(t=>hash(t)%100000).join(", ") + "]" : "";
+  $("#tk-stats").innerHTML=`<span><b>${[...text].length}</b>个字符</span><span><b>${toks.length}</b>个 token</span><span>␣ 表示空格：它会粘在后一个词的前面</span>`;
+}
+$("#tk-in").addEventListener("input", renderTok); renderTok();
+
+/* =========== 2. embeddings =========== */
+const WORDS=[
+  {w:"猫",x:110,y:95,c:"动物"},{w:"狗",x:170,y:78,c:"动物"},{w:"老虎",x:92,y:150,c:"动物"},{w:"兔子",x:168,y:138,c:"动物"},
+  {w:"苹果",x:112,y:300,c:"水果"},{w:"香蕉",x:178,y:328,c:"水果"},{w:"橘子",x:92,y:352,c:"水果"},
+  {w:"汽车",x:340,y:318,c:"交通"},{w:"火车",x:398,y:352,c:"交通"},{w:"飞机",x:412,y:290,c:"交通"},
+  {w:"手机",x:300,y:190,c:"电子"},{w:"电脑",x:258,y:222,c:"电子"},
+  {w:"国王",x:442,y:88,c:"人物"},{w:"王后",x:562,y:88,c:"人物"},{w:"男人",x:442,y:196,c:"人物"},{w:"女人",x:562,y:196,c:"人物"},
+];
+const CLU={"动物":[130,40],"水果":[135,258],"交通":[375,258],"电子":[280,158],"人物":[502,40]};
+// vectors: cluster base + own noise, royalty/gender axes built in so the analogy holds
+const baseVec={}; Object.keys(CLU).forEach(k=>{ const r=rng(hash(k)); baseVec[k]=Array.from({length:24},()=>r()*2-1); });
+const gAxis=(()=>{ const r=rng(77); return Array.from({length:24},()=>r()*2-1); })();
+const rAxis=(()=>{ const r=rng(91); return Array.from({length:24},()=>r()*2-1); })();
+WORDS.forEach(o=>{ const r=rng(hash(o.w)); o.v=baseVec[o.c].map((b,i)=>b*0.85+(r()*2-1)*0.4);
+  if(o.c==="人物"){ const g=(o.w==="王后"||o.w==="女人")?1:-1, k=(o.w==="国王"||o.w==="王后")?1:-1; o.v=baseVec["人物"].map((b,i)=>b*0.7+g*gAxis[i]*0.45+k*rAxis[i]*0.45+(r()*2-1)*0.08); }
+});
+function cos(a,b){ let d=0,na=0,nb=0; for(let i=0;i<a.length;i++){ d+=a[i]*b[i]; na+=a[i]*a[i]; nb+=b[i]*b[i]; } return d/Math.sqrt(na*nb); }
+let selA=WORDS[0], selB=WORDS[1], nextSlot="b";
+const svg=$("#emb-svg");
+function drawEmb(analogy=false){
+  svg.innerHTML="";
+  const defs=svgEl("defs"); const mk=svgEl("marker",{id:"ah",viewBox:"0 0 10 10",refX:"9",refY:"5",markerWidth:"7",markerHeight:"7",orient:"auto-start-reverse"});
+  mk.appendChild(svgEl("path",{d:"M0,0 L10,5 L0,10 z",fill:css("--amber")})); defs.appendChild(mk); svg.appendChild(defs);
+  for(const k in CLU){ const t=svgEl("text",{x:CLU[k][0],y:CLU[k][1],class:"clu","text-anchor":"middle"}); t.textContent=k; svg.appendChild(t); }
+  if(analogy){
+    const P=n=>WORDS.find(o=>o.w===n);
+    [[P("男人"),P("女人")],[P("国王"),P("王后")]].forEach(([a,b],i)=>{
+      const ln=svgEl("line",{x1:a.x+10,y1:a.y,x2:b.x-12,y2:b.y,stroke:css("--amber"),"stroke-width":"2.5","marker-end":"url(#ah)","stroke-dasharray":"200","stroke-dashoffset":"200"});
+      ln.innerHTML=`<animate attributeName="stroke-dashoffset" from="200" to="0" dur=".7s" begin="${i*0.7}s" fill="freeze"/>`;
+      svg.appendChild(ln);
+    });
+    const t=svgEl("text",{x:502,y:150,"text-anchor":"middle",fill:css("--amber"),"font-size":"12"}); t.textContent="同一个「性别」方向"; svg.appendChild(t);
+  }
+  WORDS.forEach(o=>{
+    const g=svgEl("g",{class:"pt"+(o===selA?" a":o===selB?" b":""),tabindex:"0",role:"button","aria-label":o.w});
+    g.appendChild(svgEl("circle",{cx:o.x,cy:o.y,r:o===selA||o===selB?7:5}));
+    const t=svgEl("text",{x:o.x+11,y:o.y+5}); t.textContent=o.w; g.appendChild(t);
+    const choose=()=>{ if(o===selA||o===selB) return; if(nextSlot==="a"){ selA=o; nextSlot="b"; } else { selB=o; nextSlot="a"; } drawEmb(); renderVec(); };
+    g.addEventListener("click",choose); g.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); choose(); } });
+    svg.appendChild(g);
+  });
+}
+function cell(v){ const a=Math.min(1,Math.abs(v)); const c=v>=0?"--accent":"--amber"; return `<i style="background:color-mix(in srgb, var(${c}) ${(a*100).toFixed(0)}%, var(--sunk))"></i>`; }
+function renderVec(){
+  const row=(o,col)=>`<div class="vec-lbl"><span><span class="dot" style="background:var(${col})"></span>${o.w}</span><span class="fig-note">[${o.v.slice(0,3).map(x=>x.toFixed(2)).join(", ")}, …]</span></div><div class="vec">${o.v.map(cell).join("")}</div>`;
+  $("#emb-vecs").innerHTML=row(selA,"--accent")+row(selB,"--amber");
+  const s=cos(selA.v,selB.v);
+  const verdict = s>0.75?"非常接近":s>0.4?"有些关联":s>0.1?"关系不大":"几乎无关";
+  $("#emb-sim").innerHTML=`<b>${s.toFixed(2)}</b>余弦相似度（1 = 方向完全相同，0 = 无关）：「${selA.w}」和「${selB.w}」${verdict}。<br>换别的词再点点看，同一簇里的词相似度最高。`;
+}
+$("#emb-analogy").onclick=()=>{ selA=WORDS.find(o=>o.w==="国王"); selB=WORDS.find(o=>o.w==="王后"); nextSlot="a"; drawEmb(true); renderVec(); };
+drawEmb(); renderVec();
+
+/* =========== 3. attention =========== */
+let head="coref", variant="lei", q=8;
+const toks=()=>["小猫","没","跳上","桌子","，","因为","它","太",variant==="lei"?"累":"高","了"];
+function weights(){
+  const n=10, W=[];
+  for(let i=0;i<n;i++){
+    const r=new Array(n).fill(0);
+    if(head==="prev"){ for(let j=0;j<=i;j++) r[j]=0.15/(i+1); if(i>0) r[i-1]+=0.65; r[i]+= i>0?0.2:0.85; }
+    else {
+      for(let j=0;j<=i;j++) r[j]=0.05; r[i]+=0.3; if(i>0) r[0]+=0.15; if(i>3) r[3]+=0.15;
+      if(i===6){ r.fill(0); Object.assign(r,{0:.34,3:.30,5:.12,6:.14,1:.03,2:.04,4:.03}); }
+      if(i===8){ r.fill(0); const L=variant==="lei"; Object.assign(r,{0:L?.46:.08,3:L?.07:.48,6:.24,7:.06,8:.08,2:L?.03:.02,5:.03,1:.02,4:.01}); }
+      if(i===9){ r.fill(0); Object.assign(r,{8:.44,7:.14,6:.12,9:.14,0:.06,3:.06,5:.04}); }
+    }
+    const s=r.reduce((a,b)=>a+b,0); W.push(r.map(v=>v/s));
+  }
+  return W;
+}
+function drawAtt(){
+  const T=toks(), W=weights(), row=W[q];
+  const S=$("#att-svg"); S.innerHTML="";
+  const X=i=>40+i*66, Y=170;
+  // arcs first so tokens sit on top
+  row.forEach((w,j)=>{
+    if(j>q||w<0.015) return;
+    const x1=X(q), x2=X(j);
+    if(j===q){
+      const p=svgEl("path",{d:`M${x1-10},${Y-18} C${x1-24},${Y-70} ${x1+24},${Y-70} ${x1+10},${Y-18}`,class:"att-arc","stroke-width":(1+w*16).toFixed(1),opacity:(0.25+w*0.75).toFixed(2)}); S.appendChild(p);
+    } else {
+      const h=Math.min(150, 26+Math.abs(q-j)*17);
+      const p=svgEl("path",{d:`M${x1},${Y-18} Q${(x1+x2)/2},${Y-18-h} ${x2},${Y-18}`,class:"att-arc","stroke-width":(1+w*16).toFixed(1),opacity:(0.25+w*0.75).toFixed(2)}); S.appendChild(p);
+    }
+    if(w>=0.06){ const t=svgEl("text",{x:X(j),y:Y+34,class:"att-w"}); t.textContent=Math.round(w*100)+"%"; S.appendChild(t); }
+  });
+  T.forEach((t,i)=>{
+    const g=svgEl("g",{class:"att-tok"+(i===q?" q":"")+(i>q?" fut":""),tabindex:"0",role:"button","aria-label":t});
+    const wdt=Math.max(34,[...t].length*18+16);
+    g.appendChild(svgEl("rect",{x:X(i)-wdt/2,y:Y-17,width:wdt,height:32,rx:6}));
+    const tx=svgEl("text",{x:X(i),y:Y+5}); tx.textContent=t; g.appendChild(tx);
+    const f=()=>{ q=i; drawAtt(); }; g.addEventListener("click",f); g.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); f(); } });
+    S.appendChild(g);
+  });
+  // heatmap
+  const H=$("#att-heat"); H.innerHTML=""; const cols=`3.2em repeat(10,minmax(0,1fr))`;
+  W.forEach((r,i)=>{
+    const R=el("div",{class:"row"+(i===q?" sel":""),style:`grid-template-columns:${cols}`});
+    R.appendChild(el("span",{class:"rl"},T[i]));
+    r.forEach((w,j)=>{
+      if(j>i){ R.appendChild(el("span",{class:"c off"})); return; }
+      const b=el("button",{class:"c",type:"button","aria-label":`${T[i]} → ${T[j]} ${Math.round(w*100)}%`,style:`background:color-mix(in srgb, var(--accent) ${Math.min(100,w*160).toFixed(0)}%, var(--sunk))`+(i===q?";outline:1.5px solid var(--ink)":"")});
+      b.onclick=()=>{ q=i; drawAtt(); }; R.appendChild(b);
+    });
+    H.appendChild(R);
+  });
+  const L=el("div",{class:"row",style:`grid-template-columns:${cols}`}); L.appendChild(el("span")); T.forEach(t=>L.appendChild(el("span",{class:"cl"},t))); H.appendChild(L);
+  // table: scores → softmax → weights
+  $("#att-tbl-h").innerHTML=`「${T[q]}」这一行的计算过程：Q·K 匹配分 → softmax → 权重`;
+  const sc=row.slice(0,q+1).map(w=>Math.log(w)); const mx=Math.max(...sc);
+  let h=`<tr><th>被看的词</th><th style="text-align:right">匹配分</th><th>权重</th></tr>`;
+  row.slice(0,q+1).map((w,j)=>({w,j,s:sc[j]-mx+4})).sort((a,b)=>b.w-a.w).forEach(o=>{
+    h+=`<tr><td>${T[o.j]}</td><td class="m" style="text-align:right">${o.s.toFixed(2)}</td><td class="m"><span class="mini" style="width:${(o.w*110).toFixed(0)}px"></span> ${Math.round(o.w*100)}%</td></tr>`;
+  });
+  $("#att-tbl").innerHTML=h;
+}
+document.querySelectorAll("[data-head]").forEach(b=>b.onclick=()=>{ head=b.dataset.head; document.querySelectorAll("[data-head]").forEach(x=>x.setAttribute("aria-pressed",x===b)); drawAtt(); });
+document.querySelectorAll("[data-var]").forEach(b=>b.onclick=()=>{ variant=b.dataset.var; document.querySelectorAll("[data-var]").forEach(x=>x.setAttribute("aria-pressed",x===b)); q=8; drawAtt(); });
+drawAtt();
+
+/* positional encoding heatmap */
+function hex(c){ c=c.replace("#",""); if(c.length===3) c=c.split("").map(x=>x+x).join(""); const n=parseInt(c,16); return [n>>16&255,n>>8&255,n&255]; }
+function drawPE(){
+  const cv=$("#pe-canvas"), g=cv.getContext("2d"); const P=64, D=128, cw=cv.width/D, ch=cv.height/P;
+  const A=hex(css("--accent")), B=hex(css("--amber")), Z=hex(css("--sunk"));
+  for(let p=0;p<P;p++) for(let d=0;d<D;d++){
+    const i=Math.floor(d/2), ang=p/Math.pow(10000,2*i/D); const v=d%2===0?Math.sin(ang):Math.cos(ang);
+    const C=v>=0?A:B, t=Math.abs(v); g.fillStyle=`rgb(${Z.map((z,k)=>Math.round(z+(C[k]-z)*t)).join(",")})`;
+    g.fillRect(d*cw,p*ch,Math.ceil(cw),Math.ceil(ch));
+  }
+}
+drawPE();
+
+/* =========== 4. layer stack + logit lens =========== */
+function drawStack(L){
+  const S=$("#stack"); S.innerHTML="";
+  const add=(t,a,txt,cls)=>{ const e=svgEl(t,a); if(txt!=null) e.textContent=txt; if(cls) e.setAttribute("class",cls); S.appendChild(e); return e; };
+  add("rect",{x:40,y:420,width:220,height:36,rx:6},null,"io"); add("text",{x:150,y:443,"text-anchor":"middle"},"token → 向量（第 1、2 站）");
+  add("line",{x1:150,y1:420,x2:150,y2:38},null,"res");
+  add("text",{x:160,y:410},"残差通道：信息一路往上加",null).setAttribute("class","sub");
+  const blocks=[{y:320,n:"第 1 层"},{y:220,n:"第 2 层"},{y:80,n:"第 96 层"}];
+  blocks.forEach(b=>{
+    add("rect",{x:20,y:b.y,width:260,height:78,rx:8},null,"blk");
+    add("text",{x:30,y:b.y+16},b.n,"sub");
+    add("rect",{x:34,y:b.y+26,width:110,height:40,rx:6},null,"att"); add("text",{x:89,y:b.y+51,"text-anchor":"middle"},"注意力");
+    add("rect",{x:156,y:b.y+26,width:110,height:40,rx:6},null,"ffn"); add("text",{x:211,y:b.y+51,"text-anchor":"middle"},"前馈网络");
+  });
+  add("text",{x:150,y:180,"text-anchor":"middle",class:"sub"},"⋮  中间还有 93 层  ⋮");
+  add("rect",{x:40,y:4,width:220,height:34,rx:6},null,"io"); add("text",{x:150,y:26,"text-anchor":"middle"},"打分 → 概率（第 5 站）");
+  // highlight: map layer 1..96 to a y along the stack
+  const y = L<=1?320: L<=2?220: L>=96?80: L<50? 220-(L-2)/48*50 : 170-(L-50)/46*90;
+  const hy = (L===1||L===2||L===96)? y : y+10;
+  const h = (L===1||L===2||L===96)? 78 : 58;
+  add("rect",{x:14,y:hy-4,width:272,height:h+8,rx:10},null,"hl");
+}
+const LENS=[
+  {l:1,  d:{"的":.12,"一":.08,"是":.07,"在":.06,"我":.05}},
+  {l:24, d:{"一个":.16,"城市":.10,"哪里":.09,"什么":.08,"的":.06}},
+  {l:48, d:{"城市":.20,"巴黎":.17,"一个":.09,"里昂":.07,"首都":.06}},
+  {l:72, d:{"巴黎":.55,"里昂":.09,"城市":.07,"马赛":.05,"伦敦":.04}},
+  {l:96, d:{"巴黎":.87,"里昂":.03,"马赛":.02,"伦敦":.01,"城市":.01}},
+];
+function lens(L){
+  let a=LENS[0], b=LENS[LENS.length-1];
+  for(let i=0;i<LENS.length-1;i++) if(L>=LENS[i].l && L<=LENS[i+1].l){ a=LENS[i]; b=LENS[i+1]; }
+  const t=b.l===a.l?0:(L-a.l)/(b.l-a.l); const keys=new Set([...Object.keys(a.d),...Object.keys(b.d)]);
+  const out=[...keys].map(k=>[k,(a.d[k]||0.005)*(1-t)+(b.d[k]||0.005)*t]).sort((x,y)=>y[1]-x[1]).slice(0,5);
+  $("#lens-o").textContent=L; drawStack(L);
+  $("#lens-bars").innerHTML=out.map(([k,p],i)=>`<div class="bar${k==="巴黎"?" hi":""}"><span class="lbl">${k}</span><span class="track"><span class="fill${k==="巴黎"?"":" amber"}" style="width:${(p*100).toFixed(1)}%"></span></span><span class="pct">${pct(p)}</span></div>`).join("");
+}
+$("#lens-l").addEventListener("input",e=>lens(+e.target.value)); lens(1);
+
+/* =========== 5. softmax & sampling =========== */
+const SM=[["面包",4.1],["包子",3.8],["鸡蛋",3.5],["粥",3.0],["油条",2.7],["面条",2.2],["火锅",0.4],["石头",-3.0]];
+let smP=[];
+function renderSM(){
+  const T=+$("#sm-t").value, P=+$("#sm-p").value;
+  $("#sm-to").textContent=T.toFixed(2); $("#sm-po").textContent=P.toFixed(2);
+  let p=softmax(SM.map(x=>x[1]),T);
+  const order=p.map((v,i)=>i).sort((a,b)=>p[b]-p[a]); const keep=new Set(); let c=0;
+  for(const i of order){ keep.add(i); c+=p[i]; if(c>=P-1e-9) break; }
+  const s=[...keep].reduce((a,i)=>a+p[i],0); smP=p.map((v,i)=>keep.has(i)?v/s:0);
+  $("#sm-rows").innerHTML=SM.map((x,i)=>`<div class="logit-row${keep.has(i)?"":" cut"}"><span class="lbl">${x[0]}</span><span class="z">${x[1].toFixed(1)}</span><span class="bar" style="grid-template-columns:minmax(0,1fr);padding:0"><span class="track"><span class="fill" style="width:${(smP[i]*100).toFixed(1)}%"></span></span></span><span class="bar" style="grid-template-columns:1fr;padding:0"><span class="pct">${keep.has(i)?pct(smP[i]):"被截掉"}</span></span></div>`).join("");
+}
+["#sm-t","#sm-p"].forEach(s=>$(s).addEventListener("input",renderSM));
+$("#sm-draw").onclick=()=>{
+  const cnt={}; for(let k=0;k<20;k++){ const i=pick(smP); cnt[SM[i][0]]=(cnt[SM[i][0]]||0)+1; }
+  $("#sm-tally").innerHTML=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<span>${k} <b>×${v}</b></span>`).join("")+`<span style="background:none;color:var(--muted)">T=${(+$("#sm-t").value).toFixed(2)}</span>`;
+};
+$("#sm-clear").onclick=()=>{ $("#sm-tally").innerHTML=""; };
+renderSM();
+
+/* =========== 6. autoregressive loop =========== */
+const POEM=["床","前","明月","光","，","疑","是","地上","霜","。","<结束>"];
+let ar=0, timer=null;
+function renderAR(){
+  const R=$("#ar-rows"); R.innerHTML="";
+  const start=Math.max(0,ar-5);
+  if(ar===0){ R.innerHTML=`<p class="cap" style="margin:0">起点：输入只有「床」。按「下一步」，看模型每次读入全部已有内容、吐出一个新 token。</p>`; }
+  for(let k=start;k<ar;k++){
+    const inp=POEM.slice(0,k+1), out=POEM[k+1];
+    const row=el("div",{class:"ar-row"+(k===ar-1?" last":"")});
+    row.innerHTML=`<span class="k">第${k+1}步</span><span class="line">${inp.map(t=>`<span class="tok">${t}</span>`).join("")}<span class="arrow">→ 模型 →</span><span class="tok out">${out}</span></span>`;
+    R.appendChild(row);
+  }
+  const done=ar>=POEM.length-1; $("#ar-next").disabled=done; $("#ar-play").disabled=done;
+}
+function stepAR(){ if(ar<POEM.length-1){ ar++; renderAR(); } if(ar>=POEM.length-1) stopAR(); }
+function stopAR(){ clearInterval(timer); timer=null; $("#ar-play").textContent="自动播放"; }
+$("#ar-next").onclick=()=>{ stopAR(); stepAR(); };
+$("#ar-play").onclick=()=>{ if(timer){ stopAR(); return; } $("#ar-play").textContent="暂停"; stepAR(); timer=setInterval(stepAR,900); };
+$("#ar-reset").onclick=()=>{ stopAR(); ar=0; renderAR(); };
+renderAR();
+
+/* =========== 7. training =========== */
+const sig=x=>1/(1+Math.exp(-x)), bump=(v,c,w)=>Math.exp(-(((v-c)/w)**2));
+function trainDist(v){
+  const eps=1/100000;
+  const pg=eps+(0.9-eps)*sig((v-60)/7);
+  const pde=eps+0.28*bump(v,33,11)*(1-sig((v-60)/7));
+  const pli=eps+0.10*bump(v,55,12)+0.04*sig((v-60)/7);
+  const pye=eps+0.06*bump(v,48,14)+0.01*sig((v-60)/7);
+  const pxia=eps+0.05*bump(v,44,14)+0.02*sig((v-60)/7);
+  const rest=Math.max(0,1-pg-pde-pli-pye-pxia);
+  return [["光",pg],["亮",pli],["的",pde],["夜",pye],["下",pxia],["其他 10 万个",rest]];
+}
+const stepOf=v=>v===0?0:Math.round(Math.pow(10,v/20));
+function drawLoss(v){
+  const cv=$("#tr-canvas"), g=cv.getContext("2d"), W=cv.width, H=cv.height, pad={l:44,r:12,t:30,b:34};
+  g.clearRect(0,0,W,H);
+  const ink=css("--ink2"), mut=css("--muted"), line=css("--line"), acc=css("--accent");
+  const maxL=12, X=u=>pad.l+u/100*(W-pad.l-pad.r), Y=L=>pad.t+(1-L/maxL)*(H-pad.t-pad.b);
+  g.font="12px "+css("--mono"); g.fillStyle=mut; g.strokeStyle=line; g.lineWidth=1;
+  [0,3,6,9,12].forEach(L=>{ g.beginPath(); g.moveTo(pad.l,Y(L)); g.lineTo(W-pad.r,Y(L)); g.stroke(); g.textAlign="right"; g.fillText(L,pad.l-8,Y(L)+4); });
+  g.textAlign="center"; [0,20,40,60,80,100].forEach(u=>g.fillText(u===0?"0":"10"+["","¹","²","³","⁴","⁵"][u/20],X(u),H-pad.b+18));
+  g.textAlign="left"; g.fillText("损失 −ln p",4,14); g.textAlign="right"; g.fillText("训练步数",W-pad.r,H-4);
+  // area + line
+  g.beginPath(); for(let u=0;u<=100;u++){ const L=-Math.log(trainDist(u)[0][1]); u===0?g.moveTo(X(u),Y(L)):g.lineTo(X(u),Y(L)); }
+  g.strokeStyle=acc; g.lineWidth=2.5; g.stroke();
+  g.lineTo(X(100),Y(0)); g.lineTo(X(0),Y(0)); g.closePath(); g.globalAlpha=.12; g.fillStyle=acc; g.fill(); g.globalAlpha=1;
+  const L=-Math.log(trainDist(v)[0][1]);
+  g.beginPath(); g.arc(X(v),Y(L),6,0,Math.PI*2); g.fillStyle=acc; g.fill(); g.lineWidth=2; g.strokeStyle=css("--surface"); g.stroke();
+}
+function renderTrain(){
+  const v=+$("#tr-s").value, d=trainDist(v);
+  $("#tr-o").textContent=stepOf(v).toLocaleString("zh-CN");
+  $("#tr-bars").innerHTML=d.map(([k,p])=>`<div class="bar${k==="光"?" hi":""}" style="grid-template-columns:6.5em minmax(0,1fr) 3.6em"><span class="lbl">${k}</span><span class="track"><span class="fill${k==="光"?"":" amber"}" style="width:${(p*100).toFixed(1)}%"></span></span><span class="pct">${pct(p)}</span></div>`).join("");
+  const p=d[0][1]; $("#tr-p").textContent=p<0.001?p.toExponential(0):pct(p); $("#tr-l").textContent=(-Math.log(p)).toFixed(2);
+  drawLoss(v);
+}
+$("#tr-s").addEventListener("input",renderTrain); renderTrain();
+
+/* repaint canvases & svg colors when the theme changes */
+const repaint=()=>{ drawPE(); renderTrain(); drawEmb(); };
+try{ matchMedia("(prefers-color-scheme: dark)").addEventListener("change",repaint); }catch(e){}
+new MutationObserver(repaint).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+})();
+</script>
