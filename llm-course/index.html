@@ -1,0 +1,1071 @@
+<title>大模型五讲</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;900&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#F1F4F6; --surface:#FFFFFF; --surface-2:#E8EDF1; --ink:#121A22; --ink-2:#39444F; --muted:#63707E;
+  --line:#D3DAE1; --line-2:#BCC6D0;
+  --accent:#0A6C68; --accent-soft:#D5ECEA;
+  --mask:#F2C230; --mask-soft:#FCEFBF; --mask-ink:#5A4300;
+  --ok:#0B7F3A; --bad:#BE3434;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;
+  --bar:#6da7ec; --bar-hi:#1c5cab; --bar-other:#C5CDD6;
+  --chip1:#DCEAFB; --chip2:#FBE2D5; --chip3:#D6F1E5; --chip4:#FBEFC6; --chip5:#F4DCE7;
+  --serif:"Noto Serif SC","Songti SC","STSong","SimSun",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC","Noto Sans CJK SC",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,"PingFang SC",monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0E1318; --surface:#161C23; --surface-2:#1E262F; --ink:#E6ECF1; --ink-2:#BEC8D2; --muted:#8C98A6;
+    --line:#2A343F; --line-2:#3A4652;
+    --accent:#52C3B9; --accent-soft:#12302E;
+    --mask:#D9A92B; --mask-soft:#3A3116; --mask-ink:#F6DD8C;
+    --ok:#4CC27A; --bad:#EE7373;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+    --bar:#2F6FBF; --bar-hi:#86b6ef; --bar-other:#3A4652;
+    --chip1:#1C3350; --chip2:#472A1D; --chip3:#163A2D; --chip4:#3C3217; --chip5:#41222E;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0E1318; --surface:#161C23; --surface-2:#1E262F; --ink:#E6ECF1; --ink-2:#BEC8D2; --muted:#8C98A6;
+  --line:#2A343F; --line-2:#3A4652;
+  --accent:#52C3B9; --accent-soft:#12302E;
+  --mask:#D9A92B; --mask-soft:#3A3116; --mask-ink:#F6DD8C;
+  --ok:#4CC27A; --bad:#EE7373;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+  --bar:#2F6FBF; --bar-hi:#86b6ef; --bar-other:#3A4652;
+  --chip1:#1C3350; --chip2:#472A1D; --chip3:#163A2D; --chip4:#3C3217; --chip5:#41222E;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased;padding-inline:16px;padding-block:0 64px}
+.wrap{max-width:960px;margin:0 auto}
+.prose{max-width:690px}
+h1,h2,h3{font-family:var(--serif);text-wrap:balance;margin:0;line-height:1.3}
+p{margin:0}
+.stack{display:flex;flex-direction:column;gap:14px}
+code,.mono{font-family:var(--mono);font-size:.92em}
+b,strong{font-weight:650}
+a{color:var(--accent)}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+/* ---------- header ---------- */
+header.top{padding-block:44px 28px;display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-size:13px;letter-spacing:.14em;color:var(--muted)}
+header.top h1{font-size:clamp(34px,6vw,52px);font-weight:900;letter-spacing:.02em}
+header.top h1 .h1-blank{display:inline-block;min-width:1.1em;border-bottom:4px solid var(--mask);color:transparent;margin-left:.08em}
+.lede{font-size:17px;color:var(--ink-2);max-width:640px}
+.chain{list-style:none;margin:10px 0 0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.chain li{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;position:relative;min-width:0}
+.chain li .n{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.chain li .q{font-size:14px;line-height:1.45}
+.chain li .st{font-size:12px;color:var(--muted)}
+.chain li.on{border-color:var(--accent);background:var(--accent-soft)}
+.chain li.on .st{color:var(--accent);font-weight:600}
+.chain li.off{opacity:.62}
+.chain li:not(:last-child)::after{content:"→";position:absolute;right:-9px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted);background:var(--bg);line-height:1;padding:2px 0;z-index:1}
+.chain-note{font-size:13px;color:var(--muted)}
+.howto{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;font-size:14px;color:var(--ink-2);padding-top:6px}
+.howto .tag{margin-right:6px}
+
+/* ---------- sections ---------- */
+section.lesson{padding-block:40px 8px;border-top:1px solid var(--line);margin-top:28px;display:flex;flex-direction:column;gap:22px}
+.lesson-head{display:flex;flex-direction:column;gap:6px}
+.lesson-head .num{font-family:var(--mono);font-size:13px;color:var(--accent);letter-spacing:.06em}
+.lesson-head h2{font-size:clamp(24px,3.6vw,32px);font-weight:900}
+.lesson-head .ask{color:var(--muted);font-size:15px}
+.stage{display:grid;grid-template-columns:118px minmax(0,1fr);gap:18px}
+.stage > .label{position:relative;padding-top:2px}
+.stage > .label .tag{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px)}
+.stage + .stage{margin-top:6px}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;letter-spacing:.06em;font-weight:600;padding:3px 9px;border-radius:999px;border:1px solid var(--line-2);color:var(--ink-2);background:var(--surface);white-space:nowrap}
+.tag i{font-style:normal;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.tag.why{border-color:var(--mask);background:var(--mask-soft);color:var(--mask-ink)}
+.tag.how{border-color:var(--s1);color:var(--s1)}
+.tag.you{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.stage-body{display:flex;flex-direction:column;gap:14px;min-width:0}
+
+.derived{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:6px;max-width:690px}
+.derived .k{font-size:12.5px;letter-spacing:.1em;color:var(--accent);font-weight:700}
+.derived p{color:var(--ink)}
+.aside{font-size:14px;color:var(--muted);max-width:690px}
+.guess{display:inline-block;font-size:11.5px;letter-spacing:.04em;color:var(--mask-ink);background:var(--mask-soft);border:1px dashed var(--mask);border-radius:4px;padding:0 6px;margin-left:6px;vertical-align:2px;font-weight:600}
+.you-box{background:var(--accent-soft);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;max-width:690px}
+.you-box p{color:var(--ink)}
+.fwd{font-size:14px;color:var(--ink-2);border-top:1px dashed var(--line-2);padding-top:10px;max-width:690px}
+.fwd b{color:var(--accent)}
+
+/* ---------- lab (widget) ---------- */
+.lab{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.lab-title{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 12px;align-items:baseline}
+.lab-title h3{font-family:var(--sans);font-size:15px;font-weight:700;letter-spacing:.02em}
+.lab-title .hint{font-size:13px;color:var(--muted)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.seg{display:inline-flex;flex-wrap:wrap;gap:4px;background:var(--surface-2);padding:4px;border-radius:10px}
+.seg button{border:0;background:transparent;padding:5px 11px;border-radius:7px;font-size:14px;cursor:pointer;color:var(--ink-2)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12);font-weight:600}
+.btn{border:1px solid var(--line-2);background:var(--surface);border-radius:8px;padding:6px 13px;font-size:14px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.btn:disabled{opacity:.45;cursor:default}
+.slider{display:flex;flex-direction:column;gap:4px;min-width:0}
+.row .slider{flex:1 1 220px}
+.slider label{font-size:13.5px;color:var(--ink-2);display:flex;justify-content:space-between;gap:10px}
+.slider label output{font-family:var(--mono);color:var(--ink);font-weight:600}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.toggle{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line-2);border-radius:999px;padding:5px 12px 5px 8px;cursor:pointer;font-size:14px;background:var(--surface);user-select:none}
+.toggle input{accent-color:var(--accent);width:16px;height:16px;margin:0}
+.toggle.locked{opacity:.7;cursor:default}
+.small{font-size:13px;color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+
+/* token chips */
+.tokens{display:flex;flex-wrap:wrap;gap:3px;align-items:flex-end;font-family:var(--mono);font-size:15px;line-height:1.35}
+.tk{position:relative;padding:3px 5px;border-radius:5px;background:var(--chip1);white-space:pre;color:var(--ink);min-width:1.1em;text-align:center}
+.tk:nth-child(5n+2){background:var(--chip2)}
+.tk:nth-child(5n+3){background:var(--chip3)}
+.tk:nth-child(5n+4){background:var(--chip4)}
+.tk:nth-child(5n+5){background:var(--chip5)}
+.tk.multi{outline:1.5px dashed var(--ink-2);outline-offset:-1.5px}
+.tk .x{position:absolute;top:-8px;right:-5px;font-size:10px;font-weight:600;background:var(--ink);color:var(--surface);border-radius:6px;padding:0 4px;line-height:14px}
+.tk.ws{color:var(--muted)}
+.tk.ctx{background:var(--surface-2)!important}
+.tk.ans{background:var(--mask)!important;color:var(--mask-ink)}
+.tk.ans.hidden-ans{color:transparent}
+.tk.ans.hidden-ans::after{content:"？";position:absolute;inset:0;display:grid;place-items:center;color:var(--mask-ink);font-weight:700}
+.tk.future{background:transparent!important;color:var(--line-2);outline:1px solid var(--line)}
+.tk.c0{background:color-mix(in srgb,var(--s2) 26%,var(--surface))!important}
+.tk.c1{background:color-mix(in srgb,var(--s3) 28%,var(--surface))!important}
+.tk.c2{background:color-mix(in srgb,var(--s1) 26%,var(--surface))!important}
+
+/* prob bars */
+.bars{display:grid;grid-template-columns:minmax(52px,max-content) minmax(0,1fr) 58px;gap:5px 8px;align-items:center;min-width:0;font-size:14px}
+.bar-row{display:contents}
+.bar-row .w{font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px}
+.bar-row .track{height:14px;border-radius:0 4px 4px 0;position:relative;background:transparent;border-left:1px solid var(--line-2)}
+.bar-row .fill{position:absolute;left:0;top:0;bottom:0;border-radius:0 4px 4px 0;background:var(--bar);transition:width .35s ease}
+.bar-row.hit .fill{background:var(--bar-hi)}
+.bar-row.other .fill{background:var(--bar-other)}
+.bar-row .v{font-family:var(--mono);font-size:13px;text-align:right;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.bar-row.hit .w{font-weight:700}
+.bar-row .w .ok{font-family:var(--sans);font-size:11px;color:var(--ok);margin-left:4px;font-weight:700}
+.bar-row.other .w{color:var(--muted)}
+
+/* 1.1 ledger */
+.ledger{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.route{border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.route h4{margin:0;font-size:14px;font-weight:700}
+.route .big{font-family:var(--serif);font-size:clamp(24px,4vw,32px);font-weight:900;line-height:1.15}
+.route .big small{font-family:var(--sans);font-size:14px;font-weight:500;color:var(--muted);margin-left:4px}
+.route.b{border-color:var(--accent)}
+.route .ex{font-size:13.5px;color:var(--ink-2);background:var(--surface-2);border-radius:6px;padding:6px 9px;font-family:var(--mono)}
+.qcard{display:grid;grid-template-columns:64px minmax(0,1fr);gap:4px 10px;font-size:14px;background:var(--surface-2);border-radius:10px;padding:12px 14px}
+.qcard .k{color:var(--muted);font-size:13px}
+.qcard .v{font-family:var(--mono);word-break:break-all;white-space:pre-wrap}
+.qcard .v.ans{color:var(--mask-ink);font-weight:700}
+
+/* loop diagram */
+.loop{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;counter-reset:s}
+.loop .step{border:1px solid var(--line);border-radius:10px;padding:10px;font-size:13.5px;line-height:1.55;display:flex;flex-direction:column;gap:4px;background:var(--surface);transition:background .2s,border-color .2s;cursor:pointer;text-align:left}
+.loop .step .h{font-weight:700;font-size:14px}
+.loop .step .h::before{counter-increment:s;content:counter(s);font-family:var(--mono);font-size:11px;display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--surface-2);margin-right:6px;vertical-align:1px}
+.loop .step.cur{border-color:var(--accent);background:var(--accent-soft)}
+.loop .step.cur .h::before{background:var(--accent);color:var(--surface)}
+.loop-detail{font-size:14.5px;color:var(--ink-2);min-height:3.2em}
+.lossline{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:14px;align-items:baseline}
+.lossline .big{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--ink)}
+
+/* 1.2 blanks */
+.abilities{display:flex;flex-wrap:wrap;gap:8px}
+.blanks{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.blank{border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.blank .sent{font-size:15px;line-height:1.6}
+.blank .sent .hole{display:inline-block;min-width:2.4em;border-bottom:3px solid var(--mask);text-align:center;color:var(--mask-ink);font-weight:700}
+.blank .need{font-size:12px;color:var(--muted)}
+.blank .need span{display:inline-block;border:1px solid var(--line-2);border-radius:4px;padding:0 5px;margin:0 3px 3px 0}
+.blank .need span.have{border-color:var(--accent);color:var(--accent)}
+.blank .score{font-size:13px;color:var(--ink-2);display:flex;justify-content:space-between}
+.scoreboard{display:flex;flex-wrap:wrap;gap:10px 28px;align-items:baseline;background:var(--surface-2);padding:12px 14px;border-radius:10px}
+.scoreboard .big{font-family:var(--mono);font-size:24px;font-weight:600}
+.scoreboard .lab2{font-size:13px;color:var(--muted)}
+
+/* compress */
+.compress{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px}
+.readlist{font-size:14px;max-height:190px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface-2);display:flex;flex-direction:column;gap:2px}
+.readlist div{white-space:nowrap}
+.readlist div.new{color:var(--accent);font-weight:600}
+.cbar{display:flex;flex-direction:column;gap:4px}
+.cbar .lbl{display:flex;justify-content:space-between;font-size:13.5px}
+.cbar .trk{height:16px;border-left:1px solid var(--line-2)}
+.cbar .f{height:100%;border-radius:0 4px 4px 0;transition:width .35s ease}
+
+/* 1.3 */
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.opt{border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:14px;min-width:0}
+.opt h4{margin:0;font-size:14.5px}
+.opt .verdict{font-size:13px;font-weight:600}
+.opt .verdict.bad{color:var(--bad)}
+.opt .verdict.mid{color:var(--mask-ink)}
+.opt .verdict.good{color:var(--accent)}
+.unk{background:var(--bad)!important;color:#fff!important}
+.bpe-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:start}
+.merges{display:flex;flex-wrap:wrap;gap:4px;font-family:var(--mono);font-size:12.5px;max-height:110px;overflow:auto}
+.merges span{border:1px solid var(--line-2);border-radius:4px;padding:0 5px;white-space:nowrap}
+.merges span.last{border-color:var(--accent);color:var(--accent);font-weight:600}
+.stats{display:flex;gap:18px;flex-wrap:wrap;font-size:13.5px;color:var(--ink-2)}
+.stats b{font-family:var(--mono);font-size:18px;color:var(--ink)}
+svg text{fill:var(--muted);font-family:var(--sans);font-size:11px}
+svg .axis{stroke:var(--line-2)}
+svg .grid{stroke:var(--line);stroke-dasharray:2 3}
+svg .curve{stroke:var(--s1);fill:none;stroke-width:2}
+svg .dot{fill:var(--s1);stroke:var(--surface);stroke-width:2}
+textarea{width:100%;min-height:74px;border:1px solid var(--line-2);border-radius:8px;padding:9px 11px;background:var(--surface);font-family:var(--mono);font-size:14.5px;resize:vertical}
+.tok-row{display:flex;flex-direction:column;gap:6px}
+.tok-row .hdr{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;font-size:13.5px}
+.tok-row .hdr b{font-family:var(--mono)}
+.status{font-size:12.5px;color:var(--muted)}
+.status.ok{color:var(--ok)}
+.fmt-bars{display:flex;flex-direction:column;gap:8px}
+.fmt-row{display:grid;grid-template-columns:96px minmax(0,1fr) 48px;gap:10px;align-items:center;font-size:13.5px;cursor:pointer;border-radius:6px;padding:2px 0;background:transparent;border:0;text-align:left;width:100%}
+.fmt-row .stk{display:flex;height:18px;gap:2px}
+.fmt-row .stk span{height:100%}
+.fmt-row .stk span:first-child{border-radius:0}
+.fmt-row .stk span:last-child{border-radius:0 4px 4px 0}
+.fmt-row .n{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.fmt-row[aria-pressed="true"] .nm{font-weight:700;color:var(--accent)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--ink-2)}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.fmt-chips{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:10px;font-size:13.5px}
+.fmt-chips .tokens{font-size:13.5px}
+table.mini{border-collapse:collapse;font-size:13px;width:100%}
+table.mini th,table.mini td{border-bottom:1px solid var(--line);padding:5px 8px;text-align:right;font-variant-numeric:tabular-nums}
+table.mini th:first-child,table.mini td:first-child{text-align:left}
+table.mini th{color:var(--muted);font-weight:600}
+.tbl-wrap{overflow-x:auto}
+
+/* 1.4 */
+.frames{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.frame{border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.frame .sent{font-size:15px}
+.frame .sent .hole{display:inline-block;min-width:2.4em;border-bottom:3px solid var(--mask)}
+.truth{font-size:13px;display:flex;gap:6px;align-items:baseline;color:var(--ink-2)}
+.truth b{color:var(--ok)}
+.counts{font-size:12.5px;color:var(--muted);font-family:var(--mono)}
+.dbm{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.dbm .side{border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.dbm .side h4{margin:0;font-size:14px}
+.dbrow{font-family:var(--mono);font-size:13px;background:var(--surface-2);border-radius:6px;padding:8px 10px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 10px}
+.dbrow .k{color:var(--muted)}
+.dbrow.none{display:block;color:var(--bad);font-weight:600}
+
+/* recap */
+.recap{display:flex;flex-direction:column;gap:0;max-width:690px;counter-reset:r}
+.recap .r{display:grid;grid-template-columns:30px minmax(0,1fr);gap:12px;padding:10px 0;border-bottom:1px dashed var(--line-2);font-size:15px}
+.recap .r .d{font-family:var(--mono);font-size:12px;color:var(--muted);padding-top:3px}
+.recap .r.next{color:var(--accent);font-weight:600;border-bottom:0}
+.check{background:var(--surface);border:1px solid var(--accent);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;max-width:690px}
+.check h3{font-size:19px}
+.check ol{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:6px;font-size:15px}
+footer{margin-top:40px;font-size:12.5px;color:var(--muted);max-width:690px}
+
+@media (max-width: 760px){
+  .chain{grid-template-columns:1fr}
+  .chain li:not(:last-child)::after{content:"↓";right:auto;left:18px;top:auto;bottom:-12px;transform:none}
+  .stage{grid-template-columns:1fr;gap:8px}
+  .stage > .label .tag{position:static}
+  .ledger,.compress,.three,.bpe-grid,.frames,.dbm{grid-template-columns:1fr}
+  .loop{grid-template-columns:1fr 1fr}
+  .qcard{grid-template-columns:52px minmax(0,1fr)}
+}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <div class="eyebrow">大模型原理 · 零基础推导课</div>
+  <h1>大模型五讲<span class="h1-blank" aria-hidden="true">讲</span></h1>
+  <p class="lede">这门课不先告诉你答案。每一节从一个问题出发，你在"实验台"上动手试，答案会从实验里自己冒出来。第 1 讲先做完，等你确认讲法合适，再往下推。</p>
+  <ol class="chain" aria-label="五讲的推导顺序">
+    <li class="on"><span class="n">第 1 讲</span><span class="q">模型到底在做什么？</span><span class="st">正在读</span></li>
+    <li class="off"><span class="n">第 2 讲</span><span class="q">分数怎么变成概率？</span><span class="st">等你确认后再做</span></li>
+    <li class="off"><span class="n">第 3 讲</span><span class="q">为什么会流畅地说错？</span><span class="st">等你确认后再做</span></li>
+    <li class="off"><span class="n">第 4 讲</span><span class="q">它怎么"读"上下文？</span><span class="st">等你确认后再做</span></li>
+    <li class="off"><span class="n">第 5 讲</span><span class="q">文字怎么变成能算距离的数字？</span><span class="st">等你确认后再做</span></li>
+  </ol>
+  <p class="chain-note">顺序不能换：后一讲的每个结论，都要用到前一讲推出来的东西。</p>
+  <div class="howto"><span>每一节走三步：</span>
+    <span><span class="tag why">为什么必须这样</span>从一个难题出发</span>
+    <span><span class="tag how">机制</span>它具体怎么运转</span>
+    <span><span class="tag you">连到你</span>回到你做过的事</span>
+  </div>
+</header>
+
+<!-- ============ 1.1 ============ -->
+<section class="lesson" id="s11">
+  <div class="lesson-head">
+    <span class="num">1.1</span>
+    <h2>没有老师，怎么给机器出几万亿道题？</h2>
+    <p class="ask">——为什么偏偏选"预测下一个词"这个任务，而不是直接教它知识</p>
+  </div>
+
+  <div class="stage">
+    <div class="label"><span class="tag why">为什么必须这样</span></div>
+    <div class="stage-body">
+      <div class="prose stack">
+        <p>先想清楚"训练"需要什么。机器学东西的办法其实很笨：给它一道题，它作答；对照标准答案，答得不好，就把它内部的"旋钮"拧一点点。每次只拧一点点，所以这个"做题—对答案—拧旋钮"的循环要重复<b>极多次</b>，多到几万亿次。</p>
+        <p>这样一来，真正卡脖子的就不是"教什么"，而是：<b>几万亿道带标准答案的题，从哪来？</b></p>
+        <p>你手里有人类写下的海量文字，但没有老师，也没有答案册。摆在面前的是两条路。拖动下面的滑块，看看每条路要付出什么。</p>
+      </div>
+
+      <div class="lab" id="ledger">
+        <div class="lab-title"><h3>实验台 ① 两条路的账</h3><span class="hint">拖动滑块，改变想要的题数</span></div>
+        <div class="slider">
+          <label for="qN"><span>想要多少道带答案的题</span><output id="qNout" class="num">—</output></label>
+          <input type="range" id="qN" min="4" max="13.18" step="0.01" value="13.18">
+        </div>
+        <div class="ledger">
+          <div class="route">
+            <h4>路线 A · 请人出题</h4>
+            <div class="ex">问：法国的首都是哪里？ 答：巴黎</div>
+            <div class="big num" id="routeA">—</div>
+            <p class="small">假设一个人每 30 秒写出一道题、一年工作 2000 小时，也就是每人每年 24 万道。还没算"谁来判定答案对不对"。</p>
+          </div>
+          <div class="route b">
+            <h4>路线 B · 遮住下一个词</h4>
+            <div class="ex">题：法国的首都是 ▢　答：巴黎（原文写着）</div>
+            <div class="big num" id="routeB">0 <small>人工</small></div>
+            <p class="small" id="routeBnote">任何一段现成文字，在任意位置切一刀：前面是题，后面那个词就是答案。只需要有这么多文字。</p>
+          </div>
+        </div>
+        <p class="small">参照：Meta 公开说 Llama 3 用了超过 15 万亿个 token 训练（token 是什么，1.3 节讲；先把它当作"一个词"）。滑块最右端就是这个量级。</p>
+      </div>
+
+      <div class="prose"><p>路线 B 的"切一刀"具体长什么样？挑一段文字，一格一格往后推：</p></div>
+
+      <div class="lab" id="cutlab">
+        <div class="lab-title"><h3>实验台 ② 一段话自带多少道题</h3><span class="hint">按"下一道题"，或直接拖滑块</span></div>
+        <div class="row">
+          <div class="seg" role="group" aria-label="选择例子" id="cutPick">
+            <button type="button" data-k="poem" aria-pressed="true">唐诗</button>
+            <button type="button" data-k="biz" aria-pressed="false">财报句子</button>
+            <button type="button" data-k="en" aria-pressed="false">英文</button>
+            <button type="button" data-k="code" aria-pressed="false">代码</button>
+          </div>
+        </div>
+        <div class="tokens" id="cutTokens" aria-live="polite"></div>
+        <div class="qcard">
+          <span class="k">题目</span><span class="v" id="cutQ"></span>
+          <span class="k">答案</span><span class="v ans" id="cutA"></span>
+        </div>
+        <div class="row">
+          <div class="slider">
+            <label for="cutPos"><span>切在第几格</span><output id="cutPosOut" class="num"></output></label>
+            <input type="range" id="cutPos" min="0" max="10" step="1" value="4">
+          </div>
+          <button type="button" class="btn" id="cutReveal">揭晓答案</button>
+          <button type="button" class="btn primary" id="cutNext">下一道题 →</button>
+        </div>
+        <p class="small" id="cutCount"></p>
+      </div>
+
+      <div class="derived">
+        <span class="k">推出来的</span>
+        <p>路线 B 赢在两件事：<b>答案是文字自带的</b>，不用任何人标注，也不用争论对错——原文写什么，什么就是答案；<b>任何文字、任何位置都能出题</b>，诗、财报、代码都行，题量只受文字总量限制。</p>
+        <p>所以"预测下一个词"被选中，并不是因为它最像"学知识"，而是因为在"没有老师"的条件下，只有它能把人类现成的文字变成几万亿道有标准答案的题。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="label"><span class="tag how">机制</span></div>
+    <div class="stage-body">
+      <div class="prose"><p>一道题从出题到"拧旋钮"，完整走一遍是这样的。点每一步看细节：</p></div>
+      <div class="lab" id="looplab">
+        <div class="lab-title"><h3>实验台 ③ 一道题的一生</h3><span class="hint">点步骤，或拖下面的训练进度</span></div>
+        <div class="loop" id="loop">
+          <button type="button" class="step cur" data-i="0"><span class="h">读前文</span><span>"法国的首都是"</span></button>
+          <button type="button" class="step" data-i="1"><span class="h">交出概率表</span><span>词表里每个词各有多大可能</span></button>
+          <button type="button" class="step" data-i="2"><span class="h">翻开答案</span><span>原文下一个词：巴黎</span></button>
+          <button type="button" class="step" data-i="3"><span class="h">扣分</span><span>给"巴黎"的概率越低扣越多</span></button>
+          <button type="button" class="step" data-i="4"><span class="h">拧旋钮</span><span>每个旋钮都挪一点点</span></button>
+        </div>
+        <p class="loop-detail" id="loopDetail"></p>
+        <div class="slider">
+          <label for="trainT"><span>训练进度：见过的同类句子越来越多</span><output id="trainTout" class="num"></output></label>
+          <input type="range" id="trainT" min="0" max="100" step="1" value="0">
+        </div>
+        <div class="bars" id="trainBars"></div>
+        <div class="lossline"><span>给正确答案"巴黎"的概率 <span class="big num" id="trainP"></span></span><span>这道题扣分 <span class="big num" id="trainL"></span></span></div>
+        <p class="small">扣分 = −log₂(给正确答案的概率)。给 100% 扣 0 分；给 50% 扣 1 分；25% 扣 2 分——每少一半，多扣 1 分。训练的全部目标，就是让所有题的扣分加起来尽量小。图中数字为示意。</p>
+      </div>
+      <p class="fwd">注意第 ② 步：模型交出的是一张<b>概率表</b>，不是一个词。为什么是表？是谁从表里挑出最终那个词的？——这是<b>第 2 讲</b>的起点。</p>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="label"><span class="tag you">连到你</span></div>
+    <div class="stage-body">
+      <div class="you-box">
+        <p><b>你做过推荐系统的语义召回。</b>推荐模型的训练样本里，"答案"通常不是人标的，而是用户自己的行为：点没点、看没看完、买没买。没人逐条去标"这个用户喜欢这条内容"。<span class="guess">按你给的线索推测，待你校对</span></p>
+        <p>这和路线 B 是同一招：<b>挑一个答案天然长在数据里的任务，才喂得起海量样本。</b>大模型只是把这招用在了文字上——每段文字的"下一个词"，就是一份现成的、免费的行为日志。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 1.2 ============ -->
+<section class="lesson" id="s12">
+  <div class="lesson-head">
+    <span class="num">1.2</span>
+    <h2>只让它填空，它怎么学会了知识和推理？</h2>
+    <p class="ask">——为什么说知识和推理是"副产品"</p>
+  </div>
+
+  <div class="stage">
+    <div class="label"><span class="tag why">为什么必须这样</span></div>
+    <div class="stage-body">
+      <div class="prose stack">
+        <p>训练目标里只有一句话：<b>把原文真实的下一个词的概率抬高</b>（也就是把扣分压低）。没有一个字提到"知识"或"推理"。</p>
+        <p>可训练出来的模型能答事实、能算数、能做简单推理。这些本事是从哪来的？动手试：下面五个空都是语料里随处可见的那种句子。给模型开关不同的能力，看它在每个空上扣多少分。</p>
+      </div>
+
+      <div class="lab" id="ablab">
+        <div class="lab-title"><h3>实验台 ④ 给模型装能力</h3><span class="hint">勾选能力，看每个空的概率表怎么变</span></div>
+        <div class="abilities" id="abilities">
+          <label class="toggle locked"><input type="checkbox" checked disabled id="ab-freq"> 数词频（永远开着）</label>
+          <label class="toggle"><input type="checkbox" id="ab-g" data-ab="g"> 语法</label>
+          <label class="toggle"><input type="checkbox" id="ab-k" data-ab="k"> 世界知识</label>
+          <label class="toggle"><input type="checkbox" id="ab-m" data-ab="m"> 算术</label>
+          <label class="toggle"><input type="checkbox" id="ab-r" data-ab="r"> 逻辑推理</label>
+        </div>
+        <div class="scoreboard">
+          <span><span class="lab2">五个空的总扣分</span><br><span class="big num" id="abTotal">—</span></span>
+          <span><span class="lab2">给正确答案的平均概率</span><br><span class="big num" id="abAvg">—</span></span>
+          <span class="small" id="abHint" style="flex:1 1 240px"></span>
+        </div>
+        <div class="blanks" id="blanks"></div>
+        <p class="small">概率为示意数字，用来展示"哪种能力影响哪个空"，不是某个真实模型的输出。</p>
+      </div>
+
+      <div class="derived">
+        <span class="k">推出来的</span>
+        <p>每种能力只在需要它的那几个空上降低扣分。而训练要压低的是<b>所有文字上的总扣分</b>——文字里什么样的空都有：要常识的、要算数的、要推理的。所以谁能把扣分压下去，谁就会被一点点"拧"出来。</p>
+        <p>知识和推理从来不是训练目标，而是<b>为了把空填对，不得不长出来的副产品</b>。</p>
+        <p>再看第 1 个空：所有能力全开，"苹果"也只有约四分之一。原文本来就有多种合理写法，再强的模型也只能分概率——这是扣分永远降不到 0 的原因之一。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="label"><span class="tag how">机制</span></div>
+    <div class="stage-body">
+      <div class="prose stack">
+        <p>还有一个疑问：想填对空，最省事的办法难道不是<b>把读过的句子全背下来</b>？</p>
+        <p>算笔账。Llama 3 训练用了超过 15 万亿个 token，它当时最大的版本有 700 亿个参数（就是"旋钮"）。平摊下来，一个旋钮要负责两百多个 token——背是背不下的。装不下，就只能找<b>一条能同时解释很多句子的规律</b>。下面用一个小例子看"背"和"找规律"的成本差多少。</p>
+      </div>
+
+      <div class="lab" id="cmplab">
+        <div class="lab-title"><h3>实验台 ⑤ 背下来 vs 找规律</h3><span class="hint">按"多读 10 句"，看两种存法的成本</span></div>
+        <div class="compress">
+          <div class="stack" style="gap:8px">
+            <div class="row"><button type="button" class="btn primary" id="cmpMore">多读 10 句</button><button type="button" class="btn" id="cmpReset">重来</button><span class="small num" id="cmpRead"></span></div>
+            <div class="readlist" id="cmpList" aria-live="polite"></div>
+          </div>
+          <div class="stack" style="gap:12px">
+            <div class="cbar"><div class="lbl"><span>背诵法：每个不同的句子存一份</span><b class="num" id="cmpMemN"></b></div><div class="trk"><div class="f" id="cmpMem" style="background:var(--s2)"></div></div></div>
+            <div class="cbar"><div class="lbl"><span>规律法：存"国家—首都"事实 + 句式</span><b class="num" id="cmpRuleN"></b></div><div class="trk"><div class="f" id="cmpRule" style="background:var(--s1)"></div></div></div>
+            <p class="small">单位：存下来的字数。</p>
+            <div class="derived" style="padding:12px 14px"><span class="k">规律法的额外红利</span><p><b class="num" id="cmpGen">0</b> 句没读过、但规律法能写出来的句子——比如读过"日本的首都是东京"和"我去过法国的首都巴黎"，就能写出"我去过日本的首都东京"。</p></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="derived">
+        <span class="k">推出来的</span>
+        <p>规律比句子少得多，还能推到没见过的组合上。在旋钮有限的条件下，训练会自动偏向这种"一条管很多句"的存法。"法国—首都—巴黎"这样的事实，"A 比 B 高、B 比 C 高"这样的推理套路，本质上都是这种能压缩很多句子的规律。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="label"><span class="tag you">连到你</span></div>
+    <div class="stage-body">
+      <div class="you-box">
+        <p><b>拿你熟悉的财报场景说。</b>模型会算"同比"，不是因为谁教过它公式，而是它读过海量"营收 X 亿，同比增长 Y%"的句子，为了猜中那个数，被逼着近似学会了这种换算。<span class="guess">待你校对：你的场景里是否让模型算过数</span></p>
+        <p>"近似"两个字要紧。实验台 ④ 的第 5 个空，能力全开时正确答案 1000 也只有 74%，还有一截给了常见的错误算法 990（1100 × 0.9）。所以在财报问答里，<b>精确计算更适合交给代码或计算工具</b>，让模型负责找数和组织语言，而不是让它"心算"。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 1.3 ============ -->
+<section class="lesson" id="s13">
+  <div class="lesson-head">
+    <span class="num">1.3</span>
+    <h2>它读的最小单位是什么？为什么不是字？</h2>
+    <p class="ask">——token 是什么，为什么 JSON 的括号引号浪费 token</p>
+  </div>
+
+  <div class="stage">
+    <div class="label"><span class="tag why">为什么必须这样</span></div>
+    <div class="stage-body">
+      <div class="prose stack">
+        <p>回到实验台 ③ 的第 ② 步：模型每一步要给一张<b>固定清单</b>（词表）上的每一项打概率。所以做模型之前得先定下来：清单上放什么？</p>
+        <p>三个候选方案，各自会撞上什么墙：</p>
+      </div>
+      <div class="three">
+        <div class="opt">
+          <h4>方案一：按整词</h4>
+          <p>清单得列出所有词。可中文没有空格，新词、人名、产品名、错别字无穷无尽，清单外的词只能记成"不认识"。</p>
+          <div class="tokens"><span class="tk">我</span><span class="tk">想</span><span class="tk">吃</span><span class="tk unk">[不认识]</span><span class="tk">大餐</span></div>
+          <p class="small">"饕餮"不在清单里。</p>
+          <span class="verdict bad">撞墙：总有漏网的词</span>
+        </div>
+        <div class="opt">
+          <h4>方案二：按单个字（或字节）</h4>
+          <p>清单很小，什么都能拼出来，永远不会"不认识"。但句子被切得很长，而模型<b>每处理一个单位都要完整算一遍</b>。</p>
+          <div class="tokens"><span class="tk">我</span><span class="tk">想</span><span class="tk">吃</span><span class="tk">饕</span><span class="tk">餮</span><span class="tk">大</span><span class="tk">餐</span></div>
+          <p class="small">第 4 讲会看到：长度翻倍，读的成本不止翻倍。</p>
+          <span class="verdict mid">撞墙：太长、太贵</span>
+        </div>
+        <div class="opt">
+          <h4>方案三：折中</h4>
+          <p>常见的片段合成一个单位，少见的拆回小块。那问题来了：哪些该合？——不靠人定，<b>靠数频率</b>。</p>
+          <div class="tokens"><span class="tk">我</span><span class="tk">想</span><span class="tk">吃</span><span class="tk">饕</span><span class="tk">餮</span><span class="tk">大餐</span></div>
+          <p class="small">常见的"大餐"合一个，少见的"饕餮"拆开。</p>
+          <span class="verdict good">下面动手看它怎么"数"出来</span>
+        </div>
+      </div>
+
+      <div class="lab" id="bpelab">
+        <div class="lab-title"><h3>实验台 ⑥ 从频率里长出词表</h3><span class="hint">拖滑块：合并规则一条条加上去</span></div>
+        <p class="small">规则只有一条：在一小堆财报句子里，找出<b>最常挨在一起的两个片段</b>，把它们合成一个新片段，记进词表；重复。</p>
+        <div class="slider">
+          <label for="bpeK"><span>已学会的合并规则</span><output id="bpeKout" class="num"></output></label>
+          <input type="range" id="bpeK" min="0" max="10" step="1" value="0">
+        </div>
+        <div class="bpe-grid">
+          <div class="stack" style="gap:10px">
+            <div class="small">一句没在语料里出现过的话，被切成：</div>
+            <div class="tokens" id="bpeSample"></div>
+            <div class="stats"><span>词表大小 <b id="bpeV"></b></span><span>整个语料切成 <b id="bpeN"></b> 个 token</span></div>
+            <div class="small">学会的合并（按学会的先后）：</div>
+            <div class="merges" id="bpeMerges"></div>
+          </div>
+          <div>
+            <svg id="bpeChart" viewBox="0 0 320 200" width="100%" role="img" aria-label="词表大小与语料 token 数的取舍曲线"></svg>
+            <p class="small">往右：词表越大，同一段语料切出来越短。实际分词器在这条曲线上挑一个点，一般是十万到二十万左右的词表。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="derived">
+        <span class="k">推出来的</span>
+        <p><b>token 就是这样来的</b>：不是人规定的"字"或"词"，而是<b>按频率从语料里统计出来的片段</b>。常见的串（"季度""同比"）合成一个，少见的拆成小块。所以它永远不会"不认识"，最多是"拆得碎"。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="label"><span class="tag how">机制</span></div>
+    <div class="stage-body">
+      <div class="prose stack">
+        <p>真实分词器的最底层不是"字"，是<b>字节</b>：一个常用汉字存进电脑占 3 个字节。分词器从字节开始合并。如果它统计的语料里中文少，很多汉字就合并不完整，<b>一个字会被拆成 2~3 个 token</b>。</p>
+        <p>下面是两个真实的、公开的分词器，在你的浏览器里现场跑。随便改文字试试：你的名字、一个生僻字、一段 JSON。</p>
+      </div>
+      <div class="lab" id="toklab">
+        <div class="lab-title"><h3>实验台 ⑦ 真实分词器</h3><span class="status" id="tokStatus">正在加载分词器……先显示预先算好的例子</span></div>
+        <label for="tokIn" class="small">输入任意文字</label>
+        <textarea id="tokIn" maxlength="600" spellcheck="false"></textarea>
+        <div class="tok-row">
+          <div class="hdr"><b>o200k</b><span class="small">GPT-4o 用的分词器，词表约 20 万</span><span><b class="num" id="tokNo">—</b> 个 token</span></div>
+          <div class="tokens" id="tokO"></div>
+        </div>
+        <div class="tok-row">
+          <div class="hdr"><b>cl100k</b><span class="small">GPT-4 用的分词器，词表约 10 万</span><span><b class="num" id="tokNc">—</b> 个 token</span></div>
+          <div class="tokens" id="tokC"></div>
+        </div>
+        <p class="small">虚线框、右上角 ×3 = 这一个字被拆成了 3 个 token。颜色只用来区分相邻块的边界。Claude 的分词器没有公开，具体数字会不同，但规律一样。</p>
+      </div>
+
+      <div class="prose stack">
+        <p>现在能回答"为什么 JSON 浪费 token"了。同一张表（虚构的示例数据），换四种写法，用 o200k 数一数。每个 token 按用途上色：</p>
+      </div>
+      <div class="lab" id="fmtlab">
+        <div class="lab-title"><h3>实验台 ⑧ 同一张表的四种写法</h3><span class="hint">点一行，看它具体被切成什么</span></div>
+        <div class="legend"><span><i style="background:var(--s1)"></i>真正的内容（数值）</span><span><i style="background:var(--s3)"></i>键名 / 表头</span><span><i style="background:var(--s2)"></i>结构符号：括号、引号、逗号、竖线、缩进空格</span></div>
+        <div class="fmt-bars" id="fmtBars"></div>
+        <div class="fmt-chips"><div class="tokens" id="fmtChips"></div></div>
+        <div class="tbl-wrap">
+          <table class="mini" id="fmtTable"></table>
+        </div>
+        <p class="small">一个 token 同时跨两类时，按"内容 &gt; 键名 &gt; 结构"归类。留意数字：1500 被切成 150 | 0，数字是按三位一段切的——这也是模型"心算"不稳的一个原因。</p>
+      </div>
+      <div class="derived">
+        <span class="k">推出来的</span>
+        <p>四种写法里<b>内容 token 一样多</b>（32 个），差别全在"包装"：JSON 每一行都把四个键名重写一遍，每个文字值还要套引号；缩进的空格也要花 token。Markdown 表只写一次表头，但竖线也要钱；CSV 最省。</p>
+        <p>包装为什么要紧：每个 token 都要完整计算一遍、按 token 计费；能塞进去的 token 总数有上限（第 4 讲）；让模型<b>输出</b> JSON 时，每个括号引号都是它一步一步生成的，而输出 token 通常比输入贵好几倍，也更慢。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="label"><span class="tag you">连到你</span></div>
+    <div class="stage-body">
+      <div class="you-box">
+        <p><b>你在腾讯把数据做成 Markdown 表喂给模型。</b>从实验台 ⑧ 看，它比缩进版 JSON 少了约 44% 的 token（162 → 91），省下的几乎全是重复的键名。</p>
+        <p>但也看到了：如果只图省，CSV 更省。Markdown 表的价值不全在省——<b>第 4 讲</b>会看到它的另一面：表头当"锚点"，帮模型在长上下文里找对列。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 1.4 ============ -->
+<section class="lesson" id="s14">
+  <div class="lesson-head">
+    <span class="num">1.4</span>
+    <h2>那它"知道"的，到底是什么？</h2>
+    <p class="ask">——为什么模型"知道"的一切都是统计规律，而不是事实</p>
+  </div>
+
+  <div class="stage">
+    <div class="label"><span class="tag why">为什么必须这样</span></div>
+    <div class="stage-body">
+      <div class="prose stack">
+        <p>把前三节连起来，问一个问题：<b>整个训练过程中，哪一步出现过"这句话是真的"这个信号？</b></p>
+        <p>1.1：答案 = 原文的下一个词。原文写什么，什么就算"对"。<br>1.2：能力 = 任何能压低扣分的规律。<br>1.3：连读文字的单位，都是按频率数出来的。</p>
+        <p>一步都没有。那就值得做个实验：<b>如果语料里错的说法比对的多，会怎样？</b>用一个老谣言："从太空唯一能用肉眼看到的人造建筑是长城。"2003 年杨利伟从太空回来后说，他没有看到长城。</p>
+      </div>
+
+      <div class="lab" id="gwlab">
+        <div class="lab-title"><h3>实验台 ⑨ 语料投票</h3><span class="hint">拖动辟谣文章的比例</span></div>
+        <p class="small">一个只会"数数"的迷你模型：它读 1000 篇文章，只记"这句前文后面出现过什么、出现几次"。谣言文章写"唯一能看到的是长城"；辟谣文章里有七成会<b>先引用谣言</b>再反驳。</p>
+        <div class="slider">
+          <label for="gwS"><span>辟谣文章占比</span><output id="gwSout" class="num"></output></label>
+          <input type="range" id="gwS" min="0" max="100" step="5" value="30">
+        </div>
+        <div class="frames">
+          <div class="frame">
+            <div class="small">问法一（谣言的说法）</div>
+            <div class="sent">从太空唯一能用肉眼看到的人造建筑是<span class="hole">&nbsp;</span></div>
+            <div class="bars" id="gwA"></div>
+            <div class="counts" id="gwAc"></div>
+            <div class="truth">事实：<b>这个前提本身是错的</b></div>
+          </div>
+          <div class="frame">
+            <div class="small">问法二（辟谣的说法）</div>
+            <div class="sent">宇航员说，从太空用肉眼<span class="hole">&nbsp;</span>看到长城</div>
+            <div class="bars" id="gwB"></div>
+            <div class="counts" id="gwBc"></div>
+            <div class="truth">事实：<b>不能</b></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="derived">
+        <span class="k">推出来的</span>
+        <p>把比例拉到 0%、50%、100% 各看一眼：模型给的概率<b>跟着语料里的比例走</b>，不跟着事实走。</p>
+        <p>更要紧的是：辟谣比例拉到 100%，问法一照样几乎全押"长城"。因为它存的不是"长城看不见"这条<b>事实</b>，而是"<b>这种前文后面常跟什么</b>"。换个问法，就换了一套统计。辟谣文章为了辟谣先引用谣言，反倒给"唯一能看到的人造建筑是 → 长城"又添了一票。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="label"><span class="tag how">机制</span></div>
+    <div class="stage-body">
+      <div class="prose"><p>所以模型内部并没有一张"事实表"。和真正的事实表（数据库）并排比一下：</p></div>
+      <div class="lab" id="dblab">
+        <div class="lab-title"><h3>实验台 ⑩ 问数据库 vs 问模型</h3><span class="hint">换一个问题</span></div>
+        <div class="seg" role="group" aria-label="选择问题" id="dbPick">
+          <button type="button" data-k="fr" aria-pressed="true">法国的首都</button>
+          <button type="button" data-k="xl" aria-pressed="false">星澜科技 2025 年 Q3 营收（虚构公司）</button>
+        </div>
+        <div class="dbm">
+          <div class="side"><h4>数据库</h4><div id="dbOut"></div><p class="small">每一行都有来源和更新时间；没有这一行，就老实说查不到。</p></div>
+          <div class="side"><h4>模型</h4><div class="small" id="dbPrompt"></div><div class="bars" id="dbModel"></div><p class="small">不管问什么，它都交出一张概率表。表"尖不尖"只反映见得多不多。数字为示意。</p></div>
+        </div>
+      </div>
+      <div class="derived">
+        <span class="k">推出来的</span>
+        <p>模型里只有"<b>什么样的前文后面常跟什么</b>"：没有出处，没有日期，也没有"查不到"这个选项。表尖，说明这种前文在语料里常见、后文很一致；表平，说明见得少或说法杂——但尖和平都不等于对和错。</p>
+      </div>
+      <p class="fwd">"它永远交出一张表、没有'查不到'"——<b>第 3 讲</b>会从这里推出：为什么它会流畅地说错，又为什么不说"我不知道"。</p>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="label"><span class="tag you">连到你</span></div>
+    <div class="stage-body">
+      <div class="you-box">
+        <p><b>这就是你在腾讯做 RAG 的根本原因。</b>模型对"某公司某季度营收"的"知道"，只是训练语料里这串字后面常跟过什么数：没有出处，还停在训练截止的那天。</p>
+        <p>RAG 把真实财报递进上下文，等于把"像不像"的参照物，从"训练时读过的全部文字"换成"眼前这份文件"。但比较方式没变，仍然是"像不像"——所以你遇到的 <b>Q3 答成 Q2</b>，数字明明都在上下文里，它还是配错了。第 3 讲就从这个案例接着推。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ recap ============ -->
+<section class="lesson" id="recap">
+  <div class="lesson-head">
+    <span class="num">回看</span>
+    <h2>第 1 讲这条推导链</h2>
+  </div>
+  <div class="recap">
+    <div class="r"><span class="d">1.1</span><span>没有老师 → 只能选一个答案自带的任务 → <b>预测下一个词</b></span></div>
+    <div class="r"><span class="d">1.2</span><span>要把所有空都填对 → 被逼出知识和推理；旋钮装不下原文 → 只能存<b>规律</b></span></div>
+    <div class="r"><span class="d">1.3</span><span>要一张固定清单 → 按频率合并片段 → <b>token</b>；包装符号也占 token</span></div>
+    <div class="r"><span class="d">1.4</span><span>全程没有"真假"信号 → 它"知道"的是<b>统计规律</b>，不是事实</span></div>
+    <div class="r next"><span class="d">→ 2</span><span>它每一步交出的是一张概率表。为什么是表？谁来挑？温度又是什么？</span></div>
+  </div>
+
+  <div class="check">
+    <h3>请你帮我校对这一讲</h3>
+    <ol>
+      <li><b>深浅</b>：哪一节读着吃力，哪一节嫌啰嗦？</li>
+      <li><b>顺序</b>：每一节是先让你撞上问题、再冒出结论吗？有没有哪里还是"先给结论"了？</li>
+      <li><b>实验台</b>：哪几个真的帮你想明白了，哪几个只是好看？</li>
+      <li><b>你的经历</b>：标了"待你校对"的地方是我按线索推测的。你在腾讯具体做过什么（RAG 的文档类型、推荐/社交挖掘的角色、Q3 案例的细节），告诉我，后面几讲就连得更准。</li>
+    </ol>
+    <p class="small">直接在对话里回复就行。确认后我按同样的方式做第 2 讲。</p>
+  </div>
+</section>
+
+<footer>
+  标注"示意"的概率数字是为演示手工设定的；实验台 ⑦ ⑧ 的 token 数由公开分词器 o200k / cl100k（gpt-tokenizer 2.9.0）实际计算；Llama 3 的 15 万亿 token 与 700 亿参数来自 Meta 的公开发布。
+</footer>
+</div>
+
+<script>
+const PRE = {"cut":{"poem":[["床"],["前"],["明"],["月"],["光"],["，"],["疑"],["是"],["地"],["上"],["霜",2],["。"],["举"],["头"],["望"],["明"],["月"],["，"],["低"],["头"],["思"],["故"],["乡"],["。"]],"biz":[["公司"],["第三"],["季度"],["营"],["收"],["同比"],["增长"],["8"],["%，"],["主要"],["来自"],["广告"],["业务"],["。"]],"en":[["The"],[" capital"],[" of"],[" France"],[" is"],[" Paris"],[","],[" and"],[" the"],[" capital"],[" of"],[" Japan"],[" is"],[" Tokyo"],["."]],"code":[["def"],[" add"],["(a"],[","],[" b"],["):\n"],["   "],[" return"],[" a"],[" +"],[" b"]]},"play":{"text":"我在腾讯做过 RAG。饕餮是古代神兽。The capital of France is Paris.","o":[["我"],["在"],["腾讯"],["做"],["过"],[" R"],["AG"],["。"],["饕",2],["餮",2],["是"],["古"],["代"],["神"],["兽"],["。"],["The"],[" capital"],[" of"],[" France"],[" is"],[" Paris"],["."]],"c":[["我"],["在"],["腾",3],["讯",2],["做",2],["过"],[" R"],["AG"],["。"],["饕",3],["餮",3],["是"],["古",2],["代"],["神",2],["兽",2],["。"],["The"],[" capital"],[" of"],[" France"],[" is"],[" Paris"],["."]]},"fmt":{"json":{"o":{"n":162,"cnt":[82,48,32],"pieces":[["[\n",0],[" ",0],[" {\n",0],["   ",0],[" \"",0],["季度",1],["\":",0],[" \"",0],["Q",2],["1",2],["\",\n",0],["   ",0],[" \"",0],["营",1],["收",1],["(",1],["亿元",1],[")\":",1],[" ",0],["150",2],["0",2],[",\n",0],["   ",0],[" \"",0],["同比",1],["\":",0],[" \"+",2],["6",2],["%\",\n",2],["   ",0],[" \"",0],["净",1],["利润",1],["(",1],["亿元",1],[")\":",1],[" ",0],["410",2],["\n",0],[" ",0],[" },\n",0],[" ",0],[" {\n",0],["   ",0],[" \"",0],["季度",1],["\":",0],[" \"",0],["Q",2],["2",2],["\",\n",0],["   ",0],[" \"",0],["营",1],["收",1],["(",1],["亿元",1],[")\":",1],[" ",0],["161",2],["0",2],[",\n",0],["   ",0],[" \"",0],["同比",1],["\":",0],[" \"+",2],["8",2],["%\",\n",2],["   ",0],[" \"",0],["净",1],["利润",1],["(",1],["亿元",1],[")\":",1],[" ",0],["450",2],["\n",0],[" ",0],[" },\n",0],[" ",0],[" {\n",0],["   ",0],[" \"",0],["季度",1],["\":",0],[" \"",0],["Q",2],["3",2],["\",\n",0],["   ",0],[" \"",0],["营",1],["收",1],["(",1],["亿元",1],[")\":",1],[" ",0],["167",2],["0",2],[",\n",0],["   ",0],[" \"",0],["同比",1],["\":",0],[" \"+",2],["9",2],["%\",\n",2],["   ",0],[" \"",0],["净",1],["利润",1],["(",1],["亿元",1],[")\":",1],[" ",0],["470",2],["\n",0],[" ",0],[" },\n",0],[" ",0],[" {\n",0],["   ",0],[" \"",0],["季度",1],["\":",0],[" \"",0],["Q",2],["4",2],["\",\n",0],["   ",0],[" \"",0],["营",1],["收",1],["(",1],["亿元",1],[")\":",1],[" ",0],["172",2],["0",2],[",\n",0],["   ",0],[" \"",0],["同比",1],["\":",0],[" \"+",2],["11",2],["%\",\n",2],["   ",0],[" \"",0],["净",1],["利润",1],["(",1],["亿元",1],[")\":",1],[" ",0],["500",2],["\n",0],[" ",0],[" }\n",0],["]",0]]},"c":{"n":190,"cnt":[82,76,32]}},"jsonc":{"o":{"n":102,"cnt":[22,48,32],"pieces":[["[",0],["{\"",0],["季度",1],["\":\"",0],["Q",2],["1",2],["\",\"",0],["营",1],["收",1],["(",1],["亿元",1],[")\":",1],["150",2],["0",2],[",\"",0],["同比",1],["\":\"+",2],["6",2],["%",2],["\",\"",0],["净",1],["利润",1],["(",1],["亿元",1],[")\":",1],["410",2],["},{\"",0],["季度",1],["\":\"",0],["Q",2],["2",2],["\",\"",0],["营",1],["收",1],["(",1],["亿元",1],[")\":",1],["161",2],["0",2],[",\"",0],["同比",1],["\":\"+",2],["8",2],["%",2],["\",\"",0],["净",1],["利润",1],["(",1],["亿元",1],[")\":",1],["450",2],["},{\"",0],["季度",1],["\":\"",0],["Q",2],["3",2],["\",\"",0],["营",1],["收",1],["(",1],["亿元",1],[")\":",1],["167",2],["0",2],[",\"",0],["同比",1],["\":\"+",2],["9",2],["%",2],["\",\"",0],["净",1],["利润",1],["(",1],["亿元",1],[")\":",1],["470",2],["},{\"",0],["季度",1],["\":\"",0],["Q",2],["4",2],["\",\"",0],["营",1],["收",1],["(",1],["亿元",1],[")\":",1],["172",2],["0",2],[",\"",0],["同比",1],["\":\"+",2],["11",2],["%",2],["\",\"",0],["净",1],["利润",1],["(",1],["亿元",1],[")\":",1],["500",2],["}]",0]]},"c":{"n":130,"cnt":[22,76,32]}},"md":{"o":{"n":91,"cnt":[42,17,32],"pieces":[["|",0],[" 季",1,2],["度",1],[" |",0],[" 营",1,2],["收",1],["(",1],["亿元",1],[")",1],[" |",0],[" 同",1],["比",1],[" |",0],[" 净",1,2],["利润",1],["(",1],["亿元",1],[")",1],[" |\n",0],["|",0],["---",0],["|",0],["---",0],["|",0],["---",0],["|",0],["---",0],["|\n",0],["|",0],[" Q",2],["1",2],[" |",0],[" ",0],["150",2],["0",2],[" |",0],[" +",2],["6",2],["%",2],[" |",0],[" ",0],["410",2],[" |\n",0],["|",0],[" Q",2],["2",2],[" |",0],[" ",0],["161",2],["0",2],[" |",0],[" +",2],["8",2],["%",2],[" |",0],[" ",0],["450",2],[" |\n",0],["|",0],[" Q",2],["3",2],[" |",0],[" ",0],["167",2],["0",2],[" |",0],[" +",2],["9",2],["%",2],[" |",0],[" ",0],["470",2],[" |\n",0],["|",0],[" Q",2],["4",2],[" |",0],[" ",0],["172",2],["0",2],[" |",0],[" +",2],["11",2],["%",2],[" |",0],[" ",0],["500",2],[" |",0]]},"c":{"n":95,"cnt":[42,21,32]}},"csv":{"o":{"n":53,"cnt":[9,12,32],"pieces":[["季度",1],[",",0],["营",1],["收",1],["(",1],["亿元",1],["),",1],["同比",1],[",",0],["净",1],["利润",1],["(",1],["亿元",1],[")\n",1],["Q",2],["1",2],[",",0],["150",2],["0",2],[",+",2],["6",2],["%,",2],["410",2],["\n",0],["Q",2],["2",2],[",",0],["161",2],["0",2],[",+",2],["8",2],["%,",2],["450",2],["\n",0],["Q",2],["3",2],[",",0],["167",2],["0",2],[",+",2],["9",2],["%,",2],["470",2],["\n",0],["Q",2],["4",2],[",",0],["172",2],["0",2],[",+",2],["11",2],["%,",2],["500",2]]},"c":{"n":60,"cnt":[9,19,32]}}}};
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pct = p => p >= 0.995 ? '100%' : p >= 0.1 ? (p*100).toFixed(0)+'%' : p >= 0.01 ? (p*100).toFixed(1)+'%' : p >= 0.0001 ? (p*100).toFixed(2)+'%' : '≈0%';
+const showWS = t => t.replace(/\n/g,'↵').replace(/ /g,'·');
+
+/* bars: items [{w,p,hit,other}] */
+function renderBars(el, items, max=1){
+  el.innerHTML = items.map(it => `<div class="bar-row${it.hit?' hit':''}${it.other?' other':''}">
+    <span class="w" title="${esc(it.w)}">${esc(it.w)}${it.hit?'<span class="ok">✓ 原文</span>':''}</span>
+    <span class="track" title="${esc(it.w)}：${pct(it.p)}"><span class="fill" style="width:${Math.max(0.4, it.p/max*100)}%"></span></span>
+    <span class="v">${pct(it.p)}</span></div>`).join('');
+}
+function chipHTML(g, cls=''){
+  const [t, n] = g; const ws = /^[\s]+$/.test(t);
+  return `<span class="tk${n>1?' multi':''}${ws?' ws':''}${cls?' '+cls:''}">${esc(showWS(t))}${n>1?`<span class="x">×${n}</span>`:''}</span>`;
+}
+
+/* ---------- 1.1 ledger ---------- */
+(function(){
+  const r = $('#qN'), out = $('#qNout'), A = $('#routeA'), Bn = $('#routeBnote');
+  function cn(n){
+    if (n >= 1e12) return (n/1e12).toFixed(n>=1e13?1:2).replace(/\.0+$/,'') + ' 万亿';
+    if (n >= 1e8) return (n/1e8).toFixed(1).replace(/\.0$/,'') + ' 亿';
+    if (n >= 1e4) return (n/1e4).toFixed(n>=1e5?0:1).replace(/\.0$/,'') + ' 万';
+    return Math.round(n).toLocaleString('zh-CN');
+  }
+  function upd(){
+    const n = Math.pow(10, +r.value);
+    out.textContent = cn(n) + ' 道';
+    const py = n / 240000;
+    let s;
+    if (py < 1) s = `${cn(Math.max(1, py*2000))}<small>小时 · 1 个人</small>`;
+    else if (py < 100) s = `${py.toFixed(py<10?1:0)}<small>人 × 一整年</small>`;
+    else s = `${cn(py)}<small>人 × 一整年</small>`;
+    A.innerHTML = s;
+    Bn.textContent = `只需要约 ${cn(n)} 个词的现成文字——切一刀就是一道题，答案原文自带。`;
+  }
+  r.addEventListener('input', upd); upd();
+})();
+
+/* ---------- 1.1 cut ---------- */
+(function(){
+  let key = 'poem', pos = 4, revealed = false;
+  const tokEl = $('#cutTokens'), Q = $('#cutQ'), A = $('#cutA'), rng = $('#cutPos'), po = $('#cutPosOut'), cnt = $('#cutCount');
+  function draw(){
+    const g = PRE.cut[key]; rng.max = g.length - 1; if (pos > g.length-1) pos = g.length-1; rng.value = pos;
+    tokEl.innerHTML = g.map((x,i) => chipHTML(x, i<pos ? 'ctx' : i===pos ? 'ans'+(revealed?'':' hidden-ans') : 'future')).join('');
+    const ctx = g.slice(0,pos).map(x=>x[0]).join('');
+    Q.textContent = ctx ? ctx.replace(/\n/g,'↵\n') + ' ▢' : '（文章开头）▢';
+    A.textContent = revealed ? showWS(g[pos][0]) : '？（先想一想，再按"揭晓答案"）';
+    po.textContent = `第 ${pos+1} 格 / 共 ${g.length} 格`;
+    const toks = g.reduce((s,x)=>s+(x[1]||1),0);
+    cnt.innerHTML = `这段文字被切成 <b class="num">${toks}</b> 个 token，每个 token 都是一道题的答案 → 自动生成 <b class="num">${toks}</b> 道题，零人工。` + (g.some(x=>x[1]>1) ? ' （带 ×2 的"霜"其实占 2 个 token，1.3 节解释。）' : '');
+    $('#cutReveal').disabled = revealed;
+  }
+  $$('#cutPick button').forEach(b => b.addEventListener('click', () => {
+    key = b.dataset.k; pos = Math.min(4, PRE.cut[key].length-1); revealed = false;
+    $$('#cutPick button').forEach(x => x.setAttribute('aria-pressed', x===b)); draw();
+  }));
+  rng.addEventListener('input', () => { pos = +rng.value; revealed = false; draw(); });
+  $('#cutReveal').addEventListener('click', () => { revealed = true; draw(); });
+  $('#cutNext').addEventListener('click', () => { const g = PRE.cut[key]; if (!revealed) { revealed = true; } else { pos = (pos+1) % g.length; revealed = false; } draw(); });
+  draw();
+})();
+
+/* ---------- 1.1 loop + training ---------- */
+(function(){
+  const details = [
+    '模型读进前文"法国的首都是"。它此刻只看得到这些，看不到后面的原文。',
+    '它不直接说出一个词，而是给词表里每个词（约 20 万个）都打一个概率，加起来等于 100%。下面的条形图就是这张表的前几行。',
+    '把原文翻开：真实的下一个词是"巴黎"。这就是标准答案，不需要任何人判断。',
+    '看它给"巴黎"分了多少概率。分得越少，说明它越"意外"，扣分越多。拖动下面的训练进度看扣分怎么变。',
+    '根据这次扣分，把模型里几百亿个旋钮每一个都挪一点点，方向是"下次遇到类似的前文，巴黎的概率高一点"。然后进入下一道题——几万亿次。'
+  ];
+  const steps = $$('#loop .step'), det = $('#loopDetail');
+  function setStep(i){ steps.forEach((s,j)=>s.classList.toggle('cur', i===j)); det.textContent = details[i]; }
+  steps.forEach((s,i)=>s.addEventListener('click',()=>setStep(i)));
+  setStep(0);
+  const words = [['巴黎',15],['里昂',8.5],['伦敦',8],['北京',7],['一座',6.2]];
+  const V = 200000;
+  const r = $('#trainT');
+  function upd(){
+    const t = +r.value/100;
+    const ex = words.map(([w,l]) => Math.exp(l*t));
+    const other = (V - words.length);
+    const Z = ex.reduce((a,b)=>a+b,0) + other;
+    const ps = ex.map(e=>e/Z);
+    const items = words.map(([w],i)=>({w, p:ps[i], hit: i===0}));
+    items.push({w:`其余 ${other.toLocaleString('zh-CN')} 个词`, p: other/Z, other:true});
+    renderBars($('#trainBars'), items);
+    $('#trainTout').textContent = t===0 ? '刚开始（旋钮是随机的）' : t<1 ? `${Math.round(t*100)}%` : '训练后';
+    $('#trainP').textContent = pct(ps[0]);
+    $('#trainL').textContent = (-Math.log2(ps[0])).toFixed(1) + ' 分';
+  }
+  r.addEventListener('input', upd); upd();
+})();
+
+/* ---------- 1.2 abilities ---------- */
+(function(){
+  const AB = {g:'语法', k:'世界知识', m:'算术', r:'逻辑推理'};
+  // each blank: need (relevant abilities), dist keyed by sorted subset string
+  const B = [
+    {s:'我昨天去超市买了三斤', tail:'。', ans:'苹果', need:['g','k'], d:{
+      '':[['的',.16],['了',.11],['一',.08],['苹果',.003]],
+      'g':[['苹果',.15],['猪肉',.15],['书',.12],['大米',.12]],
+      'k':[['的',.10],['苹果',.08],['猪肉',.07],['超市',.06]],
+      'gk':[['苹果',.24],['猪肉',.22],['大米',.18],['鸡蛋',.12]]}},
+    {s:'法国的首都是', tail:'。', ans:'巴黎', need:['g','k'], d:{
+      '':[['的',.15],['一',.09],['在',.07],['巴黎',.002]],
+      'g':[['北京',.10],['巴黎',.08],['伦敦',.08],['一座',.07]],
+      'k':[['巴黎',.45],['的',.08],['法国',.05],['首都',.04]],
+      'gk':[['巴黎',.93],['一座',.02],['里昂',.01],['著名',.005]]}},
+    {s:'23 + 19 = ', tail:'', ans:'42', need:['g','m'], d:{
+      '':[['的',.10],['1',.06],['23',.05],['42',.001]],
+      'g':[['42',.05],['32',.05],['41',.05],['24',.04]],
+      'm':[['42',.40],['=',.10],['4',.05],['的',.05]],
+      'gm':[['42',.90],['41',.03],['32',.02],['43',.01]]}},
+    {s:'小明比小红高，小红比小刚高。三人里最矮的是', tail:'。', ans:'小刚', need:['g','r'], d:{
+      '':[['的',.14],['小',.10],['他',.06],['小刚',.01]],
+      'g':[['小明',.30],['小红',.30],['小刚',.30],['谁',.03]],
+      'r':[['小刚',.50],['的',.08],['小',.06],['他',.04]],
+      'gr':[['小刚',.88],['小红',.06],['小明',.04],['谁',.01]]}},
+    {s:'今年营收 1100 亿元，同比增长 10%，去年同期营收是', tail:' 亿元。', ans:'1000', need:['g','k','m'], d:{
+      '':[['的',.12],['1100',.05],['多少',.04],['1000',.003]],
+      'g':[['1100',.12],['1000',.06],['990',.06],['1210',.05]],
+      'k':[['1000',.12],['1100',.10],['990',.08],['的',.05]],
+      'm':[['1210',.20],['990',.20],['1000',.15],['1100',.10]],
+      'gk':[['1000',.15],['990',.15],['1100',.10],['1010',.06]],
+      'gm':[['1210',.25],['990',.25],['1000',.20],['1100',.05]],
+      'km':[['1000',.55],['990',.20],['的',.03],['1100',.03]],
+      'gkm':[['1000',.74],['990',.18],['1010',.02],['1210',.01]]}}
+  ];
+  const wrap = $('#blanks');
+  wrap.innerHTML = B.map((b,i)=>`<div class="blank"><div class="sent">${i+1}. ${esc(b.s)}<span class="hole">？</span>${esc(b.tail)}</div>
+    <div class="need" data-need="${i}"></div><div class="bars" id="bl${i}"></div><div class="score"><span>正确答案：<b>${esc(b.ans)}</b></span><span id="bs${i}"></span></div></div>`).join('');
+  const boxes = $$('#abilities input[data-ab]');
+  function upd(){
+    const on = new Set(boxes.filter(x=>x.checked).map(x=>x.dataset.ab));
+    let tot = 0, sp = 0;
+    B.forEach((b,i)=>{
+      const key = b.need.filter(a=>on.has(a)).join('');
+      const d = b.d[key];
+      const rest = Math.max(0, 1 - d.reduce((s,x)=>s+x[1],0));
+      const items = d.map(([w,p])=>({w,p,hit:w===b.ans}));
+      items.push({w:'其他', p:rest, other:true});
+      renderBars($('#bl'+i), items);
+      const pc = (d.find(x=>x[0]===b.ans)||[0,1e-4])[1];
+      const loss = -Math.log2(pc); tot += loss; sp += pc;
+      $('#bs'+i).textContent = `扣 ${loss.toFixed(1)} 分`;
+      $(`[data-need="${i}"]`).innerHTML = '需要：' + b.need.map(a=>`<span class="${on.has(a)?'have':''}">${AB[a]}</span>`).join('');
+    });
+    $('#abTotal').textContent = tot.toFixed(1) + ' 分';
+    $('#abAvg').textContent = pct(sp/B.length);
+    const n = on.size;
+    $('#abHint').textContent = n===0 ? '先只勾"语法"：它知道这里该填个名词或数字，但还猜不中是哪个。'
+      : (on.has('g') && n===1) ? '再勾"世界知识"：第 1、2 个空会变，第 3、4 个空纹丝不动——它们要的是别的能力。'
+      : n<4 ? '每勾一个能力，只有"需要它"的那几个空扣分下降。试试把四个全勾上。'
+      : '全开了。第 1 个空还是只有约四分之一：原文本来就可能是别的东西。';
+  }
+  boxes.forEach(x=>x.addEventListener('change', upd)); upd();
+})();
+
+/* ---------- 1.2 compress ---------- */
+(function(){
+  const F = [['法国','巴黎'],['日本','东京'],['英国','伦敦'],['德国','柏林'],['意大利','罗马'],['埃及','开罗'],['泰国','曼谷'],['韩国','首尔']];
+  const T = ['{c}的首都是{x}。','{x}是{c}的首都。','我去过{c}的首都{x}。','{c}首都{x}今天下雨。'];
+  let seen, order, last;
+  let seed = 7; const rnd = () => (seed = (seed*16807) % 2147483647) / 2147483647;
+  function reset(){ seen = new Map(); order = []; last = new Set(); seed = 7; read(6, true); }
+  function read(n, init){
+    last = new Set();
+    for (let i=0;i<n;i++){ const f = Math.floor(rnd()*F.length), t = Math.floor(rnd()*T.length); const k = f+'-'+t;
+      order.push(k); if (!init) last.add(order.length-1); seen.set(k, (seen.get(k)||0)+1); }
+    draw();
+  }
+  const sent = k => { const [f,t] = k.split('-').map(Number); return T[t].replace('{c}',F[f][0]).replace('{x}',F[f][1]); };
+  function draw(){
+    const list = $('#cmpList');
+    list.innerHTML = order.map((k,i)=>`<div class="${last.has(i)?'new':''}">${esc(sent(k))}</div>`).reverse().join('');
+    const keys = [...seen.keys()];
+    const mem = keys.reduce((s,k)=>s+[...sent(k)].length,0);
+    const fs = new Set(keys.map(k=>+k.split('-')[0])), ts = new Set(keys.map(k=>+k.split('-')[1]));
+    const rule = [...fs].reduce((s,f)=>s+F[f][0].length+F[f][1].length,0) + [...ts].reduce((s,t)=>s+T[t].replace('{c}','').replace('{x}','').length,0);
+    const max = Math.max(mem, rule, 1);
+    $('#cmpMem').style.width = (mem/max*100)+'%'; $('#cmpRule').style.width = (rule/max*100)+'%';
+    $('#cmpMemN').textContent = mem + ' 字'; $('#cmpRuleN').textContent = rule + ' 字';
+    $('#cmpGen').textContent = fs.size*ts.size - keys.length;
+    $('#cmpRead').textContent = `已读 ${order.length} 句，其中不同的 ${keys.length} 句`;
+  }
+  $('#cmpMore').addEventListener('click', ()=>read(10));
+  $('#cmpReset').addEventListener('click', reset);
+  reset();
+})();
+
+/* ---------- 1.3 BPE toy ---------- */
+(function(){
+  const CORPUS = ['第一季度营收同比增长','第二季度营收同比增长','第三季度营收同比下降','第四季度营收同比增长','第三季度净利润同比增长','第四季度净利润同比下降','全年营收同比增长','全年净利润同比增长','广告业务营收同比增长','游戏业务营收同比下降','广告业务净利润同比增长','游戏业务净利润同比增长'];
+  const SAMPLE = '第二季度游戏业务净利润同比下降';
+  let lines = CORPUS.map(s=>[...s]);
+  const base = new Set(CORPUS.join('')).size;
+  const merges = [], snaps = [{v:base, n:lines.reduce((s,l)=>s+l.length,0)}];
+  for (let it=0; it<40; it++){
+    const cnt = new Map(), first = new Map(); let idx = 0;
+    lines.forEach(l=>{ for (let i=0;i<l.length-1;i++){ const k = l[i]+'\u0000'+l[i+1]; cnt.set(k,(cnt.get(k)||0)+1); if(!first.has(k)) first.set(k, idx++); } });
+    let best=null, bc=1;
+    for (const [k,c] of cnt) if (c>bc || (c===bc && best && first.get(k)<first.get(best))) { if (c>=2){ best=k; bc=c; } }
+    if (!best) break;
+    const [a,b] = best.split('\u0000');
+    merges.push([a,b,bc]);
+    lines = lines.map(l=>{ const o=[]; for (let i=0;i<l.length;i++){ if (i<l.length-1 && l[i]===a && l[i+1]===b){ o.push(a+b); i++; } else o.push(l[i]); } return o; });
+    snaps.push({v:base+merges.length, n:lines.reduce((s,l)=>s+l.length,0)});
+  }
+  const r = $('#bpeK'); r.max = merges.length; r.value = 0;
+  function encode(s, k){ let l=[...s]; for (let m=0;m<k;m++){ const [a,b]=merges[m]; const o=[]; for (let i=0;i<l.length;i++){ if(i<l.length-1&&l[i]===a&&l[i+1]===b){o.push(a+b);i++;} else o.push(l[i]); } l=o; } return l; }
+  const svg = $('#bpeChart');
+  const W=320,H=200,L=44,R=12,T=14,Bm=36;
+  const vs = snaps.map(s=>s.v), ns = snaps.map(s=>s.n);
+  const x0=Math.min(...vs), x1=Math.max(...vs), y0=0, y1=Math.ceil(Math.max(...ns)/20)*20;
+  const X = v => L + (v-x0)/(x1-x0||1)*(W-L-R), Y = n => H-Bm - (n-y0)/(y1-y0)*(H-Bm-T);
+  function chart(k){
+    const yt = [0, y1/2, y1];
+    let g = yt.map(t=>`<line class="grid" x1="${L}" x2="${W-R}" y1="${Y(t)}" y2="${Y(t)}"/><text x="${L-6}" y="${Y(t)+4}" text-anchor="end">${t}</text>`).join('');
+    g += `<line class="axis" x1="${L}" x2="${W-R}" y1="${H-Bm}" y2="${H-Bm}"/>`;
+    g += [x0, x1].map(v=>`<text x="${X(v)}" y="${H-Bm+15}" text-anchor="middle">${v}</text>`).join('');
+    g += `<text x="${(L+W-R)/2}" y="${H-6}" text-anchor="middle">词表大小 →</text><text x="${L-6}" y="${T-4}" text-anchor="start" transform="translate(0,0)">语料 token 数</text>`;
+    g += `<polyline class="curve" points="${snaps.map(s=>X(s.v)+','+Y(s.n)).join(' ')}"/>`;
+    g += `<circle class="dot" r="5" cx="${X(snaps[k].v)}" cy="${Y(snaps[k].n)}"><title>词表 ${snaps[k].v}，语料 ${snaps[k].n} 个 token</title></circle>`;
+    svg.innerHTML = g;
+  }
+  function upd(){
+    const k = +r.value;
+    $('#bpeKout').textContent = k===0 ? '0 条（每个字都是一个 token）' : `${k} 条`;
+    $('#bpeSample').innerHTML = encode(SAMPLE,k).map(t=>chipHTML([t])).join('');
+    $('#bpeV').textContent = snaps[k].v; $('#bpeN').textContent = snaps[k].n;
+    $('#bpeMerges').innerHTML = k===0 ? '<span class="small" style="border:0">还没有</span>' : merges.slice(0,k).map((m,i)=>`<span class="${i===k-1?'last':''}" title="在语料里挨着出现 ${m[2]} 次">${esc(m[0])}+${esc(m[1])}→${esc(m[0]+m[1])}</span>`).join('');
+    chart(k);
+  }
+  r.addEventListener('input', upd); upd();
+})();
+
+/* ---------- 1.3 real tokenizer ---------- */
+(function(){
+  const ta = $('#tokIn'), st = $('#tokStatus');
+  ta.value = PRE.play.text;
+  function paint(go, gc){
+    $('#tokO').innerHTML = go.map(g=>chipHTML(g)).join(''); $('#tokC').innerHTML = gc.map(g=>chipHTML(g)).join('');
+    $('#tokNo').textContent = go.reduce((s,g)=>s+(g[1]||1),0); $('#tokNc').textContent = gc.reduce((s,g)=>s+(g[1]||1),0);
+  }
+  paint(PRE.play.o, PRE.play.c);
+  const te = new TextEncoder(), td = new TextDecoder();
+  function bytesOf(tk, id){
+    const p = tk.bytePairEncodingCoreProcessor; const r = p && p.bytePairRankDecoder && p.bytePairRankDecoder[id];
+    if (typeof r === 'string') return te.encode(r); if (r) return Uint8Array.from(r);
+    const v = p && p.bytePairNonUtfRankDecoder && p.bytePairNonUtfRankDecoder.get(id); return v ? Uint8Array.from(v) : te.encode(tk.decode([id]));
+  }
+  function complete(buf){ let i=buf.length-1,k=0; while(i>=0&&(buf[i]&0xC0)===0x80){i--;k++;} if(i<0)return false; const b=buf[i]; const need=b<0x80?1:(b>>5)===6?2:(b>>4)===14?3:(b>>3)===30?4:1; return k+1>=need; }
+  function groups(tk, s){ const ids = tk.encode(s); const out=[]; let buf=[], n=0;
+    for (const id of ids){ for (const b of bytesOf(tk,id)) buf.push(b); n++; if (complete(buf)){ out.push([td.decode(Uint8Array.from(buf)), n]); buf=[]; n=0; } }
+    if (n) out.push([td.decode(Uint8Array.from(buf)), n]); return out; }
+  let O=null, C=null, timer=0;
+  function run(){ if (!O || !C) return; try { paint(groups(O, ta.value), groups(C, ta.value)); } catch(e){ st.textContent = '分词出错：' + e.message; } }
+  ta.addEventListener('input', ()=>{ if (!O || !C) { st.textContent = '分词器还没加载好，暂时只能看预先算好的例子'; return; } clearTimeout(timer); timer = setTimeout(run, 120); });
+  function load(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.async=true; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
+  const base = 'https://cdn.jsdelivr.net/npm/gpt-tokenizer@2.9.0/dist/';
+  Promise.all([load(base+'o200k_base.js'), load(base+'cl100k_base.js')]).then(()=>{
+    O = window.GPTTokenizer_o200k_base; C = window.GPTTokenizer_cl100k_base;
+    if (!O || !C) throw new Error('missing');
+    st.textContent = '分词器已加载，可以随便改文字'; st.classList.add('ok'); run();
+  }).catch(()=>{ st.textContent = '分词器没能加载（可能是网络拦截了 jsdelivr），下面是预先算好的例子'; ta.readOnly = true; });
+})();
+
+/* ---------- 1.3 formats ---------- */
+(function(){
+  const NAMES = {json:'JSON 缩进版', jsonc:'JSON 紧凑版', md:'Markdown 表', csv:'CSV'};
+  const COL = ['var(--s2)','var(--s3)','var(--s1)'];
+  const order = ['json','jsonc','md','csv'];
+  let cur = 'json';
+  const max = Math.max(...order.map(k=>PRE.fmt[k].o.n));
+  function draw(){
+    $('#fmtBars').innerHTML = order.map(k=>{ const f = PRE.fmt[k].o; const seg = [2,1,0].map(c=>`<span style="width:${f.cnt[c]/max*100}%;background:${COL[c]}" title="${['结构符号','键名','内容'][c]}：${f.cnt[c]} 个"></span>`).join('');
+      return `<button type="button" class="fmt-row" data-k="${k}" aria-pressed="${k===cur}"><span class="nm">${NAMES[k]}</span><span class="stk">${seg}</span><span class="n">${f.n}</span></button>`; }).join('');
+    $$('#fmtBars .fmt-row').forEach(b=>b.addEventListener('click',()=>{ cur=b.dataset.k; draw(); }));
+    $('#fmtChips').innerHTML = PRE.fmt[cur].o.pieces.map(p=>{ const [t,c,n] = p; return chipHTML([t,n||1], 'c'+c); }).join('');
+    $('#fmtTable').innerHTML = `<thead><tr><th>写法</th><th>内容</th><th>键名</th><th>结构</th><th>o200k 合计</th><th>cl100k 合计</th></tr></thead><tbody>` +
+      order.map(k=>{ const f=PRE.fmt[k]; return `<tr><td>${NAMES[k]}</td><td>${f.o.cnt[2]}</td><td>${f.o.cnt[1]}</td><td>${f.o.cnt[0]}</td><td><b>${f.o.n}</b></td><td>${f.c.n}</td></tr>`; }).join('') + '</tbody>';
+  }
+  draw();
+})();
+
+/* ---------- 1.4 great wall ---------- */
+(function(){
+  const r = $('#gwS');
+  function upd(){
+    const s = +r.value/100, N = 1000, myth = N*(1-s), deb = N*s;
+    const A = [['长城', .9*myth + .7*deb], ['金字塔', .1*myth]];
+    const Bc = [['能', .3*myth], ['不能', .8*deb], ['很难', .2*deb]];
+    const norm = arr => { const z = arr.reduce((a,x)=>a+x[1],0) || 1; return arr.map(([w,c])=>({w, p:c/z, c})); };
+    renderBars($('#gwA'), norm(A).map(x=>({...x})));
+    renderBars($('#gwB'), norm(Bc).map(x=>({...x, hit: x.w==='不能'})));
+    $('#gwAc').textContent = '语料里这句后面出现过：' + A.map(([w,c])=>`${w} ×${Math.round(c)}`).join('，');
+    $('#gwBc').textContent = '语料里这句后面出现过：' + Bc.map(([w,c])=>`${w} ×${Math.round(c)}`).join('，');
+    $('#gwSout').textContent = `${Math.round(s*100)}%（谣言 ${Math.round(myth)} 篇 · 辟谣 ${Math.round(deb)} 篇）`;
+  }
+  r.addEventListener('input', upd); upd();
+})();
+
+/* ---------- 1.4 db vs model ---------- */
+(function(){
+  const Q = {
+    fr: {db:[['实体','法国'],['属性','首都'],['值','巴黎'],['来源','某百科条目'],['更新','2026-05-02']], prompt:'前文："法国的首都是"', m:[['巴黎',.93],['一座',.02],['里昂',.01],['著名',.005]], hit:'巴黎'},
+    xl: {db:null, prompt:'前文："星澜科技 2025 年第三季度营收为"', m:[['12.6',.06],['8.4',.05],['15.2',.05],['10.3',.04]]}
+  };
+  function draw(k){
+    const q = Q[k];
+    $('#dbOut').innerHTML = q.db ? `<div class="dbrow">${q.db.map(([a,b])=>`<span class="k">${a}</span><span>${esc(b)}</span>`).join('')}</div>` : '<div class="dbrow none">查无此条</div>';
+    $('#dbPrompt').textContent = q.prompt;
+    const items = q.m.map(([w,p])=>({w: k==='xl'? w+' 亿' : w, p, hit: q.hit===w}));
+    items.push({w:'其他', p: 1-q.m.reduce((s,x)=>s+x[1],0), other:true});
+    renderBars($('#dbModel'), items);
+  }
+  $$('#dbPick button').forEach(b=>b.addEventListener('click',()=>{ $$('#dbPick button').forEach(x=>x.setAttribute('aria-pressed', x===b)); draw(b.dataset.k); }));
+  draw('fr');
+})();
+</script>
