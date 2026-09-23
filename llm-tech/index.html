@@ -143,11 +143,13 @@ footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);paddin
 .map-svg .lane-bg{fill:var(--sunk)}
 .map-svg .tick{stroke:var(--line);stroke-width:1}
 .map-svg .tick-t{font-family:var(--mono);font-size:11px;fill:var(--muted)}
-.map-svg .edge{fill:none;stroke:var(--ink2);stroke-width:1.1;opacity:.28;transition:opacity .2s,stroke .2s}
+.map-svg .edge{fill:none;stroke:var(--ink2);stroke-width:1.3;opacity:.5;transition:opacity .2s,stroke .2s}
 .map-svg .edge.x{stroke:var(--bad);stroke-dasharray:5 4;opacity:.55}
 .map-svg .edge.in{stroke:var(--amber);opacity:1;stroke-width:2.2}
 .map-svg .edge.out{stroke:var(--accent);opacity:1;stroke-width:2.2}
-.map-svg .edge.fade{opacity:.07}
+.map-svg .edge.fade{opacity:0}
+.map-svg .edge.x.fade{opacity:0}
+.nd text{paint-order:stroke;stroke:var(--sunk);stroke-width:5px;stroke-linejoin:round}
 .nd{cursor:pointer}
 .nd circle{stroke:var(--surface);stroke-width:2}
 .nd .id{font-family:var(--mono);font-size:10.5px;fill:var(--muted)}
@@ -355,7 +357,7 @@ td.m{font-family:var(--mono)}
     <div class="chips" id="map-chips" role="group" aria-label="按技术家族筛选"></div>
     <div class="map-box" style="margin-top:14px"><div class="map-scroll" id="map-scroll"><svg class="map-svg" id="map-svg" role="img" aria-label="2017 到 2026 年大模型关键技术的时间线与依赖关系"></svg></div></div>
     <div class="card" id="map-card" aria-live="polite"></div>
-    <p class="cap">每个圆点是一项技术，编号的字母代表它属于哪个家族（A 地基、B 对齐、C 推理、D 效率与知识、E 感知、F 行动、G 安全与透明）。选中一个圆点后，<span style="color:var(--amber)">橙色线</span>指向它依赖的前置技术，<span style="color:var(--accent)">蓝色线</span>指向建立在它之上的后续技术。</p>
+    <p class="cap">每个圆点是一项技术，编号的字母代表它属于哪个家族（A 地基、B 对齐、C 推理、D 效率与知识、E 感知、F 行动、G 安全与透明）。图上默认只画出选中技术的连线：<span style="color:var(--amber)">橙色线</span>连向它依赖的前置技术，<span style="color:var(--accent)">蓝色线</span>连向建立在它之上的后续技术；点「显示全部连线」可以看完整的关系网。「只是跑在 Transformer 上」这类过于普遍的依赖不画线，只列在详情卡片里。</p>
   </div>
 </section>
 
@@ -674,7 +676,10 @@ function onScroll(){
 }
 
 /* =========== LAYER 1: map =========== */
-const LANES=[["oa","OpenAI",""],["an","Anthropic",""],["gg","谷歌","DeepMind"],["ot","其他机构","高校·开源"]];
+const LANES=[["an","Anthropic",""],["oa","OpenAI",""],["gg","谷歌","DeepMind"],["ot","其他机构","高校·开源"]];
+// edges that only say "runs on a Transformer / a pretrained model": kept in the cards, not drawn on the map
+const SKIP=new Set(["A1>E1","A1>G1","A1>C5","A2>D2","A2>D3"]);
+let showAll=false;
 const X0=2016.85, XB=2022.0, X1=2026.95, PA=84, PB=200, GUT=108;
 const tOf=d=>{const [y,m]=d.split("-").map(Number); return y+(m-0.5)/12;};
 const xOf=t=> t<XB ? GUT+(t-X0)*PA : GUT+(XB-X0)*PA+(t-XB)*PB;
@@ -698,8 +703,10 @@ let selId=null, famF=null;
   for(const [k] of LANES){ const L=P["_"+k]; msvg.append(svgEl("rect",{x:0,y:L.y,width:W,height:L.h,rx:6,class:"lane-bg"})); }
   for(let yr=2017; yr<=2026; yr++){ const x=xOf(yr); msvg.append(svgEl("line",{x1:x,x2:x,y1:20,y2:H,class:"tick"})); msvg.append(svgEl("text",{x:x+4,y:14,class:"tick-t"},String(yr))); }
   const eg=svgEl("g"); msvg.append(eg);
-  const curve=(a,b)=>{ const A=P[a],B=P[b]; const mx=(A.x+B.x)/2; return `M${A.x} ${A.y} C ${mx} ${A.y}, ${mx} ${B.y}, ${B.x} ${B.y}`; };
-  T.forEach(t=>t.pre.forEach(p=>eg.append(svgEl("path",{d:curve(p,t.id),class:"edge","data-a":p,"data-b":t.id}))));
+  // leave the source through the top or bottom of its dot (so the line never crosses its own label), arrive at the target's left edge
+  const curve=(a,b)=>{ const A=P[a],B=P[b], dy=B.y-A.y, sg=dy<0?-1:1, y1=A.y+sg*8, x2=B.x-9, k=Math.max(30,(x2-A.x)*0.45);
+    return `M${A.x} ${y1} C ${A.x} ${y1+sg*Math.max(22,Math.abs(dy)*0.6)}, ${x2-k} ${B.y}, ${x2} ${B.y}`; };
+  T.forEach(t=>t.pre.filter(p=>!SKIP.has(p+">"+t.id)).forEach(p=>eg.append(svgEl("path",{d:curve(p,t.id),class:"edge","data-a":p,"data-b":t.id}))));
   X_EDGES.forEach(([a,b])=>eg.append(svgEl("path",{d:curve(a,b),class:"edge x","data-a":a,"data-b":b})));
   T.forEach(t=>{ const p=P[t.id];
     const g=svgEl("g",{class:"nd",tabindex:"0",role:"button","data-id":t.id,"aria-label":`${t.id} ${t.name}，${ORG[t.org]}，${ym(t.d)}`});
@@ -716,8 +723,10 @@ let selId=null, famF=null;
 function paint(){
   msvg.querySelectorAll(".nd").forEach(g=>{ const id=g.dataset.id; g.classList.toggle("sel",id===selId); g.classList.toggle("dim", !!famF && id[0]!==famF); });
   msvg.querySelectorAll(".edge").forEach(e=>{ const a=e.dataset.a,b=e.dataset.b; e.classList.remove("in","out","fade");
-    if(selId){ if(b===selId && !e.classList.contains("x")) e.classList.add("in"); else if(a===selId && !e.classList.contains("x")) e.classList.add("out"); else if(!(e.classList.contains("x")&&(a===selId||b===selId))) e.classList.add("fade"); }
-    else if(famF && a[0]!==famF && b[0]!==famF) e.classList.add("fade"); });
+    const isX=e.classList.contains("x"), mine=a===selId||b===selId;
+    if(mine && !isX) e.classList.add(b===selId?"in":"out");
+    else if(mine && isX) {}
+    else if(!showAll || (famF && a[0]!==famF && b[0]!==famF)) e.classList.add("fade"); });
 }
 function select(id){
   selId=id; paint(); const t=byId[id];
@@ -735,6 +744,9 @@ const chips=$("#map-chips");
   b.onclick=()=>{ famF=k||null; chips.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",c===b?"true":"false")); paint(); };
   chips.append(b);
 });
+const allB=el("button",{class:"chip","aria-pressed":"false",style:"margin-left:auto"},"显示全部连线");
+allB.onclick=()=>{ showAll=!showAll; allB.setAttribute("aria-pressed",showAll?"true":"false"); paint(); };
+chips.append(allB);
 select("C2");
 
 /* =========== LAYER 2 =========== */
