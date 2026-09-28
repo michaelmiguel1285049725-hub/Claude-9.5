@@ -448,3 +448,35 @@ dl.kv dd { margin: 0; color: var(--ink-2); display: flex; align-items: center; g
 .ov-bubble:focus-visible .ov-core, .cl-bubble:focus-visible circle, .bubble:focus-visible circle { stroke: var(--focus); stroke-width: 3.5px; }
 .lens-more:focus-visible rect, .lens-gap:focus-visible rect { stroke: var(--focus); stroke-width: 2.5px; }
 .lens-hidden:focus-visible { outline: 2px solid var(--focus); }
+
+/* ---------- 窄屏（手机）：透镜改为列表，路径导航横向滚动 ---------- */
+.lens-list { position: absolute; left: 0; right: 0; top: 96px; bottom: 0; overflow-y: auto; overscroll-behavior: contain; padding: 4px 16px 24px; display: flex; flex-direction: column; gap: 12px; }
+.ll-center { display: grid; gap: 2px; text-align: left; background: var(--node-fill); border: 2.4px solid var(--accent); border-radius: 10px; padding: 10px 14px; cursor: pointer; }
+.ll-center.ai { background: var(--node-ai-fill); }
+.ll-center .mono { font-size: 13px; color: var(--ink-2); }
+.ll-center b { font-size: 17px; }
+.ll-sub { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.ll-gaps { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--tag-proc-fg); }
+.ll-gaps button { font: 600 12px var(--mono); color: var(--tag-proc-fg); background: var(--tag-proc-bg); border: 1px solid var(--tag-proc-line); border-radius: 999px; min-height: 28px; padding: 2px 10px; }
+.ll-sec h3 { margin: 4px 0 6px; font-size: 14px; color: var(--ink-2); }
+.ll-group { margin-bottom: 8px; }
+.ll-head { display: flex; align-items: center; gap: 6px; font-size: 13px; margin-bottom: 4px; }
+.ll-sec ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+.ll-item { display: flex; align-items: center; gap: 7px; width: 100%; min-height: 40px; text-align: left; background: var(--node-fill); border: 1.3px solid var(--node-stroke); border-radius: 8px; padding: 6px 10px; font-size: 13px; cursor: pointer; }
+.ll-item.ai { background: var(--node-ai-fill); border-color: var(--node-ai-stroke); }
+.ll-item.filtered { opacity: .55; border-style: dashed; }
+.ll-item .mono { font-size: 12px; color: var(--muted); flex: none; }
+.ll-item .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ll-mark { display: inline-flex; align-items: center; gap: 4px; flex: none; }
+.ll-line { width: 18px; height: 0; border-top: 2px solid; }
+.ll-line.st-dash { border-top-style: dashed; }
+.ll-line.st-dot { border-top-style: dotted; }
+.ll-proc { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid; background: var(--ground); }
+.ll-hidden { border: 0; background: transparent; color: var(--focus); font-size: 12.5px; padding: 4px 0; cursor: pointer; }
+.ll-none { color: var(--muted); font-size: 13px; margin: 0; }
+@media (max-width: 760px) {
+  .canvas-top-left { max-width: calc(100% - 28px); }
+  .tr-line { flex-wrap: nowrap; overflow-x: auto; max-width: 100%; white-space: nowrap; scrollbar-width: none; }
+  .tr-line::-webkit-scrollbar { display: none; }
+  .canvas-tools { top: auto; bottom: 12px; right: 12px; }
+}

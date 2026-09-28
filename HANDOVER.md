@@ -14,6 +14,8 @@
 | 网页全文（v3） | `https://raw.githubusercontent.com/michaelmiguel1285049725-hub/Claude-9.5/HEAD/v3/index.html` | **只在要改代码时读**，约 4 万 token，很占空间 |
 | 传达室代码 | `https://raw.githubusercontent.com/michaelmiguel1285049725-hub/Claude-9.5/HEAD/v3/worker.js` | 讨论 AI / Notion 后端时 |
 | 部署指引 | `https://raw.githubusercontent.com/michaelmiguel1285049725-hub/Claude-9.5/HEAD/v3/SETUP.md` | 排查后端配置问题时 |
+| atlas 内容包 | `https://raw.githubusercontent.com/michaelmiguel1285049725-hub/Claude-9.5/HEAD/atlas/packs/ai-bias/pack.json` | 讨论 atlas 的内容时（第 9 节） |
+| atlas 说明 | `https://raw.githubusercontent.com/michaelmiguel1285049725-hub/Claude-9.5/HEAD/atlas/README.md` | 改 atlas 或换内容包时 |
 | 本文件 | `https://raw.githubusercontent.com/michaelmiguel1285049725-hub/Claude-9.5/HEAD/HANDOVER.md` | — |
 
 `HEAD` 指向默认分支 `claude/new-session-sefln5`，内容随项目更新，不用改地址。
@@ -38,6 +40,7 @@
 | 原版 | `…github.io/Claude-9.5/` | 最初实现，连线常驻显示 |
 | v2 | `…github.io/Claude-9.5/v2/` | 连线按需显示、区内按学派分列、手机列表模式 |
 | **v3（当前）** | `…github.io/Claude-9.5/v3/` | v2 + AI 讲解 + Notion 笔记 + 节点编号 + 访问口令 |
+| atlas | `…github.io/Claude-9.5/atlas/` | 另一个项目：可换内容包的领域学习地图，见第 9 节 |
 
 站点根：`https://michaelmiguel1285049725-hub.github.io/Claude-9.5/`
 仓库：`michaelmiguel1285049725-hub/Claude-9.5`，分支 `claude/new-session-sefln5`
@@ -141,3 +144,16 @@ H 区和 I 区的 8 个概念被移进了图例面板，不在画布上，因此
 - 网页是**一个文件**，改动请基于最新的 `index.html` 全文，不要凭记忆重写。
 - 每次大改**新开一个版本目录**（v2 → v3 → v4），旧版保持不动，方便回滚。这是已经形成的习惯。
 - **绝不要把 Anthropic 密钥、Notion token、传达室口令粘进任何对话窗口。** 它们只存在于 Cloudflare 的环境变量里。`worker.js` 本身不含密钥，可以安全分享。
+
+---
+
+## 9. atlas：领域学习地图引擎（独立于 v3）
+
+`atlas/` 是一套**可复用的学习地图网页**，和 v3 共用仓库但互不依赖（没有口令、没有传达室）。页面本身不含领域内容，全部来自内容包 `atlas/packs/<编号>/pack.json`；网址加 `?pack=编号` 切换内容包，默认 `ai-bias`（AI × 认知偏差 × 决策，44 节点、47 关系、10 个空缺、6 条研究线，**草稿 v0**）。
+
+- **技术形态**：多文件静态网页，原生 ES modules + D3 7.9.0（jsdelivr），无构建步骤。本地预览需在仓库根运行 `python3 -m http.server`，再开 `http://localhost:8000/atlas/`。
+- **三个视角**：关系网（三层下钻：研究线概览 → 研究线展开 → 关系透镜；另有找路径的横向链条）、成熟度地图（证据等级 × 拥挤度）、时间线（分段压缩的年份轴 × 研究线泳道）。
+- **数据契约**：`domain` / `nodes` / `edges` / `gaps` 四部分，字段与校验规则见 `atlas/README.md`。改完内容包先跑 `node atlas/tools/validate.mjs atlas/packs/ai-bias`。**不要改动内容包里的文字、文献、年份、证据等级**，发现问题只报告。
+- **状态**：学习进度、Notion 链接、筛选偏好存在浏览器 localStorage（按内容包分开）；当前视角、层级、中心节点写在网址 hash 里，可刷新恢复。
+- **已知待决**：成熟度和时间线在"适配全部"时字偏小，时间线 2020 年后节点拥挤；"只看空缺"目前 = 挂了空缺编号的线 + 所有未验证的线。
+

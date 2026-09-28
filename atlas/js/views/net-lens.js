@@ -1,15 +1,17 @@
 // 关系网第三层：关系透镜。一个节点居中，左栏"指向它的"，右栏"它指向的"，按关系类型分组。
 // 每个侧边节点用一条三次贝塞尔曲线连到中心；颜色、线型、箭头、加工空心圆与编码表完全一致。
-import { nodeBox, centerBox, drawNode, styleEdgePath, CARD, CENTER } from '../glyph.js';
+import { nodeBox, centerBox, drawNode, styleEdgePath, relSampleSvg, CARD, CENTER } from '../glyph.js';
 import { REL_TYPES, relColor } from '../encoding.js';
 import { clusterOf } from '../data.js';
 import { esc, reduceMotion } from './shared.js';
 
 const d3 = window.d3;
 const TOP = 112, BOTTOM = 36, GROUP_H = 24, GROUP_GAP = 18, ROW_GAP = 6, MORE_H = 30, FOLD = 6;
+const NARROW = 720;   // 比这更窄（手机）时，透镜改成可上下滚动的列表
 
-export function createLensView({ svg, model, tooltip, actions, getDigested }) {
+export function createLensView({ svg, root, model, tooltip, actions, getDigested }) {
   const g = svg.append('g').attr('class', 'lens').attr('display', 'none');
+  const list = d3.select(root).append('div').attr('class', 'lens-list').attr('hidden', true);
   const defs = svg.append('defs');
   const clipL = defs.append('clipPath').attr('id', 'lensClipL').append('rect');
   const clipR = defs.append('clipPath').attr('id', 'lensClipR').append('rect');
@@ -55,7 +57,7 @@ export function createLensView({ svg, model, tooltip, actions, getDigested }) {
         if (gi) y += GROUP_GAP;
         rows.push({ kind: 'group', t: gr.t, n: gr.list.length, y }); y += GROUP_H;
         const key = `${center}|${side}|${gr.t}`;
-        const open = expanded.has(key) || gr.list.length <= FOLD + 1;
+        const open = expanded.has(key) || gr.list.length <= FOLD;
         const items = open ? gr.list : gr.list.slice(0, FOLD);
         items.forEach(it => { rows.push({ kind: 'card', ...it, hiddenByFilter: !shown(it.e), y: y + CARD.h / 2 }); y += CARD.h + ROW_GAP; });
         if (!open) { rows.push({ kind: 'more', key, n: gr.list.length - FOLD, t: gr.t, y }); y += MORE_H; }
@@ -77,6 +79,10 @@ export function createLensView({ svg, model, tooltip, actions, getDigested }) {
   function render() {
     if (!vis || !center) return;
     const n = model.nodeById.get(center);
+    const narrow = size.W < NARROW;
+    list.attr('hidden', narrow ? null : true);
+    g.attr('visibility', narrow ? 'hidden' : null);
+    if (narrow) { renderList(n); return; }
     geom = layout();
     const { cx, cy, sides } = geom;
     const digested = getDigested();
@@ -162,6 +168,42 @@ export function createLensView({ svg, model, tooltip, actions, getDigested }) {
     }
     drawCurves();
   }
+
+  // ---------- 窄屏：列表形式（颜色、线型、加工标记与画布一致） ----------
+  function renderList(n) {
+    const all = model.edgesByNode.get(center) || [];
+    const c = clusterOf(model, n);
+    const gaps = model.gaps.filter(gp => (gp.nodes || []).includes(center));
+    const section = side => {
+      const mine = all.filter(e => (side === 'L' ? e.to === center : e.from === center));
+      const visible = mine.filter(e => vis.edges.has(e.id));
+      const edges = showHidden[side] ? mine : visible;
+      const groups = bySide(side, edges);
+      const hidden = mine.length - visible.length;
+      const item = ({ e, other }) => {
+        const o = model.nodeById.get(other);
+        const st = e.status === '确立' ? 'solid' : e.status === '初步' ? 'dash' : 'dot';
+        return `<li><button type="button" class="ll-item${vis.edges.has(e.id) ? '' : ' filtered'}${o.ai_related ? ' ai' : ''}" data-node="${esc(other)}" data-edge="${esc(e.id)}">
+          <span class="dot" style="background:${clusterOf(model, o).color}"></span><span class="mono">${esc(other)}</span><span class="nm">${esc(o.name)}</span>
+          <span class="ll-mark"><i class="ll-line st-${st}" style="border-color:${relColor(e.type)}"></i>${e.basis === '加工' ? `<i class="ll-proc" style="border-color:${relColor(e.type)}"></i>` : ''}</span></button></li>`;
+      };
+      return `<section class="ll-sec"><h3>${side === 'L' ? `指向它的（${edges.length}）` : `它指向的（${edges.length}）`}</h3>
+        ${groups.length ? groups.map(gr => `<div class="ll-group"><div class="ll-head">${relSampleSvg(gr.t, '确立', 26)}<b style="color:${relColor(gr.t)}">${esc(gr.t)} · ${gr.list.length}</b></div><ul>${gr.list.map(item).join('')}</ul></div>`).join('') : '<p class="ll-none">—</p>'}
+        ${hidden ? `<button type="button" class="ll-hidden" data-side="${side}">${showHidden[side] ? `正在临时显示因筛选隐藏的 ${hidden} 条 · 收起` : `因筛选隐藏了 ${hidden} 条`}</button>` : ''}</section>`;
+    };
+    list.html(`<button type="button" class="ll-center${n.ai_related ? ' ai' : ''}" data-center>
+        <span class="mono">${esc(n.id)}</span><b>${esc(n.name)}</b><span class="ll-sub"><span class="dot" style="background:${c.color}"></span>${esc(c.name)} · 点击看详情</span></button>
+      ${gaps.length ? `<div class="ll-gaps">空缺 ${gaps.map(gp => `<button type="button" data-gap="${esc(gp.id)}">${esc(gp.id)}</button>`).join('')}</div>` : ''}
+      ${all.length ? section('L') + section('R') : '<p class="ll-none">这个节点目前没有记录任何关系</p>'}`);
+    list.node().scrollTop = 0;
+  }
+  list.on('click', ev => {
+    const b = ev.target.closest('button'); if (!b) return;
+    if ('center' in b.dataset) return actions.selectNode(center, { detail: true });
+    if (b.dataset.gap) return actions.selectGap(b.dataset.gap, { zoom: false });
+    if (b.classList.contains('ll-hidden')) { showHidden[b.dataset.side] = !showHidden[b.dataset.side]; return render(); }
+    if (b.dataset.node) actions.openLens(b.dataset.node, { from: 'lens' });
+  });
 
   // 曲线：在中心节点边缘上的落点，按侧边卡片的上下顺序均匀分布，避免交叉
   function drawCurves() {
@@ -290,7 +332,7 @@ export function createLensView({ svg, model, tooltip, actions, getDigested }) {
       g.attr('display', null);
       render();
     },
-    hide() { g.attr('display', 'none'); hover(null); },
+    hide() { g.attr('display', 'none'); list.attr('hidden', true); hover(null); },
     setInset(px) { if (px === inset) return; inset = px; if (center && g.attr('display') !== 'none') render(); },
     setGap(id) { if (id === gapSel) return; gapSel = id; if (geom && g.attr('display') !== 'none') drawCurves(); },
     setVisibility(v) { vis = v; if (center && g.attr('display') !== 'none') render(); },

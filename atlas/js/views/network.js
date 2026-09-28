@@ -12,7 +12,7 @@ export function createNetworkView({ root, model, store, tooltip, actions, getDig
   const common = { svg, model, store, tooltip, actions, getDigested };
   const overview = createOverview(common);
   const cluster = createClusterView(common);
-  const lens = createLensView(common);
+  const lens = createLensView({ ...common, root });
   const pathv = createPathView({ ...common, root });
 
   let net = { level: 'overview', cluster: null, trail: [], pos: -1 };
