@@ -213,8 +213,6 @@ svg[data-level="1"] .lv3{display:none}
 .hull-area{cursor:default;pointer-events:all}
 
 /* 簇视图 */
-svg[data-level="1"] .nodes,svg[data-level="1"] .edges,svg[data-level="1"] .hulls{display:none}
-svg:not([data-level="1"]) .bubbles{display:none}
 .bubble circle{fill:var(--c);fill-opacity:.22;stroke:var(--c);stroke-width:2;cursor:pointer}
 .bubble text{text-anchor:middle;pointer-events:none}
 .bubble .b-name{font:500 20px var(--sans);fill:var(--ink)}
@@ -490,3 +488,83 @@ svg[data-level="2"] .lv3,svg[data-level="1"] .lv3{display:block}
 .hull-label .hull-count,.hull-label .hull-prog{font:400 11px var(--mono);fill:var(--muted)}
 .gap-badge circle{fill:var(--tag-proc-bg);stroke:var(--warn);stroke-width:1.2}
 .gap-badge text{font:600 10.5px var(--mono);fill:var(--tag-proc-fg);text-anchor:middle}
+
+/* ===== 改版 2 · 阶段 C：全览 / 聚焦 / 简化 / 透镜 / 路径导航 ===== */
+.node.dim25{opacity:.25} .node.dim35{opacity:.35}
+.edge.dim35{opacity:.35} .edge.faint15{opacity:.15}
+.hull.dim25{opacity:.25}
+.hull.focused .hull-area{opacity:.14}
+#canvas[data-mode="cluster"] .hull:not(.focused){pointer-events:none}
+/* 汇总连线 */
+.clink .l{fill:none;stroke:var(--muted);opacity:.5;stroke-linecap:round}
+.clink .hit{fill:none;stroke:transparent;stroke-width:18;pointer-events:stroke;cursor:default}
+.clink:hover .l{opacity:.85;stroke:var(--ink-2)}
+.clink .badge{fill:var(--panel);stroke:var(--muted);stroke-width:1.2}
+.clink .badge-t{font:600 11px var(--mono);fill:var(--ink-2);text-anchor:middle;pointer-events:none}
+.clink.dim35{opacity:.3}
+/* 跨研究线短线 */
+.stub-label{font:500 11px var(--sans);fill:var(--ink-2);text-anchor:middle;pointer-events:none}
+/* 简化视图 */
+svg#canvas:not(.simple) .bubbles{display:none}
+svg#canvas.simple .hulls,svg#canvas.simple .summary,svg#canvas.simple .edges,svg#canvas.simple .nodes,svg#canvas.simple .stubs{display:none}
+.bubble .b-fill{fill:var(--c);fill-opacity:.22;stroke:var(--c);stroke-width:2}
+.bubble .b-ring-bg{fill:none;stroke:var(--line);stroke-width:3}
+.bubble .b-ring{fill:none;stroke:var(--ev-a);stroke-width:3;stroke-linecap:round;transform:rotate(-90deg)}
+.bubble text{text-anchor:middle;pointer-events:none}
+.bubble .b-name{font:500 14px var(--sans);fill:var(--ink)}
+.bubble .b-name.main{font-weight:700}
+.bubble .b-count{font:400 11px var(--sans);fill:var(--ink-2)}
+/* 透镜 */
+.lens[hidden]{display:none}
+.lens-colhead{font:600 13px var(--sans);fill:var(--ink-2)}
+.lens-gtitle text{font:600 12px var(--sans);fill:var(--ink-2)}
+.lens-card .shape{fill:var(--node-fill);stroke:var(--node-stroke);stroke-width:1.3}
+.lens-card .shape.ai{fill:var(--ai-fill);stroke:var(--ai-stroke)}
+.lens-card .kind-bar{stroke:var(--node-stroke);stroke-width:3.5;stroke-linecap:round}
+.lens-card .cl-dot{stroke:var(--panel);stroke-width:1.4}
+.lens-cid{font:500 11px var(--mono);fill:var(--muted)}
+.lens-cname{font:500 13px var(--sans);fill:var(--ink)}
+.lens-card:hover .shape,.lens-card.hi .shape{stroke-width:2.2;stroke:var(--ink)}
+.lens-card.dim{opacity:.35}
+.lens-card.filtered{opacity:.4}
+.lens-card .mark circle{fill:var(--panel);stroke:var(--muted);stroke-width:1.1}
+.lens-card .mark text,.lens-center .mark text{font:700 10px var(--mono);text-anchor:middle;fill:var(--ink-2)}
+.lens-card .mark.alert circle,.lens-center .mark.alert circle{fill:var(--danger);stroke:var(--danger)}
+.lens-card .mark.alert text,.lens-center .mark.alert text{fill:#fff}
+.lens-card .done circle,.lens-center .done circle{fill:var(--ev-a);stroke:var(--panel);stroke-width:1.2}
+.lens-card .done path,.lens-center .done path{fill:none;stroke:#fff;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.lens-fold rect{fill:var(--panel-2);stroke:var(--line);stroke-dasharray:4 3}
+.lens-fold text{font:500 12px var(--sans);fill:var(--accent);text-anchor:middle}
+.lens-hidden{font:400 11.5px var(--sans);fill:var(--warn);text-anchor:middle}
+.lens-scrollhit{fill:transparent}
+.lens-scrollhint{font:400 11px var(--sans);fill:var(--muted);text-anchor:middle}
+.lens-center .lc-shape{fill:var(--node-fill);stroke:var(--accent);stroke-width:2.6}
+.lens-center .lc-shape.ai{fill:var(--ai-fill)}
+.lens-center .kind-bar{stroke:var(--node-stroke);stroke-width:4;stroke-linecap:round}
+.lens-center .lc-id{font:500 12px var(--mono);fill:var(--muted);text-anchor:middle}
+.lens-center .lc-name{font:700 15px var(--sans);fill:var(--ink);text-anchor:middle}
+.lens-center .cl-dot{stroke:var(--panel);stroke-width:1.5}
+.lens-center .mark circle{fill:var(--panel);stroke:var(--muted);stroke-width:1.2}
+.lens-gaps rect{fill:var(--tag-proc-bg);stroke:var(--warn);stroke-width:1}
+.lens-gaps text{font:500 11.5px var(--sans);fill:var(--tag-proc-fg);text-anchor:middle}
+.lens-empty{font:400 13px var(--sans);fill:var(--muted);text-anchor:middle}
+.lens .edge .line{stroke-width:1.8}
+.lens .edge.hi .line{stroke-width:3}
+.lens .edge.dim{opacity:.25}
+.lens .edge.filtered{opacity:.4}
+.lens .edge.active .halo{opacity:.2}
+.lens-ghost{pointer-events:none}
+#stage.lens-mode .stage-tools{display:none}
+#stage.lens-mode{cursor:default}
+/* 路径导航 */
+#trail{position:absolute;top:12px;left:12px;z-index:5;display:flex;align-items:center;gap:2px;flex-wrap:wrap;max-width:calc(100% - 300px);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px 8px 3px 6px;font-size:12px;color:var(--ink-2)}
+#trail .tr-seg{border:0;background:transparent;color:var(--accent);cursor:pointer;padding:2px 6px;border-radius:999px;font-size:12px;white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis}
+#trail .tr-seg:hover{background:var(--panel-2)}
+#trail .tr-seg.cur{color:var(--ink);font-weight:600;cursor:default}
+#trail .tr-sep,#trail .tr-fold{color:var(--muted);padding:0 1px}
+#trail .tr-copy{margin-left:6px}
+#trail:not([hidden])~#summary{top:50px}
+#lensBack{position:absolute;top:50px;left:12px;z-index:5}
+#trail:not([hidden])~#lensBack{top:50px}
+#lensBack:not([hidden])~#summary{top:88px}
+.lens-center text,.lens-card text{pointer-events:none}

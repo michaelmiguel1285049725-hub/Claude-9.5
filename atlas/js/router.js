@@ -1,12 +1,17 @@
-/* URL hash ↔ 状态：#view=network&node=C-04&depth=2&edge=E-07&gap=G-03&path=E-02,E-34
+/* URL hash ↔ 状态：
+   #view=maturity&node=C-04&depth=2、#mode=lens&node=C-06&trail=C-04,C-06、#mode=cluster&cluster=C、
+   #edge=E-07、#gap=G-03、#path=E-02,E-34
    刷新后恢复；浏览器后退 / 前进回到上一个状态。筛选偏好不进 URL（在 localStorage）。 */
 import { get, set, subscribe } from './state.js';
 
-const KEYS = ['view', 'node', 'edge', 'gap', 'path', 'depth'];
+const KEYS = ['view', 'mode', 'focusCluster', 'trail', 'node', 'edge', 'gap', 'path', 'depth'];
 
 export function toHash(s) {
   const p = new URLSearchParams();
   if (s.view && s.view !== 'network') p.set('view', s.view);
+  if (s.mode && s.mode !== 'overview') p.set('mode', s.mode);
+  if (s.mode === 'cluster' && s.focusCluster) p.set('cluster', s.focusCluster);
+  if (s.mode === 'lens' && Array.isArray(s.trail) && s.trail.length) p.set('trail', s.trail.join(','));
   if (s.node) p.set('node', s.node);
   if (s.edge) p.set('edge', s.edge);
   if (s.gap) p.set('gap', s.gap);
@@ -36,13 +41,19 @@ export function pathFromEdgeIds(model, ids) {
 
 export function fromHash(model, hash) {
   const p = new URLSearchParams((hash || '').replace(/^#/, ''));
-  const out = { view: 'network', node: null, edge: null, gap: null, path: null, depth: 1 };
+  const out = { view: 'network', mode: 'overview', focusCluster: null, trail: [], node: null, edge: null, gap: null, path: null, depth: 1 };
   const v = p.get('view'); if (['network', 'maturity', 'timeline'].includes(v)) out.view = v;
   const n = p.get('node'); if (n && model.byId.has(n)) out.node = n;
   const e = p.get('edge'); if (e && model.edgeById.has(e)) out.edge = e;
   const g = p.get('gap'); if (g && model.gapById.has(g)) out.gap = g;
   const pa = p.get('path'); if (pa) out.path = pathFromEdgeIds(model, pa.split(',').filter(Boolean));
   if (p.get('depth') === '2') out.depth = 2;
+  const m = p.get('mode');
+  if (m === 'cluster') { const c = p.get('cluster'); if (c && model.clusterById.has(c)) { out.mode = 'cluster'; out.focusCluster = c; } }
+  else if (m === 'lens') {
+    const tr = (p.get('trail') || '').split(',').filter((id) => model.byId.has(id));
+    if (out.node) { out.mode = 'lens'; out.trail = tr.length ? tr : [out.node]; if (out.trail[out.trail.length - 1] !== out.node) out.trail.push(out.node); }
+  }
   return out;
 }
 
@@ -55,8 +66,8 @@ export function initRouter({ model }) {
     if (parsed.path) { patch.panel = 'path'; patch.pathQuery = { from: parsed.path.nodes[0], to: parsed.path.nodes[parsed.path.nodes.length - 1], sourceFirst: !!(s.pathQuery && s.pathQuery.sourceFirst) }; }
     else if (parsed.gap) patch.panel = 'gaps';
     else if (parsed.edge) patch.panel = 'edge';
-    else if (parsed.node) patch.panel = 'node';
-    else patch.panel = s.panel === 'path' ? 'path' : s.filters.gapsOnly ? 'gaps' : 'closed';
+    else if (parsed.node && parsed.mode !== 'lens') patch.panel = 'node';
+    else patch.panel = s.panel === 'path' ? 'path' : 'closed';
     set(patch);
     applying = false;
   }
