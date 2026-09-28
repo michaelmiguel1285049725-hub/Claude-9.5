@@ -17,7 +17,7 @@ export function edgeTip(model, e) {
 }
 
 // ---------- 高亮规则 ----------
-// 优先级：路径 > 空缺 > 选中的关系 > 聚焦的节点 > 悬停。mode=focus 时其余降到 10%，hover 时降到 25%。
+// 优先级：空缺 > 选中的关系 > 聚焦的节点 > 悬停。mode=focus 时其余降到 10%，hover 时降到 25%。
 function neighbors(visEdges, id, depth) {
   const nodes = new Set([id]), edges = new Set();
   for (const e of visEdges) {
@@ -38,7 +38,6 @@ function neighbors(visEdges, id, depth) {
 
 export function computeHighlight(model, vis, view, hover = {}) {
   const empty = () => ({ nodes2: new Set(), edges2: new Set() });
-  if (view.path) return { mode: 'focus', nodes: new Set(view.path.nodes), edges: new Set(view.path.steps.map(s => s.edge.id)), ...empty() };
   if (view.gap && model.gapById.has(view.gap)) {
     const g = model.gapById.get(view.gap);
     const edges = new Set(model.edges.filter(e => e.gap === g.id).map(e => e.id));
@@ -63,12 +62,11 @@ export function computeHighlight(model, vis, view, hover = {}) {
 
 // 把高亮结果套到一个视角的节点和线上
 export function applyHighlight(svg, nodeSel, edgeSel, h, view) {
-  svg.classed('mode-focus', h?.mode === 'focus').classed('mode-hover', h?.mode === 'hover').classed('picking', !!view.pathPick);
+  svg.classed('mode-focus', h?.mode === 'focus').classed('mode-hover', h?.mode === 'hover');
   nodeSel
     .classed('hi', n => !!h && h.nodes.has(n.id))
     .classed('hi2', n => !!h && h.nodes2.has(n.id))
-    .classed('sel', n => h?.selNode === n.id)
-    .classed('path-end', n => !!view.pathPick && (view.pathPick.from === n.id || view.pathPick.to === n.id));
+    .classed('sel', n => h?.selNode === n.id);
   if (edgeSel) edgeSel
     .classed('hi', e => !!h && h.edges.has(e.id))
     .classed('hi2', e => !!h && h.edges2.has(e.id))

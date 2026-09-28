@@ -3,6 +3,7 @@
 import { createOverview } from './net-overview.js';
 import { createClusterView } from './net-cluster.js';
 import { createLensView } from './net-lens.js';
+import { createPathView } from './net-path.js';
 
 const d3 = window.d3;
 
@@ -12,13 +13,14 @@ export function createNetworkView({ root, model, store, tooltip, actions, getDig
   const overview = createOverview(common);
   const cluster = createClusterView(common);
   const lens = createLensView(common);
+  const pathv = createPathView({ ...common, root });
 
   let net = { level: 'overview', cluster: null, trail: [], pos: -1 };
   let size = { W: 800, H: 600 };
   const measure = () => ({ W: svg.node().clientWidth || 800, H: svg.node().clientHeight || 600 });
 
   function show(prev) {
-    const level = net.level;
+    const level = pathv.active() ? 'path' : net.level;
     tooltip.hide();
     overview.g.attr('display', level === 'overview' ? null : 'none');
     if (level === 'cluster') {
@@ -38,17 +40,26 @@ export function createNetworkView({ root, model, store, tooltip, actions, getDig
 
   new ResizeObserver(() => {
     size = measure();
-    overview.resize(size); cluster.resize(size); lens.resize(size);
+    overview.resize(size); cluster.resize(size); lens.resize(size); pathv.resize(size);
   }).observe(svg.node());
 
-  const current = () => (net.level === 'overview' ? overview : net.level === 'cluster' ? cluster : lens);
+  const current = () => (pathv.active() ? pathv : net.level === 'overview' ? overview : net.level === 'cluster' ? cluster : lens);
 
   return {
     setVisibility(v) { overview.setVisibility(v); cluster.setVisibility(v); lens.setVisibility(v); },
-    setView() {},
+    setView(v) { lens.setGap(v.gap); },
+    setPath(p, res) {
+      const was = pathv.active();
+      pathv.set(p, res);
+      if (was !== pathv.active()) show(null);
+      actions.legendDirty();
+    },
+    focusPathInput: () => pathv.focusInput(),
+    setPanelInset(px) { lens.setInset(px); },
+    pathSummary: () => pathv.summary(),
     setNet(n, prev) { net = n; show(prev); actions.legendDirty(); },
     refreshDigested() { overview.render(); cluster.render(); lens.render(); },
-    onShow() { size = measure(); overview.resize(size); cluster.resize(size); lens.resize(size); show(null); },
+    onShow() { size = measure(); overview.resize(size); cluster.resize(size); lens.resize(size); pathv.resize(size); show(null); },
     onHide() { toolsEl.hidden = true; },
     fitAll() {},
     zoomToNodes() {},

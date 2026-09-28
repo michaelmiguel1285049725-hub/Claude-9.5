@@ -21,10 +21,12 @@ export function createLensView({ svg, model, tooltip, actions, getDigested }) {
   const gFoot = g.append('g').attr('class', 'lens-foot');
 
   let vis = null, center = null, size = { W: 800, H: 600 };
+  let inset = 0;                     // 右侧抽屉打开时让出的宽度，透镜在剩下的空间里排版
   let expanded = new Set();          // 展开了的分组：`${center}|${side}|${type}`
   let showHidden = { L: false, R: false };
   let scroll = { L: 0, R: 0 };
   let geom = null;                   // 当前排版结果
+  let gapSel = null;                 // 从空缺列表进来时，属于这个空缺的关系加粗高亮
 
   // 分组内：先按研究线顺序，再按编号
   const clusterRank = id => { const i = model.clusters.findIndex(c => c.id === model.nodeById.get(id)?.cluster); return i < 0 ? 99 : i; };
@@ -35,7 +37,7 @@ export function createLensView({ svg, model, tooltip, actions, getDigested }) {
   })).filter(gr => gr.list.length);
 
   function layout() {
-    const { W, H } = size;
+    const W = Math.max(640, size.W - inset), H = size.H;
     const cx = W / 2, cy = TOP + (H - TOP - BOTTOM) / 2;
     const dist = Math.max(270, Math.min(430, W * 0.27));
     const all = model.edgesByNode.get(center) || [];
@@ -193,7 +195,7 @@ export function createLensView({ svg, model, tooltip, actions, getDigested }) {
       x.each(function (d) { styleEdgePath(d3.select(this).select('.edge-line'), d.e); });
       return x;
     });
-    sel.attr('data-id', d => d.e.id).classed('filtered', d => d.filtered);
+    sel.attr('data-id', d => d.e.id).classed('filtered', d => d.filtered).classed('gap-hi', d => !!gapSel && d.e.gap === gapSel);
     sel.select('.edge-hit').attr('d', d => d.d);
     sel.select('.edge-line').attr('d', d => d.d);
     sel.select('.edge-proc').attr('cx', d => d.mid.x).attr('cy', d => d.mid.y).style('stroke', d => relColor(d.e.type))
@@ -289,6 +291,8 @@ export function createLensView({ svg, model, tooltip, actions, getDigested }) {
       render();
     },
     hide() { g.attr('display', 'none'); hover(null); },
+    setInset(px) { if (px === inset) return; inset = px; if (center && g.attr('display') !== 'none') render(); },
+    setGap(id) { if (id === gapSel) return; gapSel = id; if (geom && g.attr('display') !== 'none') drawCurves(); },
     setVisibility(v) { vis = v; if (center && g.attr('display') !== 'none') render(); },
     resize(s) { size = s; if (center && g.attr('display') !== 'none') render(); },
     render,

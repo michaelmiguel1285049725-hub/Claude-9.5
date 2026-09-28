@@ -16,6 +16,7 @@ import { createSearch } from './search.js';
 import { createTooltip } from './tooltip.js';
 import { renderTrail, routeText } from './trail.js';
 import { REL_TYPES } from './encoding.js';
+import { encodeHash, decodeHash, isStep } from './hash.js';
 
 const $ = sel => document.querySelector(sel);
 const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -105,7 +106,8 @@ async function start() {
     sel: null,                 // { kind: 'node' | 'edge' | 'gap', id }
     depth: 1,
     filters: sanitizeFilters(store.get('filters'), model),
-    path: { active: false, from: null, to: null, prefer: false, chosen: 0 },
+    path: { active: false, from: null, to: null, prefer: false },
+    gapSel: null,              // 空缺列表里展开的那一个（关系网里把它的关系加粗）
     panel: null,               // 右侧抽屉：'detail' | 'gaps' | null（找路径时另算）
     notionEdit: false,
     drawer: null,              // 'filter' | 'legend' | null
@@ -145,15 +147,9 @@ ${lines.length ? lines.join('\n') : '（目前没有记录任何关系）'}`;
   // ---------- 操作 ----------
   const actions = {
     state: () => state.get(),
+    // 成熟度、时间线里点节点
     clickNode(id) {
       const st = state.get();
-      if (st.path.active) {
-        const p = st.path;
-        if (!p.from) actions.setPathEnd('from', id);
-        else if (!p.to && id !== p.from) actions.setPathEnd('to', id);
-        else state.set({ path: { ...p, from: id, to: null, chosen: 0 } });
-        return;
-      }
       if (st.sel?.kind === 'node' && st.sel.id === id) actions.clearSelection();   // 再点一次同一个节点：退出聚焦
       else actions.selectNode(id);
     },
@@ -166,11 +162,21 @@ ${lines.length ? lines.join('\n') : '（目前没有记录任何关系）'}`;
       const e = model.edgeById.get(id);
       if (zoom && e) cur().zoomToNodes([e.from, e.to]);
     },
+    // 点一个空缺：关系网里进入它第一个节点的透镜并加粗它的关系；另外两个视角里高亮并缩放过去
     selectGap(id, { zoom = true } = {}) {
       const st = state.get();
-      if (st.sel?.kind === 'gap' && st.sel.id === id) { state.set({ sel: null }); return; }
-      state.set({ sel: { kind: 'gap', id }, panel: 'gaps', path: { ...st.path, active: false } });
-      if (zoom) cur().zoomToNodes(gapNodeIds(id));
+      if (st.gapSel === id && st.panel === 'gaps') { state.set({ gapSel: null }); return; }
+      const g = model.gapById.get(id); if (!g) return;
+      state.set({ gapSel: id, panel: 'gaps', path: { ...st.path, active: false } });
+      if (st.view === 'network') {
+        const first = (g.nodes || []).find(n => model.nodeById.has(n));
+        if (first && !(st.net.level === 'lens' && (g.nodes || []).includes(st.net.trail[st.net.pos]))) actions.openLens(first, { from: 'other', keepPanel: true });
+      } else if (zoom) cur().zoomToNodes(gapNodeIds(id));
+    },
+    // 面板里点一个节点：关系网里切换透镜中心，其他视角里选中它
+    focusNode(id) {
+      if (state.get().view === 'network') actions.openLens(id, { from: 'other' });
+      else actions.selectNode(id, { zoom: true, detail: true });
     },
     clearSelection() {
       const st = state.get();
@@ -178,29 +184,23 @@ ${lines.length ? lines.join('\n') : '（目前没有记录任何关系）'}`;
       if (st.sel) state.set({ sel: lensSel(st), panel: null });
     },
     // 关抽屉：透镜里保留中心节点的选中，其他视角清除选中
-    closePanel() { const st = state.get(); state.set({ sel: lensSel(st), panel: null, path: { ...st.path, active: false } }); },
+    closePanel() { const st = state.get(); state.set({ sel: lensSel(st), panel: null, gapSel: null }); },
     setDepth(depth) { state.set({ depth }); },
+    // 找路径：结果画在关系网画布上
     startPath(from = null) {
-      state.set({ sel: null, panel: null, path: { ...state.get().path, active: true, from, to: null, chosen: 0 } });
+      state.set({ view: 'network', panel: null, path: { ...state.get().path, active: true, from, to: null } });
+      requestAnimationFrame(() => views.network.focusPathInput());
     },
     exitPath() { state.set({ path: { ...state.get().path, active: false } }); },
-    setPathEnd(which, id) {
-      const p = { ...state.get().path, [which]: id, chosen: 0 };
-      state.set({ path: p });
-      if (p.from && p.to && pathRes.paths[0]) cur().zoomToNodes(pathRes.paths[0].nodes);
-    },
-    swapPath() { const p = state.get().path; state.set({ path: { ...p, from: p.to, to: p.from, chosen: 0 } }); },
-    setPreferSource(prefer) { state.set({ path: { ...state.get().path, prefer, chosen: 0 } }); },
-    choosePath(i) {
-      state.set({ path: { ...state.get().path, chosen: i } });
-      if (pathRes.paths[i]) cur().zoomToNodes(pathRes.paths[i].nodes);
-    },
+    setPathEnd(which, id) { state.set({ path: { ...state.get().path, [which]: id } }); },
+    swapPath() { const p = state.get().path; state.set({ path: { ...p, from: p.to, to: p.from } }); },
+    setPreferSource(prefer) { state.set({ path: { ...state.get().path, prefer } }); },
     setView(v) { if (VIEWS.includes(v) && v !== state.get().view) state.set({ view: v }); },
     setFilters(filters) { state.set({ filters }); },
     toggleGapList() {
       const st = state.get();
       const open = st.panel === 'gaps';
-      state.set({ panel: open ? null : 'gaps', sel: st.sel?.kind === 'gap' ? lensSel(st) : st.sel, path: { ...st.path, active: false } });
+      state.set({ panel: open ? null : 'gaps', gapSel: open ? null : st.gapSel });
     },
     setDrawer(drawer) { state.set({ drawer }); },
     // 关系网层级
@@ -212,7 +212,7 @@ ${lines.length ? lines.join('\n') : '（目前没有记录任何关系）'}`;
       state.set({ net: { level: 'cluster', cluster: net.cluster, trail: [], pos: -1 }, sel: null });
     },
     // 进入关系透镜。from: 'cluster' 从研究线点进来；'lens' 在透镜里点侧边节点；其他 = 搜索或别的视角跳过来
-    openLens(id, { from = 'other' } = {}) {
+    openLens(id, { from = 'other', keepPanel = false } = {}) {
       const st = state.get(), net = st.net;
       const node = model.nodeById.get(id); if (!node) return;
       let next;
@@ -224,7 +224,9 @@ ${lines.length ? lines.join('\n') : '（目前没有记录任何关系）'}`;
       } else {
         next = { level: 'lens', cluster: node.cluster, trail: [id], pos: 0 };
       }
-      state.set({ view: 'network', net: next, sel: { kind: 'node', id }, notionEdit: false, path: { ...st.path, active: false } });
+      const leaveGap = !keepPanel && st.gapSel && !(model.gapById.get(st.gapSel)?.nodes || []).includes(id);
+      state.set({ view: 'network', net: next, sel: { kind: 'node', id }, notionEdit: false, path: { ...st.path, active: false },
+        ...(leaveGap && st.panel !== 'gaps' ? { gapSel: null } : {}) });
     },
     trailGo(i) {
       const net = state.get().net;
@@ -267,7 +269,8 @@ ${lines.length ? lines.join('\n') : '（目前没有记录任何关系）'}`;
   const cur = () => views[state.get().view];
   const panel = createPanel($('#panel'), { model, actions, getDigested: () => digested, getNotion: id => notion[id] || '' });
   const filterBar = createFilterBar($('#filterDrawer'), { model, relSample: (t, s) => relSampleSvg(t, s, 24), onChange: f => actions.setFilters(f) });
-  const search = createSearch($('#search'), $('#searchList'), { model, onPick: id => actions.selectNode(id, { zoom: true }) });
+  // 搜索选中后直接进入该节点的关系透镜
+  const search = createSearch($('#search'), $('#searchList'), { model, onPick: id => actions.openLens(id, { from: 'search' }) });
 
   // 图例：打开时才生成，画面变化后在下一帧重建
   let legendQueued = false;
@@ -312,24 +315,19 @@ ${lines.length ? lines.join('\n') : '（目前没有记录任何关系）'}`;
       updateFilterUi(st);
     }
     pathRes = computePaths(st);
-    const chosen = st.path.active ? pathRes.paths[st.path.chosen] || pathRes.paths[0] || null : null;
-    const viewState = {
-      sel: st.path.active ? null : st.sel,
-      depth: st.depth,
-      path: chosen,
-      gap: !st.path.active && st.sel?.kind === 'gap' ? st.sel.id : null,
-      pathPick: st.path.active ? { from: st.path.from, to: st.path.to } : false,
-    };
+    const viewState = { sel: st.sel, depth: st.depth, gap: st.gapSel };
     for (const v of Object.values(views)) v.setView(viewState);
+    views.network.setPath(st.path, pathRes);
     if (!prev || st.net !== prev.net) {
       views.network.setNet(st.net, prev ? prev.net : null);
       renderTrail($('#trail'), st.net, model);
     }
-    $('#trail').hidden = st.view !== 'network';
-    $('#backBtn').hidden = !(st.view === 'network' && st.net.level === 'lens');
-    if (!prev || st.view !== prev.view) showView(st, prev, chosen);
+    $('#trail').hidden = st.view !== 'network' || st.path.active;
+    $('#backBtn').hidden = !(st.view === 'network' && st.net.level === 'lens' && !st.path.active);
+    if (!prev || st.view !== prev.view) showView(st, prev);
     const keepScroll = prev && prev.sel === st.sel && prev.panel === st.panel && prev.path.active === st.path.active;
     panel.render(st, vis, { pathRes, keepScroll });
+    views.network.setPanelInset(panel.mode() ? Math.min(380, $('#panel').offsetWidth || 380) : 0);
     // 抽屉
     $('#filterDrawer').hidden = st.drawer !== 'filter';
     $('#filterBtn').setAttribute('aria-expanded', String(st.drawer === 'filter'));
@@ -337,11 +335,12 @@ ${lines.length ? lines.join('\n') : '（目前没有记录任何关系）'}`;
     $('#legendBtn').setAttribute('aria-expanded', String(st.drawer === 'legend'));
     $('#pathBtn').setAttribute('aria-pressed', String(st.path.active));
     $('#gapBtn').setAttribute('aria-pressed', String(st.panel === 'gaps'));
-    $('#focusBtn').disabled = !(st.sel || chosen);
+    $('#focusBtn').disabled = !(st.sel || st.gapSel);
     scheduleLegend();
+    writeHash(st, prev);
   }
   // 切换视角：保留选中，并把选中的对象滚动到可见位置
-  function showView(st, prev, chosen) {
+  function showView(st, prev) {
     tooltip.hide();
     for (const v of VIEWS) {
       viewRoot(v).hidden = v !== st.view;
@@ -353,12 +352,34 @@ ${lines.length ? lines.join('\n') : '（目前没有记录任何关系）'}`;
     const v = views[st.view];
     v.onShow();
     if (!prev) return;
-    if (chosen) v.zoomToNodes(chosen.nodes);
-    else if (st.sel?.kind === 'node') v.ensureVisible(st.sel.id);
+    if (st.sel?.kind === 'node') v.ensureVisible(st.sel.id);
     else if (st.sel?.kind === 'edge') { const e = model.edgeById.get(st.sel.id); if (e) v.zoomToNodes([e.from, e.to]); }
-    else if (st.sel?.kind === 'gap') v.zoomToNodes(gapNodeIds(st.sel.id));
+    else if (st.gapSel) v.zoomToNodes(gapNodeIds(st.gapSel));
   }
+
+  // ---------- 网址 ----------
+  // 视角、层级、研究线、中心节点变化时占一个"后退"步；其余变化只改写当前这一步
+  let applyingHash = false;
+  function writeHash(st, prev) {
+    if (applyingHash) return;
+    const h = '#' + encodeHash(st);
+    if (h === location.hash) return;
+    try {
+      if (prev && isStep(prev, st)) history.pushState(null, '', h);
+      else history.replaceState(null, '', h);
+    } catch { /* 某些嵌入环境不允许改网址 */ }
+  }
+  function applyHash() {
+    const patch = decodeHash(location.hash, model);
+    if (!patch) return;
+    applyingHash = true;
+    state.set({ ...patch, path: { ...state.get().path, active: false }, panel: null, gapSel: null });
+    applyingHash = false;
+  }
+  addEventListener('popstate', applyHash);
   state.subscribe(renderAll);
+  // 打开页面时，网址里带着状态就先恢复它
+  { const patch = decodeHash(location.hash, model); if (patch) Object.assign(state.get(), patch); }
   renderAll(state.get(), null);
 
   // ---------- 按钮 ----------
@@ -371,11 +392,10 @@ ${lines.length ? lines.join('\n') : '（目前没有记录任何关系）'}`;
   document.querySelectorAll('.seg [data-view]').forEach(b => b.addEventListener('click', () => actions.setView(b.dataset.view)));
   $('#focusBtn').addEventListener('click', () => {
     const st = state.get();
-    if (st.path.active && pathRes.paths.length) return cur().zoomToNodes((pathRes.paths[st.path.chosen] || pathRes.paths[0]).nodes);
+    if (st.gapSel && !st.sel) return cur().zoomToNodes(gapNodeIds(st.gapSel));
     if (!st.sel) return;
     if (st.sel.kind === 'node') cur().zoomToNodes([st.sel.id]);
     else if (st.sel.kind === 'edge') { const e = model.edgeById.get(st.sel.id); cur().zoomToNodes([e.from, e.to]); }
-    else if (st.sel.kind === 'gap') cur().zoomToNodes(gapNodeIds(st.sel.id));
   });
   $('#pathBtn').addEventListener('click', () => (state.get().path.active ? actions.exitPath() : actions.startPath(state.get().sel?.kind === 'node' ? state.get().sel.id : null)));
 
@@ -407,6 +427,7 @@ ${lines.length ? lines.join('\n') : '（目前没有记录任何关系）'}`;
     const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName);
     if (ev.key === '/' && !typing) { ev.preventDefault(); search.focus(); return; }
     if (!typing && !ev.metaKey && !ev.ctrlKey && !ev.altKey && ['1', '2', '3'].includes(ev.key)) { actions.setView(VIEWS[+ev.key - 1]); return; }
+    if (ev.key === 'Escape' && typing && ev.target.closest('.pathbar')) { ev.target.blur(); actions.exitPath(); return; }
     if (ev.key !== 'Escape' || typing) return;
     const st = state.get();
     if (st.drawer) actions.setDrawer(null);
@@ -418,7 +439,7 @@ ${lines.length ? lines.join('\n') : '（目前没有记录任何关系）'}`;
     else if (st.sel) actions.clearSelection();
   });
 
-  window.__atlas = { model, state, views, actions, routeText: ids => routeText(ids, model), promptFor, vis: () => vis, paths: () => pathRes };   // 方便在控制台里检查
+  window.__atlas = { model, state, views, actions, routeText: ids => routeText(ids, model), promptFor, vis: () => vis, paths: () => views.network.pathSummary() };   // 方便在控制台里检查
 }
 
 start();

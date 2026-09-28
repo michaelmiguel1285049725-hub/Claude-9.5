@@ -1,7 +1,6 @@
 // 右侧详情面板：节点、关系、找路径、空缺列表。只有一句话级别的文字，其余靠视觉编码。
 import { REL_TYPES, REL, STATUS, BASIS, EVIDENCE, CROWDING, relColor } from './encoding.js';
 import { clusterOf } from './data.js';
-import { formatPath } from './pathfinder.js';
 import { relSampleSvg } from './glyph.js';
 
 const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -99,7 +98,7 @@ export function createPanel(el, { model, actions, getDigested, getNotion }) {
   function gapsHtml(st) {
     const order = ['几乎空白', '有初步工作', '已基本解决'];
     const list = [...model.gaps].sort((a, b) => order.indexOf(a.status) - order.indexOf(b.status));
-    const selId = st.sel?.kind === 'gap' ? st.sel.id : null;
+    const selId = st.gapSel;
     return `<h2 class="p-title">空缺问题 · ${model.gaps.length}</h2>
       <ul class="gap-list">${list.map(g => {
         const open = g.id === selId;
@@ -115,52 +114,13 @@ export function createPanel(el, { model, actions, getDigested, getNotion }) {
       }).join('')}</ul>`;
   }
 
-  // ---------- 找路径 ----------
-  function chainHtml(p) {
-    let s = `<span class="pn">${esc(p.nodes[0])} ${esc(nodeName(p.nodes[0]))}</span>`;
-    p.steps.forEach((stp, i) => {
-      const t = stp.edge.type;
-      const proc = stp.edge.basis === '加工' ? '<i class="proc" title="Claude 加工"></i>' : '';
-      s += `<span class="pa" style="color:${relColor(t)}">${stp.forward ? `—${esc(t)}→` : `←${esc(t)}—`}${proc}</span><span class="pn">${esc(p.nodes[i + 1])} ${esc(nodeName(p.nodes[i + 1]))}</span>`;
-    });
-    return s;
-  }
-  function pathHtml(st, res) {
-    const opt = model.nodes.map(n => `<option value="${esc(n.id)} ${esc(n.name)}"></option>`).join('');
-    const val = id => (id ? `${id} ${nodeName(id)}` : '');
-    let body = '';
-    if (!st.path.from || !st.path.to) body = `<p class="hint">${st.path.from ? '再点一个节点作为终点' : '在画布上依次点击两个节点，或在上面输入编号 / 名称'}</p>`;
-    else if (st.path.from === st.path.to) body = '<p class="hint">起点和终点是同一个节点</p>';
-    else if (!res.paths.length) {
-      const sg = res.suggest;
-      body = `<div class="no-path"><b>在当前筛选下，这两个节点不连通。</b>
-        ${sg?.single?.length ? `<p>可以放宽：${sg.single.map(esc).join('、')}</p>` : sg?.all ? `<p>需要同时放宽：${sg.active.map(esc).join('、')}</p>` : '<p>即使取消全部筛选，它们之间也没有关系链。</p>'}</div>`;
-    } else {
-      body = `<ol class="path-list">${res.paths.map((p, i) => `<li><button type="button" class="path-card${i === st.path.chosen ? ' on' : ''}" data-path="${i}" title="${esc(formatPath(p, model.nodeById))}">
-        <span class="pc-label">${i === 0 ? (st.path.prefer ? '文献优先' : '最短路径') : `备选 ${i}`}</span>
-        <span class="chain">${chainHtml(p)}</span>
-        <span class="pc-meta">共 ${p.steps.length} 步，其中 ${p.proc} 条是 Claude 加工，${p.untested} 条未验证</span></button></li>`).join('')}</ol>`;
-    }
-    return `<h2 class="p-title">找路径</h2>
-      <datalist id="nodeOptions">${opt}</datalist>
-      <div class="path-inputs">
-        <label><span>起点</span><input type="text" list="nodeOptions" data-end="from" value="${esc(val(st.path.from))}" placeholder="点画布或输入" autocomplete="off"></label>
-        <button type="button" class="mini" data-act="swap" title="交换起点和终点">⇅</button>
-        <label><span>终点</span><input type="text" list="nodeOptions" data-end="to" value="${esc(val(st.path.to))}" placeholder="点画布或输入" autocomplete="off"></label>
-      </div>
-      <label class="switch"><input type="checkbox" data-act="prefer" ${st.path.prefer ? 'checked' : ''}> 优先走文献路径 <span class="muted-s">（来源 1，加工 3，未验证 +2）</span></label>
-      ${body}
-      <div class="actions"><button type="button" class="btn" data-act="exit-path">退出找路径</button></div>`;
-  }
-
   // ---------- 渲染与事件 ----------
   const body = el.querySelector('.p-body');
   let mode = null;
 
   function render(st, vis, extra = {}) {
     let html = '';
-    if (st.path.active) { mode = 'path'; html = pathHtml(st, extra.pathRes || { paths: [] }); }
-    else if (st.panel === 'gaps' || (st.panel === 'detail' && st.sel?.kind === 'gap')) { mode = 'gaps'; html = gapsHtml(st); }
+    if (st.panel === 'gaps') { mode = 'gaps'; html = gapsHtml(st); }
     else if (st.panel === 'detail' && st.sel?.kind === 'node' && model.nodeById.has(st.sel.id)) { mode = 'node'; html = nodeHtml(model.nodeById.get(st.sel.id), st, vis); }
     else if (st.panel === 'detail' && st.sel?.kind === 'edge' && model.edgeById.has(st.sel.id)) { mode = 'edge'; html = edgeHtml(model.edgeById.get(st.sel.id), vis); }
     else mode = null;
@@ -175,10 +135,9 @@ export function createPanel(el, { model, actions, getDigested, getNotion }) {
   el.addEventListener('click', ev => {
     const t = ev.target.closest('button, [data-act]');
     if (!t || !el.contains(t)) return;
-    if (t.dataset.node) return actions.selectNode(t.dataset.node, { zoom: true, detail: true });
+    if (t.dataset.node) return actions.focusNode(t.dataset.node);
     if (t.dataset.edge) return actions.selectEdge(t.dataset.edge, { zoom: true });
     if (t.dataset.gap) return actions.selectGap(t.dataset.gap);
-    if (t.dataset.path) return actions.choosePath(+t.dataset.path);
     switch (t.dataset.act) {
       case 'close': return actions.closePanel();
       case 'copy-id': return actions.copy(model.nodeById.get(actions.state().sel.id).id, '编号已复制');
@@ -193,19 +152,11 @@ export function createPanel(el, { model, actions, getDigested, getNotion }) {
         if (v && !/^https?:\/\/\S+$/i.test(v)) { err.hidden = false; err.textContent = '链接要以 http:// 或 https:// 开头'; return; }
         return actions.setNotion(actions.state().sel.id, v);
       }
-      case 'exit-path': return actions.exitPath();
-      case 'swap': return actions.swapPath();
     }
   });
   el.addEventListener('change', ev => {
     const t = ev.target;
     if (t.dataset.act === 'depth') actions.setDepth(t.checked ? 2 : 1);
-    if (t.dataset.act === 'prefer') actions.setPreferSource(t.checked);
-    if (t.dataset.end) {
-      const id = t.value.trim().split(/\s+/)[0].toUpperCase();
-      if (model.nodeById.has(id)) actions.setPathEnd(t.dataset.end, id);
-      else if (!t.value.trim()) actions.setPathEnd(t.dataset.end, null);
-    }
   });
 
   return { render, mode: () => mode };
