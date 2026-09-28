@@ -183,20 +183,20 @@ svg.canvas[data-level="near"] .lv-near { display: inline; }
 /* 高亮：悬停 25%，聚焦 10% */
 .node, .edge { transition: opacity 200ms ease; }
 .node.hidden, .edge.hidden { display: none; }
-.net.mode-hover .node:not(.hi), .net.mode-hover .edge:not(.hi) { opacity: .25; }
-.net.mode-focus .node:not(.hi):not(.hi2), .net.mode-focus .edge:not(.hi):not(.hi2) { opacity: .1; }
-.net.mode-focus .edge.hi2 { opacity: .4; }
-.net.mode-focus .node.hi2 { opacity: .8; }
-.net.mode-focus .hull, .net.mode-hover .hull { fill-opacity: .04; }
+.canvas.mode-hover .node:not(.hi), .canvas.mode-hover .edge:not(.hi) { opacity: .25; }
+.canvas.mode-focus .node:not(.hi):not(.hi2), .canvas.mode-focus .edge:not(.hi):not(.hi2) { opacity: .1; }
+.canvas.mode-focus .edge.hi2 { opacity: .4; }
+.canvas.mode-focus .node.hi2 { opacity: .8; }
+.canvas.mode-focus .hull, .canvas.mode-hover .hull { fill-opacity: .04; }
 .node.sel .nd-shape { stroke: var(--ink); stroke-width: 2.6; }
 .node:hover .nd-shape, .node:focus-visible .nd-shape { stroke-width: 2.2; }
 .node:focus { outline: none; }
 .node.path-end .nd-shape { stroke: var(--focus); stroke-width: 3; }
 .edge.sel .edge-line { stroke-width: 3.2px !important; }
-.net.mode-focus .edge.hi .edge-line { stroke-width: 2.2px; }
+.canvas.mode-focus .edge.hi .edge-line { stroke-width: 2.2px; }
 .edge { cursor: pointer; }
 .node.dragging { cursor: grabbing; }
-.net.picking .node { cursor: crosshair; }
+.canvas.picking .node { cursor: crosshair; }
 .hull { cursor: zoom-in; }
 
 /* 语义缩放：远 = 簇视图 */
@@ -338,3 +338,60 @@ dl.kv dd { margin: 0; color: var(--ink-2); display: flex; align-items: center; g
   .canvas-tools { max-width: calc(100% - 20px); }
   .searchbox { flex-basis: 100%; }
 }
+
+/* ================= 阶段 3：成熟度地图与时间线 ================= */
+.view { position: absolute; inset: 0; }
+.view-tools { display: inline-flex; gap: 6px; }
+.view-tools:not([hidden]) + .view-tools:not([hidden]) { margin-left: 0; }
+.node.hidden { display: none; }
+
+/* 成熟度 */
+.m-cell rect { fill: var(--surface); stroke: var(--line-2); stroke-width: 1; }
+.m-count { font: 600 15px var(--mono); fill: var(--muted); }
+.m-axis { font-size: 13px; fill: var(--muted); letter-spacing: .06em; }
+.m-head-t { font-size: 13px; fill: var(--muted); }
+.m-head-gap { font-size: 15px; font-weight: 700; fill: var(--danger); }
+.m-row-t { font-size: 19px; font-weight: 700; fill: var(--ink); }
+.m-hit { fill: transparent; cursor: help; }
+.m-head .ev-badge rect { transform: scale(1.25); transform-origin: center; transform-box: fill-box; }
+.m-divider { stroke: var(--ink-2); stroke-width: 1.2; stroke-dasharray: 5 4; opacity: .5; }
+.m-group { fill: var(--cc); fill-opacity: 0; stroke: none; transition: fill-opacity 200ms; }
+.maturity.cluster-bg .m-group { fill-opacity: .16; stroke: var(--cc); stroke-opacity: .35; }
+.m-gap-label { font-size: 11.5px; font-weight: 600; letter-spacing: .06em; }
+.m-gap-label.gs-blank { fill: var(--danger); }
+.m-gap-label.gs-early { fill: var(--tag-proc-fg); }
+.m-gap-label.gs-solved { fill: var(--tag-src-fg); }
+.gapcard { cursor: pointer; transition: opacity 200ms; }
+.gapcard:focus { outline: none; }
+.gapcard rect { fill: var(--ground); stroke: var(--ink-2); stroke-width: 1.3; stroke-dasharray: 5 4; }
+.gapcard:hover rect, .gapcard:focus-visible rect { fill: var(--surface); }
+.gapcard.sel rect { stroke: var(--danger); stroke-width: 2.2; stroke-dasharray: none; }
+.gapcard.hi rect { stroke: var(--danger); }
+.gc-id { font: 500 11px var(--mono); fill: var(--muted); }
+.gc-t { font-size: 12.5px; font-weight: 500; fill: var(--ink); }
+.canvas.mode-focus .gapcard:not(.hi):not(.sel) { opacity: .35; }
+.m-arcs .edge-line, .t-arcs .edge-line { stroke-opacity: .95; }
+
+/* 时间线 */
+.t-lane rect:first-child { fill: transparent; }
+.t-lane.alt rect:first-child { fill: var(--ink); fill-opacity: .035; }
+.t-lane-mark { opacity: .8; }
+.t-lane-name { font-size: 17px; font-weight: 500; fill: var(--ink-2); }
+.t-lane.main .t-lane-name { font-weight: 700; fill: var(--ink); }
+.t-lane-sub { font: 400 13px var(--mono); fill: var(--muted); }
+.t-axis-line { stroke: var(--ink-2); stroke-width: 1.2; }
+.t-tick { stroke: var(--ink-2); }
+.t-tick-label { font: 400 14px var(--mono); fill: var(--ink-2); }
+.t-grid { stroke: var(--line); stroke-width: 1; stroke-dasharray: 2 5; opacity: .6; }
+.t-break { fill: none; stroke: var(--ink-2); stroke-width: 1.4; stroke-linejoin: round; paint-order: stroke; }
+.t-break-line { stroke: var(--ink-2); stroke-width: 1; stroke-dasharray: 1 6; opacity: .5; }
+.t-axis-title { font-size: 14px; fill: var(--muted); letter-spacing: .06em; }
+.t-axis-hit { fill: transparent; cursor: col-resize; }
+.t-yearline line { stroke: var(--focus); stroke-width: 1.2; stroke-dasharray: 3 3; pointer-events: none; }
+.node.year-hi .nd-shape { stroke: var(--focus); stroke-width: 2.4; }
+.timeline.story .node.st-hidden, .timeline.story .edge.st-hidden { opacity: 0 !important; pointer-events: none; }
+.timeline.story .node.st-new .nd-shape { stroke: var(--focus); stroke-width: 2.6; }
+.storybar { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 8; display: flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; box-shadow: var(--shadow); padding: 6px 8px 6px 16px; font-size: 13px; white-space: nowrap; }
+.storybar .sb-step { color: var(--ink-2); }
+.storybar .sb-year { font: 700 15px var(--mono); margin-right: 6px; }
+.storybar[hidden] { display: none; }

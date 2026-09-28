@@ -5,6 +5,8 @@ import { summarizePack } from './validate.js';
 import { createStore, globalStore } from './storage.js';
 import { createState } from './state.js';
 import { createNetworkView } from './views/network.js';
+import { createMaturityView } from './views/maturity.js';
+import { createTimelineView } from './views/timeline.js';
 import { buildLegend } from './legend.js';
 import { defineMarkers, relSampleSvg } from './glyph.js';
 import { sanitizeFilters, computeVisibility, createFilterBar, relaxSuggestions } from './filters.js';
@@ -106,6 +108,7 @@ async function start() {
 
   // ---------- 全局状态 ----------
   const digested = new Set((store.get('digested', []) || []).filter(id => model.nodeById.has(id)));
+  const VIEWS = ['network', 'maturity', 'timeline'];
   const state = createState({
     view: 'network',
     sel: null,                 // { kind: 'node' | 'edge' | 'gap', id }
@@ -143,18 +146,18 @@ async function start() {
     },
     selectNode(id, { zoom = false } = {}) {
       state.set({ sel: { kind: 'node', id }, panelHidden: false, path: { ...state.get().path, active: false } });
-      if (zoom) net.ensureVisible(id);
+      if (zoom) cur().ensureVisible(id);
     },
     selectEdge(id, { zoom = false } = {}) {
       state.set({ sel: { kind: 'edge', id }, panelHidden: false, path: { ...state.get().path, active: false } });
       const e = model.edgeById.get(id);
-      if (zoom && e) net.zoomToNodes([e.from, e.to]);
+      if (zoom && e) cur().zoomToNodes([e.from, e.to]);
     },
     selectGap(id) {
       const st = state.get();
       if (st.sel?.kind === 'gap' && st.sel.id === id) { state.set({ sel: null }); return; }
       state.set({ sel: { kind: 'gap', id }, panelHidden: false, path: { ...st.path, active: false } });
-      net.zoomToNodes(gapNodeIds(id));
+      cur().zoomToNodes(gapNodeIds(id));
     },
     clearSelection() {
       if (state.get().path.active) return;   // 找路径时点空白不退出
@@ -172,23 +175,30 @@ async function start() {
     setPathEnd(which, id) {
       const p = { ...state.get().path, [which]: id, chosen: 0 };
       state.set({ path: p });
-      if (p.from && p.to && pathRes.paths[0]) net.zoomToNodes(pathRes.paths[0].nodes);
+      if (p.from && p.to && pathRes.paths[0]) cur().zoomToNodes(pathRes.paths[0].nodes);
     },
     swapPath() { const p = state.get().path; state.set({ path: { ...p, from: p.to, to: p.from, chosen: 0 } }); },
     setPreferSource(prefer) { state.set({ path: { ...state.get().path, prefer, chosen: 0 } }); },
     choosePath(i) {
       state.set({ path: { ...state.get().path, chosen: i } });
-      if (pathRes.paths[i]) net.zoomToNodes(pathRes.paths[i].nodes);
+      if (pathRes.paths[i]) cur().zoomToNodes(pathRes.paths[i].nodes);
     },
+    setView(v) { if (VIEWS.includes(v) && v !== state.get().view) state.set({ view: v }); },
     setFilters(filters) { state.set({ filters, panelHidden: false }); },
     async copy(text, msg) { toast((await copyText(text)) ? msg : '复制失败，请手动选择文字复制'); },
   };
 
   // ---------- 模块 ----------
-  const net = createNetworkView({
-    root: $('#views'), model, store, fileLayout: model.layout, tooltip, actions,
-    getDigested: () => digested,
-  });
+  const viewRoot = v => document.querySelector(`.view[data-view="${v}"]`);
+  const toolsFor = v => document.querySelector(`.view-tools[data-for="${v}"]`);
+  const common = { model, store, tooltip, actions, getDigested: () => digested };
+  const net = createNetworkView({ root: viewRoot('network'), fileLayout: model.layout, ...common });
+  const views = {
+    network: net,
+    maturity: createMaturityView({ root: viewRoot('maturity'), toolsEl: toolsFor('maturity'), ...common }),
+    timeline: createTimelineView({ root: viewRoot('timeline'), toolsEl: toolsFor('timeline'), ...common }),
+  };
+  const cur = () => views[state.get().view];
   const panel = createPanel($('#panel'), { model, actions });
   const filterBar = createFilterBar($('#filterbar'), { model, relSample: (t, s) => relSampleSvg(t, s, 24), onChange: f => actions.setFilters(f) });
   const search = createSearch($('#search'), $('#searchList'), { model, onPick: id => actions.selectNode(id, { zoom: true }) });
@@ -215,38 +225,59 @@ async function start() {
     if (!prev || st.filters !== prev.filters) {
       store.set('filters', st.filters);
       vis = computeVisibility(model, st.filters, digested);
-      net.setVisibility(vis);
+      for (const v of Object.values(views)) v.setVisibility(vis);
       filterBar.sync(st.filters);
       updateSummary();
     }
     pathRes = computePaths(st);
     const chosen = st.path.active ? pathRes.paths[st.path.chosen] || pathRes.paths[0] || null : null;
-    net.setView({
+    const viewState = {
       sel: st.path.active ? null : st.sel,
       depth: st.depth,
       path: chosen,
       gap: !st.path.active && st.sel?.kind === 'gap' ? st.sel.id : null,
       pathPick: st.path.active ? { from: st.path.from, to: st.path.to } : false,
-    });
+    };
+    for (const v of Object.values(views)) v.setView(viewState);
+    if (!prev || st.view !== prev.view) showView(st, prev, chosen);
     const keepScroll = prev && prev.sel === st.sel && prev.path.active === st.path.active;
     panel.render(st, vis, { pathRes, keepScroll });
     $('#app').classList.toggle('panel-open', !!panel.mode() && !st.panelCollapsed);
     $('#pathBtn').setAttribute('aria-pressed', String(st.path.active));
     $('#focusBtn').disabled = !(st.sel || chosen);
   }
+  // 切换视角：保留选中，并把选中的对象滚动到可见位置
+  function showView(st, prev, chosen) {
+    tooltip.hide();
+    for (const v of VIEWS) {
+      viewRoot(v).hidden = v !== st.view;
+      const tools = toolsFor(v); if (tools) tools.hidden = v !== st.view;
+      document.querySelector(`.seg [data-view="${v}"]`).setAttribute('aria-pressed', String(v === st.view));
+    }
+    document.querySelectorAll('.net-only').forEach(el => { el.hidden = st.view !== 'network'; });
+    if (prev && views[prev.view].onHide) views[prev.view].onHide();
+    const v = views[st.view];
+    v.onShow();
+    if (!prev) return;
+    if (chosen) v.zoomToNodes(chosen.nodes);
+    else if (st.sel?.kind === 'node') v.ensureVisible(st.sel.id);
+    else if (st.sel?.kind === 'edge') { const e = model.edgeById.get(st.sel.id); if (e) v.zoomToNodes([e.from, e.to]); }
+    else if (st.sel?.kind === 'gap') v.zoomToNodes(gapNodeIds(st.sel.id));
+  }
   state.subscribe(renderAll);
   renderAll(state.get(), null);
 
   // ---------- 按钮与快捷键 ----------
   $('#filterSummary').addEventListener('click', () => actions.setFilters(sanitizeFilters(null, model)));
-  $('#fitBtn').addEventListener('click', () => net.fitAll());
+  $('#fitBtn').addEventListener('click', () => cur().fitAll());
+  document.querySelectorAll('.seg [data-view]').forEach(b => b.addEventListener('click', () => actions.setView(b.dataset.view)));
   $('#focusBtn').addEventListener('click', () => {
     const st = state.get();
-    if (st.path.active && pathRes.paths.length) return net.zoomToNodes((pathRes.paths[st.path.chosen] || pathRes.paths[0]).nodes);
+    if (st.path.active && pathRes.paths.length) return cur().zoomToNodes((pathRes.paths[st.path.chosen] || pathRes.paths[0]).nodes);
     if (!st.sel) return;
-    if (st.sel.kind === 'node') net.zoomToNodes([st.sel.id]);
-    else if (st.sel.kind === 'edge') { const e = model.edgeById.get(st.sel.id); net.zoomToNodes([e.from, e.to]); }
-    else if (st.sel.kind === 'gap') net.zoomToNodes(gapNodeIds(st.sel.id));
+    if (st.sel.kind === 'node') cur().zoomToNodes([st.sel.id]);
+    else if (st.sel.kind === 'edge') { const e = model.edgeById.get(st.sel.id); cur().zoomToNodes([e.from, e.to]); }
+    else if (st.sel.kind === 'gap') cur().zoomToNodes(gapNodeIds(st.sel.id));
   });
   $('#pathBtn').addEventListener('click', () => (state.get().path.active ? actions.exitPath() : actions.startPath(state.get().sel?.kind === 'node' ? state.get().sel.id : null)));
   $('#resetLayoutBtn').addEventListener('click', () => {
@@ -263,14 +294,16 @@ async function start() {
   document.addEventListener('keydown', ev => {
     const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName);
     if (ev.key === '/' && !typing) { ev.preventDefault(); search.focus(); return; }
+    if (!typing && !ev.metaKey && !ev.ctrlKey && !ev.altKey && ['1', '2', '3'].includes(ev.key)) { actions.setView(VIEWS[+ev.key - 1]); return; }
     if (ev.key === 'Escape' && !typing) {
       const st = state.get();
-      if (st.path.active) actions.exitPath();
+      if (st.view === 'timeline' && views.timeline.storyActive()) views.timeline.endStory();
+      else if (st.path.active) actions.exitPath();
       else if (st.sel) state.set({ sel: null });
     }
   });
 
-  window.__atlas = { model, state, net, actions, vis: () => vis, paths: () => pathRes };   // 方便在控制台里检查
+  window.__atlas = { model, state, net, views, actions, vis: () => vis, paths: () => pathRes };   // 方便在控制台里检查
 }
 
 start();

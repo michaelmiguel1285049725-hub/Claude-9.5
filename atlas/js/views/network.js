@@ -4,10 +4,9 @@
 import { nodeBox, drawNode, styleEdgePath } from '../glyph.js';
 import { REL_TYPES, ZOOM_FAR, ZOOM_NEAR, relColor } from '../encoding.js';
 import { clusterOf } from '../data.js';
+import { computeHighlight, applyHighlight, nodeTip, edgeTip, boxEdgePoint, esc, reduceMotion } from './shared.js';
 
 const d3 = window.d3;
-const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // 世界坐标：固定大小，与窗口无关。簇的 anchor（0–1）映射到这块画布上。
 export const WORLD = { w: 1600, h: 1000 };
@@ -93,16 +92,6 @@ function rectCollide(pad, strength = 0.7) {
 }
 
 // ---------- 几何 ----------
-// 从矩形中心朝 (tx,ty) 方向，求与矩形边（外扩 pad）的交点
-function boxEdgePoint(c, b, tx, ty, pad) {
-  const dx = tx - c.x, dy = ty - c.y;
-  if (!dx && !dy) return { x: c.x, y: c.y };
-  const sx = dx ? (b.w / 2 + pad) / Math.abs(dx) : Infinity;
-  const sy = dy ? (b.h / 2 + pad) / Math.abs(dy) : Infinity;
-  const s = Math.min(sx, sy);
-  return { x: c.x + dx * s, y: c.y + dy * s };
-}
-
 // 每条关系的几何：同一对节点之间有多条线时，按统一方向对称地弯开
 function edgeGeometry(edges, layout) {
   const groups = new Map();
@@ -306,66 +295,11 @@ export function createNetworkView({ root, model, store, fileLayout = null, toolt
   }
 
   // ---------- 高亮 ----------
-  // 优先级：路径 > 空缺 > 选中的关系 > 聚焦的节点 > 悬停
-  function neighbors(id, depth) {
-    const one = new Set([id]), edges1 = new Set();
-    for (const e of vis.visibleEdgeList) {
-      if (e.from === id) { one.add(e.to); edges1.add(e.id); }
-      else if (e.to === id) { one.add(e.from); edges1.add(e.id); }
-    }
-    const two = new Set(), edges2 = new Set();
-    if (depth >= 2) {
-      for (const e of vis.visibleEdgeList) {
-        if (edges1.has(e.id)) continue;
-        if (one.has(e.from) || one.has(e.to)) {
-          edges2.add(e.id);
-          if (!one.has(e.from)) two.add(e.from);
-          if (!one.has(e.to)) two.add(e.to);
-        }
-      }
-    }
-    return { nodes: one, edges: edges1, nodes2: two, edges2 };
-  }
-
-  function highlightSet() {
-    if (view.path) return { mode: 'focus', nodes: new Set(view.path.nodes), edges: new Set(view.path.steps.map(s => s.edge.id)), nodes2: new Set(), edges2: new Set() };
-    if (view.gap) {
-      const g = model.gapById.get(view.gap);
-      if (g) {
-        const edges = new Set(model.edges.filter(e => e.gap === g.id).map(e => e.id));
-        const nodes = new Set(Array.isArray(g.nodes) ? g.nodes : []);
-        for (const e of model.edges) if (edges.has(e.id)) { nodes.add(e.from); nodes.add(e.to); }
-        return { mode: 'focus', nodes, edges, nodes2: new Set(), edges2: new Set() };
-      }
-    }
-    if (view.sel?.kind === 'edge') {
-      const e = model.edgeById.get(view.sel.id);
-      if (e) return { mode: 'focus', nodes: new Set([e.from, e.to]), edges: new Set([e.id]), nodes2: new Set(), edges2: new Set(), selEdge: e.id };
-    }
-    if (view.sel?.kind === 'node' && model.nodeById.has(view.sel.id)) return { mode: 'focus', ...neighbors(view.sel.id, view.depth), selNode: view.sel.id };
-    if (hoverNode) return { mode: 'hover', ...neighbors(hoverNode, 1) };
-    if (hoverEdge) {
-      const e = model.edgeById.get(hoverEdge);
-      return { mode: 'hover', nodes: new Set([e.from, e.to]), edges: new Set([e.id]), nodes2: new Set(), edges2: new Set() };
-    }
-    return null;
-  }
-
   function paint() {
-    const h = highlightSet();
-    svg.classed('mode-focus', h?.mode === 'focus').classed('mode-hover', h?.mode === 'hover');
-    gNode.selectAll('g.node')
-      .classed('hidden', n => !vis.nodes.has(n.id))
-      .classed('hi', n => !!h && h.nodes.has(n.id))
-      .classed('hi2', n => !!h && h.nodes2.has(n.id))
-      .classed('sel', n => h?.selNode === n.id)
-      .classed('path-end', n => !!view.pathPick && (view.pathPick.from === n.id || view.pathPick.to === n.id));
-    gEdge.selectAll('g.edge')
-      .classed('hidden', e => !vis.edges.has(e.id))
-      .classed('hi', e => !!h && h.edges.has(e.id))
-      .classed('hi2', e => !!h && h.edges2.has(e.id))
-      .classed('sel', e => h?.selEdge === e.id);
-    svg.classed('picking', !!view.pathPick);
+    const h = computeHighlight(model, vis, view, { node: hoverNode, edge: hoverEdge });
+    gNode.selectAll('g.node').classed('hidden', n => !vis.nodes.has(n.id));
+    gEdge.selectAll('g.edge').classed('hidden', e => !vis.edges.has(e.id));
+    applyHighlight(svg, gNode.selectAll('g.node'), gEdge.selectAll('g.edge'), h, view);
   }
 
   // ---------- 平移缩放 ----------
@@ -441,7 +375,7 @@ export function createNetworkView({ root, model, store, fileLayout = null, toolt
   // ---------- 小地图 ----------
   const minimap = (() => {
     const W = 150, H = 94;
-    const box = d3.select(root.parentNode).append('div').attr('class', 'minimap').attr('title', '小地图：点击跳转');
+    const box = d3.select(root).append('div').attr('class', 'minimap').attr('title', '小地图：点击跳转');
     const m = box.append('svg').attr('width', W).attr('height', H);
     const gm = m.append('g'), vp = m.append('rect').attr('class', 'mm-view');
     let s = 1, ox = 0, oy = 0;
@@ -472,14 +406,6 @@ export function createNetworkView({ root, model, store, fileLayout = null, toolt
   })();
 
   // ---------- 交互 ----------
-  const nodeTip = n => `<div class="tt-head"><span class="tt-id">${esc(n.id)}</span>${esc(n.name)}</div>${n.gist ? `<div class="tt-body">${esc(n.gist)}</div>` : ''}`;
-  const edgeTip = e => {
-    const a = model.nodeById.get(e.from), b = model.nodeById.get(e.to);
-    return `<div class="tt-head">${esc(a.name)} <span class="tt-rel" style="color:${relColor(e.type)}">—${esc(e.type)}→</span> ${esc(b.name)}</div>
-      <div class="tt-body">${esc(e.reason || '')}</div>
-      <div class="tt-meta">${esc(e.status)} · ${e.basis === '加工' ? 'Claude 加工' : '来源'}${e.unverified ? ' · 未经检索核验' : ''}</div>`;
-  };
-
   gNode.on('pointerover', ev => {
     const el = ev.target.closest('g.node'); if (!el) return;
     const n = d3.select(el).datum();
@@ -494,7 +420,7 @@ export function createNetworkView({ root, model, store, fileLayout = null, toolt
     const el = ev.target.closest('g.edge'); if (!el) return;
     const e = d3.select(el).datum();
     if (hoverEdge !== e.id) { hoverEdge = e.id; hoverNode = null; paint(); }
-    tooltip.show(edgeTip(e), ev);
+    tooltip.show(edgeTip(model, e), ev);
   }).on('pointermove', ev => tooltip.move(ev))
     .on('pointerout', ev => {
       const el = ev.target.closest('g.edge');
@@ -577,6 +503,7 @@ export function createNetworkView({ root, model, store, fileLayout = null, toolt
   new ResizeObserver(() => { const k = d3.zoomTransform(svg.node()).k; computeBase(); updateLevel(k); drawFar(); minimap.drawBase(); minimap.update(); }).observe(svg.node());
 
   return {
+    onShow() { const k = d3.zoomTransform(svg.node()).k; computeBase(); updateLevel(k); drawFar(); minimap.update(); },
     fitAll,
     zoomToNodes,
     ensureVisible,
