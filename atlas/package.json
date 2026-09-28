@@ -1,0 +1,6 @@
+{
+  "name": "atlas",
+  "private": true,
+  "type": "module",
+  "description": "领域学习地图引擎（纯静态，无构建）。package.json 只为了让 tools/validate.mjs 能在 Node 里 import 浏览器共用的 js/validate.js。"
+}
