@@ -323,3 +323,58 @@ svg:not([data-level="1"]) .bubbles{display:none}
 .gap-list.compact .gap-sum,.gap-list.compact .gap-meta{display:none}
 #toast{position:fixed;left:50%;bottom:64px;transform:translate(-50%,12px);background:var(--ink);color:var(--panel);padding:8px 14px;border-radius:999px;font-size:13px;z-index:50;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
 #toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ===== 阶段 3：成熟度地图与时间线 ===== */
+svg.viewsvg{position:absolute;inset:0;width:100%;height:100%;display:block;user-select:none;touch-action:none}
+svg.viewsvg[hidden]{display:none}
+#viewTools{position:absolute;top:12px;left:12px;z-index:4;display:flex;align-items:center;gap:6px;flex-wrap:wrap;max-width:calc(100% - 300px);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:5px 10px;font-size:12px;color:var(--ink-2)}
+#viewTools .vt-sep{width:1px;height:18px;background:var(--line);margin:0 4px}
+#viewTools .vt-status{font:500 12px var(--mono);color:var(--ink);padding:0 4px}
+#viewTools .vt-hint{color:var(--muted);font-size:11px}
+#viewTools+#summary{top:auto;bottom:52px}
+/* 成熟度 */
+#maturity .cell{fill:var(--panel);stroke:var(--line-2);stroke-width:1}
+#maturity .cell.alt{fill:var(--surface)}
+#maturity .cell.gapcell{fill:var(--surface);stroke-dasharray:4 3;stroke:var(--line)}
+#maturity .cell-count{font:500 11px var(--mono);fill:var(--muted);text-anchor:end}
+#maturity .divider{stroke:var(--ink-2);stroke-width:1.2;stroke-dasharray:2 3}
+#maturity .head-hit{fill:transparent}
+#maturity .head-title{font:700 14px var(--sans);fill:var(--ink);text-anchor:middle}
+#maturity .head-sub{font:400 10.5px var(--sans);fill:var(--muted);text-anchor:middle}
+#maturity .rowhead .head-title,#maturity .rowhead .head-sub{text-anchor:start}
+#maturity .rowhead .head-sub{font-size:9px;letter-spacing:.15em}
+#maturity .axis-name{font:500 10.5px var(--sans);fill:var(--muted);letter-spacing:.1em}
+#maturity .gap-group{font:600 11px var(--sans)}
+#maturity .group-tint{opacity:0;pointer-events:none;transition:opacity .2s}
+#maturity .groups.on .group-tint{opacity:.13;pointer-events:all}
+.gapcard{cursor:pointer}
+.gapcard rect{fill:var(--panel);stroke:var(--c);stroke-width:1.4;stroke-dasharray:5 3}
+.gapcard:hover rect{stroke-width:2.2}
+.gapcard.active rect{stroke-dasharray:none;stroke-width:2.4;stroke:var(--ink)}
+.gapcard.faint{opacity:.2}
+.gapcard .g-id{font:500 10.5px var(--mono);fill:var(--muted)}
+.gapcard .g-title{font:500 12px var(--sans);fill:var(--ink)}
+/* 时间线 */
+#timeline .lane rect{fill:var(--panel)}
+#timeline .lane.alt rect{fill:var(--surface)}
+#timeline .lane rect.lane-mark{fill:var(--c)}
+#timeline .lane-label{font:500 14px var(--sans);fill:var(--ink-2)}
+#timeline .lane-label.main{font-weight:700;fill:var(--ink)}
+#timeline .lane-count{font:400 11px var(--mono);fill:var(--muted)}
+#timeline .lane-desc{font:400 10.5px var(--sans);fill:var(--muted)}
+#timeline .axis-line{stroke:var(--ink-2);stroke-width:1.2}
+#timeline .axis-name{font:500 10.5px var(--sans);fill:var(--muted);letter-spacing:.1em}
+#timeline .tick line{stroke:var(--ink-2);stroke-width:1}
+#timeline .tick line.gridline{stroke:var(--line-2);stroke-dasharray:2 4}
+#timeline .tick text{font:400 11px var(--mono);fill:var(--ink-2);text-anchor:middle}
+#timeline .tick-hit{fill:transparent;cursor:help}
+#timeline .tick:hover text{fill:var(--ink);font-weight:600}
+#timeline .axis-break rect{fill:var(--ground)}
+#timeline .axis-break path{fill:none;stroke:var(--ink-2);stroke-width:1.4;stroke-linejoin:round}
+#timeline .break-label{font:400 9.5px var(--sans);fill:var(--muted);text-anchor:middle}
+#timeline .seg-label{font:400 10px var(--mono);fill:var(--muted);text-anchor:middle}
+#timeline .story line{stroke:var(--accent);stroke-width:1.5;stroke-dasharray:6 4}
+#timeline .story text{font:600 12px var(--mono);fill:var(--accent)}
+.node.story-hidden{opacity:0!important;pointer-events:none}
+.node{transition:opacity .25s}
+@media (prefers-reduced-motion: reduce){ .node{transition:none} }

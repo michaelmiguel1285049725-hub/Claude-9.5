@@ -4,6 +4,8 @@ import * as enc from './encoding.js';
 import * as storage from './storage.js';
 import { get, set, subscribe } from './state.js';
 import { createNetwork } from './views/network.js';
+import { createMaturity } from './views/maturity.js';
+import { createTimeline } from './views/timeline.js';
 import { buildFilterBar, computeVisibility, restoreFilters } from './filters.js';
 import { initPanel } from './panel.js';
 import { initSearch } from './search.js';
@@ -154,16 +156,56 @@ async function boot() {
   window.__atlas.network = network;
 
   const actions = {
+    /* 画布上的点击（三视角共用）：路径模式下填起终点，否则切换选中 */
+    nodeClick(id) {
+      const s = get();
+      if (s.panel === 'path') {
+        const q = s.pathQuery || { from: null, to: null, sourceFirst: false };
+        if (!q.from || (q.from && q.to)) set({ pathQuery: { ...q, from: id, to: null }, path: null });
+        else if (id !== q.from) set({ pathQuery: { ...q, to: id }, path: null });
+        return;
+      }
+      if (s.node === id && !s.edge && !s.path && !s.gap) set({ node: null, edge: null, panel: s.filters.gapsOnly ? 'gaps' : 'closed' });
+      else set({ node: id, edge: null, path: null, gap: null, panel: 'node' });
+    },
+    edgeClick(id) { set({ edge: id, path: null, gap: null, panel: 'edge' }); },
+    clearCanvas() { const s = get(); const panel = s.panel === 'path' ? 'path' : s.filters.gapsOnly ? 'gaps' : 'closed'; set({ node: null, edge: null, path: null, gap: null, panel }); },
     clear() { set({ node: null, edge: null, path: null, gap: null, panel: get().filters.gapsOnly ? 'gaps' : 'closed' }); },
-    selectNode(id, { zoom = false } = {}) { if (!model.byId.has(id)) return; set({ node: id, edge: null, path: null, gap: null, panel: 'node' }); if (zoom) network.zoomToNode(id); },
-    selectEdge(id, { zoom = false } = {}) { if (!model.edgeById.has(id)) return; set({ edge: id, path: null, gap: null, panel: 'edge' }); if (zoom) { const e = model.edgeById.get(id); network.fitNodes([e.from, e.to]); } },
-    selectGap(id) { if (!model.gapById.has(id)) return; set({ gap: id, node: null, edge: null, path: null, panel: 'gaps' }); network.fitNodes(network.gapNodeIds(id)); },
-    back() { network.backToSelection(); },
+    selectNode(id, { zoom = false } = {}) { if (!model.byId.has(id)) return; set({ node: id, edge: null, path: null, gap: null, panel: 'node' }); if (zoom) current().zoomToNode(id); },
+    selectEdge(id, { zoom = false } = {}) { if (!model.edgeById.has(id)) return; set({ edge: id, path: null, gap: null, panel: 'edge' }); if (zoom) { const e = model.edgeById.get(id); current().fitNodes([e.from, e.to]); } },
+    selectGap(id, { zoom = true } = {}) { if (!model.gapById.has(id)) return; set({ gap: id, node: null, edge: null, path: null, panel: 'gaps' }); if (zoom) current().fitNodes(network.gapNodeIds(id)); },
+    back() { current().backToSelection(); },
     async copy(text) { toast((await copyText(text)) ? `已复制 ${text}` : '复制失败，请手动选择'); },
     pathFrom(id) { const q = get().pathQuery || {}; set({ pathQuery: { from: id, to: null, sourceFirst: !!q.sourceFirst }, path: null, node: null, edge: null, gap: null, panel: 'path' }); },
-    showPath(p) { set({ path: { nodes: p.nodes, edges: p.edges, steps: p.steps }, node: null, edge: null, gap: null }); network.fitNodes(p.nodes); },
+    showPath(p) { set({ path: { nodes: p.nodes, edges: p.edges, steps: p.steps }, node: null, edge: null, gap: null }); current().fitNodes(p.nodes); },
   };
   window.__atlas.actions = actions;
+
+  /* ---- 三个视角 ---- */
+  const maturity = createMaturity({ svgEl: $('maturity'), stageEl: $('stage'), model, actions, toolsEl: $('viewTools') });
+  const timeline = createTimeline({ svgEl: $('timeline'), stageEl: $('stage'), model, actions, toolsEl: $('viewTools') });
+  const views = { network, maturity, timeline };
+  window.__atlas.views = views;
+  const HINTS = {
+    network: '拖动平移 · 滚轮缩放 · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> 切换视角 · <kbd>/</kbd> 搜索 · <kbd>Esc</kbd> 取消',
+    maturity: '横轴证据等级 · 纵轴拥挤度 · 点节点看跨格关系 · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> 切换视角',
+    timeline: '横轴年份（分段压缩） · 每条研究线一条泳道 · 悬停年份看当年节点 · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> 切换视角',
+  };
+  function current() { return views[get().view] || network; }
+  function showView(name, { keepSelection = true } = {}) {
+    if (!views[name]) name = 'network';
+    for (const [k, v] of Object.entries(views)) if (k !== name && k !== 'network') v.hide();
+    if (name !== 'network') $('canvas').setAttribute('hidden', ''); else $('canvas').removeAttribute('hidden');
+    $('minimap').hidden = name !== 'network';
+    $('viewTools').hidden = name === 'network';
+    $('hint').innerHTML = HINTS[name];
+    document.querySelectorAll('#views button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.view === name)));
+    if (name !== 'network') views[name].show(); else { network.fitAll(false); network.applyState(); }
+    const s = get();
+    if (keepSelection) setTimeout(() => { if (s.path) current().fitNodes(s.path.nodes); else if (s.gap) current().fitNodes(network.gapNodeIds(s.gap)); else if (s.edge) { const e = model.edgeById.get(s.edge); if (e) current().fitNodes([e.from, e.to]); } else if (s.node) current().zoomToNode(s.node); }, 30);
+  }
+  document.querySelectorAll('#views button').forEach((b) => b.addEventListener('click', () => set({ view: b.dataset.view })));
+  subscribe((s, patch) => { if ('view' in patch) showView(s.view); });
 
   /* ---- 筛选栏 ---- */
   const filterBar = buildFilterBar($('filters'), model, {
@@ -193,8 +235,8 @@ async function boot() {
   }
   renderSummary();
 
-  $('fit').addEventListener('click', () => network.fitAll(true));
-  $('back').addEventListener('click', () => network.backToSelection());
+  $('fit').addEventListener('click', () => current().fitAll(true));
+  $('back').addEventListener('click', () => current().backToSelection());
   const updateBack = () => { const s = get(); $('back').disabled = !(s.node || s.edge || s.path || s.gap); };
   updateBack();
 
@@ -203,7 +245,7 @@ async function boot() {
     if ('panel' in patch) filterBar.refresh();
     if (['node', 'edge', 'path', 'gap'].some((k) => k in patch)) updateBack();
   });
-  window.addEventListener('resize', () => network.fitAll(false));
+  window.addEventListener('resize', () => current().fitAll(false));
 
   /* ---- 键盘 ---- */
   window.addEventListener('keydown', (e) => {
@@ -211,11 +253,14 @@ async function boot() {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.key === 'Escape') { tooltip.hide(); actions.clear(); }
     else if (e.key === '/') { e.preventDefault(); $('search').focus(); }
-    else if (e.key === '+' || e.key === '=') network.zoomBy(1.25);
-    else if (e.key === '-') network.zoomBy(0.8);
-    else if (e.key === '0') network.fitAll(true);
-    else if (e.key === 'f') network.fitAll(true);
+    else if (e.key === '+' || e.key === '=') current().zoomBy(1.25);
+    else if (e.key === '-') current().zoomBy(0.8);
+    else if (e.key === '0' || e.key === 'f') current().fitAll(true);
+    else if (e.key === '1') set({ view: 'network' });
+    else if (e.key === '2') set({ view: 'maturity' });
+    else if (e.key === '3') set({ view: 'timeline' });
   });
+  showView(get().view, { keepSelection: false });
 }
 
 boot();

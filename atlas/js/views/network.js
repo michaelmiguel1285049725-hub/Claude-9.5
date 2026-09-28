@@ -7,6 +7,8 @@ import * as storage from '../storage.js';
 import * as tooltip from '../tooltip.js';
 import * as progress from '../progress.js';
 import { computeVisibility } from '../filters.js';
+import { appendNodeGlyph, appendEdgeGlyph, setEdgePath, nodeTip as glyphNodeTip, edgeTip as glyphEdgeTip, borderPoint } from '../glyph.js';
+import { computeHighlight, applyClasses } from '../highlight.js';
 
 export const WORLD_W = 1360;
 export const WORLD_H = 880;
@@ -36,16 +38,6 @@ function rectCollide(pad, crossPad, strength) {
   }
   force.initialize = (n) => { nodes = n; };
   return force;
-}
-
-/* 从节点中心朝 (tx,ty) 方向，与节点外框（外扩 gap）的交点 */
-function borderPoint(n, tx, ty, gap) {
-  const dx = tx - n.x, dy = ty - n.y;
-  const L = Math.hypot(dx, dy) || 1;
-  const ux = dx / L, uy = dy / L;
-  const hw = n.w / 2 + gap, hh = n.h / 2 + gap;
-  const t = Math.min(hw / (Math.abs(ux) || 1e-9), hh / (Math.abs(uy) || 1e-9));
-  return [n.x + ux * t, n.y + uy * t];
 }
 
 function prefersReduced() { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
@@ -158,21 +150,7 @@ export function createNetwork({ svgEl, stageEl, model, layout, onNodeClick }) {
 
   function drawEdges() {
     const sel = gEdges.selectAll('g.edge').data(se, (d) => d.id);
-    const ent = sel.enter().append('g')
-      .attr('class', 'edge')
-      .attr('data-id', (d) => d.id)
-      .attr('data-type', (d) => d.ref.type)
-      .attr('data-status', (d) => d.ref.status)
-      .attr('data-basis', (d) => d.ref.basis)
-      .style('--c', (d) => enc.relColor(d.ref.type));
-    ent.append('path').attr('class', 'halo');
-    ent.append('path').attr('class', 'line')
-      .attr('stroke-width', (d) => enc.relByZh[d.ref.type]?.width || 1.6)
-      .attr('stroke-dasharray', (d) => enc.STATUS[d.ref.status]?.dash || null)
-      .attr('marker-end', (d) => `url(#mk-${enc.relByZh[d.ref.type]?.key || 'inherit'})`)
-      .attr('marker-start', (d) => (enc.relByZh[d.ref.type]?.both ? `url(#mk-${enc.relByZh[d.ref.type].key}-start)` : null));
-    ent.filter((d) => d.ref.basis === '加工').append('circle').attr('class', 'proc').attr('r', 4);
-    ent.append('path').attr('class', 'hit');
+    const ent = appendEdgeGlyph(sel.enter().append('g'));
     ent.on('mouseenter', (ev, d) => { set({ hoverEdge: d.id }); tooltip.show(edgeTip(d.ref), ev.clientX, ev.clientY); })
       .on('mousemove', (ev) => tooltip.move(ev.clientX, ev.clientY))
       .on('mouseleave', () => { set({ hoverEdge: null }); tooltip.hide(); })
@@ -180,78 +158,12 @@ export function createNetwork({ svgEl, stageEl, model, layout, onNodeClick }) {
     positionEdges();
   }
   function positionEdges() {
-    gEdges.selectAll('g.edge').each(function (d) {
-      const g = edgeGeom(d);
-      const el = d3.select(this);
-      el.select('path.hit').attr('d', g.d);
-      el.select('path.line').attr('d', g.d);
-      el.select('path.halo').attr('d', g.d);
-      el.select('circle.proc').attr('cx', g.mid[0]).attr('cy', g.mid[1]);
-    });
-  }
-
-  function shapeAttrs(sel) {
-    sel.attr('x', (d) => -d.w / 2).attr('y', (d) => -d.h / 2).attr('width', (d) => d.w).attr('height', (d) => d.h)
-      .attr('rx', (d) => { const k = enc.KINDS[d.ref.kind] || enc.KINDS.现象; return k.capsule ? d.h / 2 : k.rx; })
-      .attr('stroke-dasharray', (d) => (enc.KINDS[d.ref.kind]?.dashed ? '4 3' : null));
+    gEdges.selectAll('g.edge').each(function (d) { const g = edgeGeom(d); setEdgePath(d3.select(this), g.d, g.mid); });
   }
 
   function drawNodes() {
     const sel = gNodes.selectAll('g.node').data(sn, (d) => d.id);
-    const ent = sel.enter().append('g')
-      .attr('class', 'node')
-      .attr('data-id', (d) => d.id)
-      .attr('data-kind', (d) => d.ref.kind)
-      .attr('data-cluster', (d) => d.ref._cluster)
-      .attr('data-ai', (d) => (d.ref.ai_related ? '1' : '0'))
-      .attr('tabindex', 0)
-      .attr('role', 'button')
-      .attr('aria-label', (d) => `${d.id} ${d.ref.name}`)
-      .style('--cl', (d) => model.clusterById.get(d.ref._cluster)?._color || 'var(--muted)');
-    ent.append('rect').attr('class', 'shape').call(shapeAttrs);
-    ent.filter((d) => enc.KINDS[d.ref.kind]?.bar).append('line').attr('class', 'kind-bar')
-      .attr('x1', (d) => -d.w / 2 + 4).attr('x2', (d) => -d.w / 2 + 4).attr('y1', (d) => -d.h / 2 + 7).attr('y2', (d) => d.h / 2 - 7);
-    const fo = ent.append('foreignObject').attr('x', (d) => -d.w / 2).attr('y', (d) => -d.h / 2).attr('width', (d) => d.w).attr('height', (d) => d.h);
-    fo.append('xhtml:div').attr('class', 'lbl').each(function (d) {
-      const div = this;
-      const name = document.createElement('div'); name.className = 'name'; name.textContent = d.ref.name;
-      const sub = document.createElement('div'); sub.className = 'sub lv3';
-      const id = document.createElement('span'); id.className = 'id'; id.textContent = d.id;
-      const yr = document.createElement('span'); yr.className = 'yr'; yr.textContent = d.ref.year;
-      sub.append(id, yr); div.append(name, sub);
-    });
-    ent.append('circle').attr('class', 'cl-dot').attr('cx', (d) => -d.w / 2).attr('cy', (d) => -d.h / 2).attr('r', 5);
-    const det = ent.append('g').attr('class', 'lv3 details');
-    const ev = det.append('g').attr('class', 'ev').attr('data-ev', (d) => d.ref.evidence).attr('transform', (d) => `translate(${d.w / 2 - 10},${d.h / 2})`);
-    ev.append('rect').attr('x', -15).attr('y', -8).attr('width', 30).attr('height', 16).attr('rx', 8);
-    ev.append('text').attr('y', 4).text((d) => d.ref.evidence);
-    ev.append('title').text((d) => `证据等级 ${d.ref.evidence}：${enc.EVIDENCE[d.ref.evidence]?.desc || ''}`);
-    const cr = det.append('g').attr('class', 'crowd').attr('transform', (d) => `translate(0,${d.h / 2})`);
-    cr.each(function (d) {
-      const n = enc.CROWDING[d.ref.crowding]?.n || 1;
-      const g = d3.select(this);
-      for (let i = 0; i < n; i++) g.append('circle').attr('cx', (i - (n - 1) / 2) * 7).attr('r', 2.4);
-      g.append('title').text(`拥挤度 ${d.ref.crowding}：${enc.CROWDING[d.ref.crowding]?.desc || ''}`);
-    });
-    const marks = det.append('g').attr('class', 'marks').attr('transform', (d) => `translate(${d.w / 2},${-d.h / 2})`);
-    marks.each(function (d) {
-      const g = d3.select(this);
-      let x = 0;
-      if (Array.isArray(d.ref.alerts) && d.ref.alerts.length) {
-        const m = g.append('g').attr('class', 'mark alert').attr('transform', `translate(${x},0)`);
-        m.append('circle').attr('r', 7.5); m.append('text').attr('y', 4).text('!');
-        m.append('title').text('重要警示：' + d.ref.alerts.join('；'));
-        x -= 16;
-      }
-      if (d.ref.unverified) {
-        const m = g.append('g').attr('class', 'mark unverified').attr('transform', `translate(${x},0)`);
-        m.append('circle').attr('r', 7.5); m.append('text').attr('y', 4).text('?');
-        m.append('title').text(enc.UNVERIFIED_TEXT);
-      }
-    });
-    det.append('g').attr('class', 'done').attr('transform', (d) => `translate(${-d.w / 2},${d.h / 2})`)
-      .each(function () { const g = d3.select(this); g.append('circle').attr('r', 7); g.append('path').attr('d', 'M-3.5,0 L-1,2.6 L3.6,-2.6'); });
-
+    const ent = appendNodeGlyph(sel.enter().append('g'), model);
     /* 交互 */
     ent.on('mouseenter', (ev, d) => { set({ hoverNode: d.id }); tooltip.show(nodeTip(d.ref), ev.clientX, ev.clientY); })
       .on('mousemove', (ev) => tooltip.move(ev.clientX, ev.clientY))
@@ -326,69 +238,19 @@ export function createNetwork({ svgEl, stageEl, model, layout, onNodeClick }) {
     ba.select('.b-prog').attr('y', 30).text((d) => `已消化 ${d.progress.done} / ${d.progress.total}`);
   }
 
-  /* ---- 提示文本 ---- */
-  function nodeTip(n) {
-    const c = model.clusterById.get(n._cluster);
-    return `<div class="tip-head"><span class="tip-id">${esc(n.id)}</span><b>${esc(n.name)}</b></div><div class="tip-sub">${esc(n.gist)} <span class="bm-tag ${n.gist_basis === '加工' ? 'proc' : 'src'}">${esc(n.gist_basis)}</span></div><div class="tip-meta">${esc(n.kind)} · ${esc(c?.name || '')} · ${n.year} · 证据 ${esc(n.evidence)} · ${esc(n.crowding)}${n.unverified ? ' · <span class="tip-warn">? 未核验</span>' : ''}${n.alerts?.length ? ' · <span class="tip-danger">! 警示</span>' : ''}</div>`;
-  }
-  function edgeTip(e) {
-    const a = model.byId.get(e.from), b = model.byId.get(e.to);
-    return `<div class="tip-head"><b>${esc(a.name)}</b> <span class="tip-rel" style="--c:${enc.relColor(e.type)}">—${esc(e.type)}→</span> <b>${esc(b.name)}</b></div><div class="tip-sub">${esc(e.reason)}</div><div class="tip-meta">${esc(e.status)} · <span class="bm-tag ${e.basis === '加工' ? 'proc' : 'src'}">${e.basis === '加工' ? 'Claude 加工' : '来源'}</span>${e.gap ? ' · 空缺 ' + esc(e.gap) : ''}${e.unverified ? ' · <span class="tip-warn">? 未核验</span>' : ''}<span class="tip-id"> ${esc(e.id)}</span></div>`;
-  }
+  const nodeTip = (n) => glyphNodeTip(model, n);
+  const edgeTip = (e) => glyphEdgeTip(model, e);
 
   /* ---- 可见性与高亮 ---- */
   let visible = computeVisibility(model, get().filters);
   function refreshVisibility() { visible = computeVisibility(model, get().filters); positionHulls(); applyState(); }
 
-  function neighborhood(id, depth) {
-    const n1 = new Set([id]), e1 = new Set();
-    for (const e of model.edgesOf.get(id) || []) if (visible.edgeVis.has(e.id)) { e1.add(e.id); n1.add(e.from === id ? e.to : e.from); }
-    const n2 = new Set(), e2 = new Set();
-    if (depth >= 2) for (const x of [...n1]) if (x !== id) for (const e of model.edgesOf.get(x) || []) {
-      if (!visible.edgeVis.has(e.id) || e1.has(e.id)) continue;
-      e2.add(e.id); const o = e.from === x ? e.to : e.from; if (!n1.has(o)) n2.add(o);
-    }
-    return { n1, e1, n2, e2 };
-  }
-
   function applyState() {
     const s = get();
-    let mode = 'none', nHi = new Set(), eHi = new Set(), nHi2 = new Set(), eHi2 = new Set();
-    if (s.path) { mode = 'path'; nHi = new Set(s.path.nodes); eHi = new Set(s.path.edges); }
-    else if (s.gap && model.gapById.has(s.gap)) {
-      mode = 'gap'; const g = model.gapById.get(s.gap);
-      nHi = new Set((g.nodes || []).filter((id) => visible.nodeVis.has(id)));
-      for (const e of model.edgesByGap.get(s.gap) || []) if (visible.edgeVis.has(e.id)) { eHi.add(e.id); nHi.add(e.from); nHi.add(e.to); }
-    }
-    else if (s.edge && model.edgeById.has(s.edge)) { mode = 'edge'; const e = model.edgeById.get(s.edge); eHi.add(e.id); nHi.add(e.from); nHi.add(e.to); }
-    else if (s.node && model.byId.has(s.node)) { mode = 'focus'; const nb = neighborhood(s.node, s.depth); nHi = nb.n1; eHi = nb.e1; nHi2 = nb.n2; eHi2 = nb.e2; }
-    else if (s.hoverNode && model.byId.has(s.hoverNode)) { mode = 'hover'; const nb = neighborhood(s.hoverNode, 1); nHi = nb.n1; eHi = nb.e1; }
-    const faintCls = mode === 'hover' ? 'dim' : 'faint';
-    gNodes.selectAll('g.node').each(function (d) {
-      const el = this;
-      const hidden = !visible.nodeVis.has(d.id);
-      el.classList.toggle('hidden', hidden);
-      const hi = nHi.has(d.id), hi2 = nHi2.has(d.id);
-      el.classList.toggle('active', d.id === s.node);
-      el.classList.toggle('hi', hi);
-      el.classList.toggle('hi2', !hi && hi2);
-      el.classList.toggle('dim', mode !== 'none' && !hi && !hi2 && faintCls === 'dim');
-      el.classList.toggle('faint', mode !== 'none' && !hi && !hi2 && faintCls === 'faint');
-      el.classList.toggle('digested', progress.has(d.id));
-      el.classList.toggle('pinned', d.fx != null);
-    });
-    gEdges.selectAll('g.edge').each(function (d) {
-      const el = this;
-      const hidden = !visible.edgeVis.has(d.id);
-      el.classList.toggle('hidden', hidden);
-      const hi = eHi.has(d.id), hi2 = eHi2.has(d.id);
-      el.classList.toggle('active', d.id === s.edge);
-      el.classList.toggle('hi', hi || d.id === s.hoverEdge);
-      el.classList.toggle('hi2', !hi && hi2);
-      el.classList.toggle('dim', mode !== 'none' && !hi && !hi2 && faintCls === 'dim');
-      el.classList.toggle('faint', mode !== 'none' && !hi && !hi2 && faintCls === 'faint');
-    });
-    svgEl.dataset.mode = mode;
+    const hl = computeHighlight(model, s, visible);
+    applyClasses({ nodeEls: gNodes.node().children, edgeEls: gEdges.node().children, hl, visible, s });
+    gNodes.selectAll('g.node').each(function (d) { this.classList.toggle('pinned', d.fx != null); });
+    svgEl.dataset.mode = hl.mode;
     if (svgEl.getAttribute('data-level') === '1') drawBubbles();
   }
 
