@@ -1,5 +1,5 @@
 // 启动与编排：读取 ?pack= → 加载内容包 → 校验提示 → 建立全局状态 → 各模块订阅状态。
-// 所有用户操作都走 actions，改的是全局状态；视角和面板只负责按状态重画。
+// 所有用户操作都走 actions，改的是全局状态；视角、面板、抽屉只负责按状态重画。
 import { loadPack } from './data.js';
 import { summarizePack } from './validate.js';
 import { createStore, globalStore } from './storage.js';
@@ -7,9 +7,9 @@ import { createState } from './state.js';
 import { createNetworkView } from './views/network.js';
 import { createMaturityView } from './views/maturity.js';
 import { createTimelineView } from './views/timeline.js';
-import { buildLegend } from './legend.js';
+import { renderLegend } from './legend.js';
 import { defineMarkers, relSampleSvg } from './glyph.js';
-import { sanitizeFilters, computeVisibility, createFilterBar, relaxSuggestions } from './filters.js';
+import { sanitizeFilters, computeVisibility, createFilterBar, relaxSuggestions, activeCount } from './filters.js';
 import { findPaths, connected } from './pathfinder.js';
 import { createPanel } from './panel.js';
 import { createSearch } from './search.js';
@@ -26,8 +26,8 @@ function initTheme() {
     if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
     else delete document.documentElement.dataset.theme;
     const label = (THEMES.find(x => x[0] === t) || THEMES[0])[1];
-    $('#themeBtn').textContent = `配色：${label}`;
-    $('#themeBtn').title = '点击切换：跟随系统 → 浅色 → 深色';
+    $('#themeBtn').title = `深浅色：${label}（点击切换）`;
+    $('#themeBtn').setAttribute('aria-label', `深浅色：${label}`);
   };
   apply();
   $('#themeBtn').addEventListener('click', () => {
@@ -70,14 +70,6 @@ async function copyText(text) {
   } catch { return false; }
 }
 
-function download(name, obj) {
-  const blob = new Blob([JSON.stringify(obj, null, 2) + '\n'], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob); a.download = name;
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-}
-
 async function start() {
   initTheme();
   if (!window.d3) { fatal('D3 可视化库没有加载成功（需要联网访问 cdn.jsdelivr.net）。'); return; }
@@ -89,19 +81,15 @@ async function start() {
   try { model = await loadPack(packId); } catch (err) { fatal(err.message); return; }
   const store = createStore(packId);
 
-  // ---------- 标题 ----------
+  // ---------- 标题：副标题和版本放进悬停提示 ----------
   const d = model.domain;
   document.title = `${d.title || packId} · 学习地图`;
   $('#title').textContent = d.title || packId;
-  $('#subtitle').textContent = d.subtitle || '';
-  const meta = [d.version && `v${d.version}`, d.data_date].filter(Boolean).join(' · ');
-  $('#ver').textContent = meta; $('#ver').hidden = !meta;
+  $('#brand').title = [d.subtitle, [d.version && `v${d.version}`, d.data_date].filter(Boolean).join(' · '), d.status_note].filter(Boolean).join('\n');
   if (d.status_note) {
     const chip = $('#draft');
     chip.hidden = false;
     chip.textContent = /草稿|draft/i.test(d.status_note + d.version) ? '草稿' : '说明';
-    chip.title = d.status_note;
-    chip.setAttribute('aria-label', d.status_note);
   }
   showIssues(model.issues, model.pack);
   defineMarkers(window.d3.select('#defs defs'));
@@ -111,12 +99,13 @@ async function start() {
   const VIEWS = ['network', 'maturity', 'timeline'];
   const state = createState({
     view: 'network',
+    net: { level: 'overview', cluster: null },   // 关系网当前层级
     sel: null,                 // { kind: 'node' | 'edge' | 'gap', id }
     depth: 1,
     filters: sanitizeFilters(store.get('filters'), model),
     path: { active: false, from: null, to: null, prefer: false, chosen: 0 },
-    panelCollapsed: false,
-    panelHidden: false,
+    gapList: false,            // 右侧抽屉列出全部空缺
+    drawer: null,              // 'filter' | 'legend' | null
   });
   let vis = computeVisibility(model, state.get().filters, digested);
   let pathRes = { paths: [] };
@@ -145,31 +134,28 @@ async function start() {
       else actions.selectNode(id);
     },
     selectNode(id, { zoom = false } = {}) {
-      state.set({ sel: { kind: 'node', id }, panelHidden: false, path: { ...state.get().path, active: false } });
+      state.set({ sel: { kind: 'node', id }, gapList: false, path: { ...state.get().path, active: false } });
       if (zoom) cur().ensureVisible(id);
     },
     selectEdge(id, { zoom = false } = {}) {
-      state.set({ sel: { kind: 'edge', id }, panelHidden: false, path: { ...state.get().path, active: false } });
+      state.set({ sel: { kind: 'edge', id }, gapList: false, path: { ...state.get().path, active: false } });
       const e = model.edgeById.get(id);
       if (zoom && e) cur().zoomToNodes([e.from, e.to]);
     },
     selectGap(id) {
       const st = state.get();
       if (st.sel?.kind === 'gap' && st.sel.id === id) { state.set({ sel: null }); return; }
-      state.set({ sel: { kind: 'gap', id }, panelHidden: false, path: { ...st.path, active: false } });
+      state.set({ sel: { kind: 'gap', id }, path: { ...st.path, active: false } });
       cur().zoomToNodes(gapNodeIds(id));
     },
     clearSelection() {
       if (state.get().path.active) return;   // 找路径时点空白不退出
       if (state.get().sel) state.set({ sel: null });
     },
-    closePanel() {
-      state.set({ sel: null, panelHidden: true, path: { ...state.get().path, active: false } });
-    },
-    togglePanelCollapsed() { state.set({ panelCollapsed: !state.get().panelCollapsed }); },
+    closePanel() { state.set({ sel: null, gapList: false, path: { ...state.get().path, active: false } }); },
     setDepth(depth) { state.set({ depth }); },
     startPath(from = null) {
-      state.set({ sel: null, panelHidden: false, path: { ...state.get().path, active: true, from, to: null, chosen: 0 } });
+      state.set({ sel: null, gapList: false, path: { ...state.get().path, active: true, from, to: null, chosen: 0 } });
     },
     exitPath() { state.set({ path: { ...state.get().path, active: false } }); },
     setPathEnd(which, id) {
@@ -184,7 +170,13 @@ async function start() {
       if (pathRes.paths[i]) cur().zoomToNodes(pathRes.paths[i].nodes);
     },
     setView(v) { if (VIEWS.includes(v) && v !== state.get().view) state.set({ view: v }); },
-    setFilters(filters) { state.set({ filters, panelHidden: false }); },
+    setFilters(filters) { state.set({ filters }); },
+    toggleGapList() { const st = state.get(); state.set({ gapList: !st.gapList, sel: st.sel?.kind === 'gap' ? null : st.sel, path: { ...st.path, active: false } }); },
+    setDrawer(drawer) { state.set({ drawer }); },
+    // 关系网层级
+    openCluster(cluster) { state.set({ net: { level: 'cluster', cluster } }); },
+    goOverview() { state.set({ net: { level: 'overview', cluster: null } }); },
+    legendDirty() { scheduleLegend(); },
     async copy(text, msg) { toast((await copyText(text)) ? msg : '复制失败，请手动选择文字复制'); },
   };
 
@@ -192,18 +184,27 @@ async function start() {
   const viewRoot = v => document.querySelector(`.view[data-view="${v}"]`);
   const toolsFor = v => document.querySelector(`.view-tools[data-for="${v}"]`);
   const common = { model, store, tooltip, actions, getDigested: () => digested };
-  const net = createNetworkView({ root: viewRoot('network'), fileLayout: model.layout, ...common });
   const views = {
-    network: net,
+    network: createNetworkView({ root: viewRoot('network'), ...common }),
     maturity: createMaturityView({ root: viewRoot('maturity'), toolsEl: toolsFor('maturity'), ...common }),
     timeline: createTimelineView({ root: viewRoot('timeline'), toolsEl: toolsFor('timeline'), ...common }),
   };
   const cur = () => views[state.get().view];
   const panel = createPanel($('#panel'), { model, actions });
-  const filterBar = createFilterBar($('#filterbar'), { model, relSample: (t, s) => relSampleSvg(t, s, 24), onChange: f => actions.setFilters(f) });
+  const filterBar = createFilterBar($('#filterDrawer'), { model, relSample: (t, s) => relSampleSvg(t, s, 24), onChange: f => actions.setFilters(f) });
   const search = createSearch($('#search'), $('#searchList'), { model, onPick: id => actions.selectNode(id, { zoom: true }) });
-  buildLegend($('#legend'), model);
-  if (innerWidth < 1500) $('#legend').open = false;   // 窄一点的屏幕上图例默认收起
+
+  // 图例：打开时才生成，画面变化后在下一帧重建
+  let legendQueued = false;
+  function scheduleLegend() {
+    if (legendQueued || state.get().drawer !== 'legend') return;
+    legendQueued = true;
+    requestAnimationFrame(() => {
+      legendQueued = false;
+      if (state.get().drawer !== 'legend') return;
+      renderLegend($('#legend'), { ...(cur().legend ? cur().legend() : {}), digested });
+    });
+  }
 
   // ---------- 状态 → 画面 ----------
   function computePaths(st) {
@@ -214,11 +215,17 @@ async function start() {
     return paths.length ? { paths } : { paths, suggest: relaxSuggestions(model, st.filters, digested, p.from, p.to, connected) };
   }
 
-  function updateSummary() {
+  function updateFilterUi(st) {
     const el = $('#filterSummary');
-    if (!vis.hiddenEdges && !vis.hiddenNodes) { el.hidden = true; return; }
-    el.hidden = false;
-    el.innerHTML = `已隐藏 ${vis.hiddenEdges} 条线、${vis.hiddenNodes} 个节点 · <u>一键恢复</u>`;
+    if (!vis.hiddenEdges && !vis.hiddenNodes) el.hidden = true;
+    else {
+      el.hidden = false;
+      el.innerHTML = `已隐藏 ${vis.hiddenEdges} 条关系、${vis.hiddenNodes} 个节点 · <u>恢复全部</u>`;
+    }
+    const n = activeCount(st.filters);
+    $('#filterCount').hidden = !n;
+    $('#filterCount').textContent = n;
+    $('#sourceOnly').checked = st.filters.sourceOnly;
   }
 
   function renderAll(st, prev) {
@@ -227,7 +234,7 @@ async function start() {
       vis = computeVisibility(model, st.filters, digested);
       for (const v of Object.values(views)) v.setVisibility(vis);
       filterBar.sync(st.filters);
-      updateSummary();
+      updateFilterUi(st);
     }
     pathRes = computePaths(st);
     const chosen = st.path.active ? pathRes.paths[st.path.chosen] || pathRes.paths[0] || null : null;
@@ -239,12 +246,19 @@ async function start() {
       pathPick: st.path.active ? { from: st.path.from, to: st.path.to } : false,
     };
     for (const v of Object.values(views)) v.setView(viewState);
+    if (!prev || st.net !== prev.net) views.network.setNet(st.net);
     if (!prev || st.view !== prev.view) showView(st, prev, chosen);
     const keepScroll = prev && prev.sel === st.sel && prev.path.active === st.path.active;
     panel.render(st, vis, { pathRes, keepScroll });
-    $('#app').classList.toggle('panel-open', !!panel.mode() && !st.panelCollapsed);
+    // 抽屉
+    $('#filterDrawer').hidden = st.drawer !== 'filter';
+    $('#filterBtn').setAttribute('aria-expanded', String(st.drawer === 'filter'));
+    $('#legend').hidden = st.drawer !== 'legend';
+    $('#legendBtn').setAttribute('aria-expanded', String(st.drawer === 'legend'));
     $('#pathBtn').setAttribute('aria-pressed', String(st.path.active));
+    $('#gapBtn').setAttribute('aria-pressed', String(st.gapList || st.sel?.kind === 'gap'));
     $('#focusBtn').disabled = !(st.sel || chosen);
+    scheduleLegend();
   }
   // 切换视角：保留选中，并把选中的对象滚动到可见位置
   function showView(st, prev, chosen) {
@@ -254,7 +268,7 @@ async function start() {
       const tools = toolsFor(v); if (tools) tools.hidden = v !== st.view;
       document.querySelector(`.seg [data-view="${v}"]`).setAttribute('aria-pressed', String(v === st.view));
     }
-    document.querySelectorAll('.net-only').forEach(el => { el.hidden = st.view !== 'network'; });
+    document.querySelectorAll('.zoom-only').forEach(el => { el.hidden = st.view === 'network'; });
     if (prev && views[prev.view].onHide) views[prev.view].onHide();
     const v = views[st.view];
     v.onShow();
@@ -267,8 +281,12 @@ async function start() {
   state.subscribe(renderAll);
   renderAll(state.get(), null);
 
-  // ---------- 按钮与快捷键 ----------
+  // ---------- 按钮 ----------
   $('#filterSummary').addEventListener('click', () => actions.setFilters(sanitizeFilters(null, model)));
+  $('#sourceOnly').addEventListener('change', ev => actions.setFilters({ ...state.get().filters, sourceOnly: ev.target.checked }));
+  $('#filterBtn').addEventListener('click', () => actions.setDrawer(state.get().drawer === 'filter' ? null : 'filter'));
+  $('#legendBtn').addEventListener('click', () => actions.setDrawer(state.get().drawer === 'legend' ? null : 'legend'));
+  $('#gapBtn').addEventListener('click', () => actions.toggleGapList());
   $('#fitBtn').addEventListener('click', () => cur().fitAll());
   document.querySelectorAll('.seg [data-view]').forEach(b => b.addEventListener('click', () => actions.setView(b.dataset.view)));
   $('#focusBtn').addEventListener('click', () => {
@@ -280,40 +298,35 @@ async function start() {
     else if (st.sel.kind === 'gap') cur().zoomToNodes(gapNodeIds(st.sel.id));
   });
   $('#pathBtn').addEventListener('click', () => (state.get().path.active ? actions.exitPath() : actions.startPath(state.get().sel?.kind === 'node' ? state.get().sel.id : null)));
-  // 重置布局：拖动过节点时要点两次（页面内确认，不用浏览器弹窗）
-  let resetArmed = null;
-  $('#resetLayoutBtn').addEventListener('click', ev => {
-    const btn = ev.currentTarget;
-    if (net.hasCustomLayout() && !resetArmed) {
-      btn.textContent = '再点一次确认重置';
-      btn.classList.add('armed');
-      resetArmed = setTimeout(() => { resetArmed = null; btn.textContent = '重置布局'; btn.classList.remove('armed'); }, 3000);
-      return;
-    }
-    clearTimeout(resetArmed); resetArmed = null;
-    btn.textContent = '重置布局'; btn.classList.remove('armed');
-    net.resetLayout();
-    toast('布局已重置');
-  });
-  $('#exportLayoutBtn').addEventListener('click', () => {
-    download('layout.json', net.exportLayout());
-    toast('已导出 layout.json，放进内容包目录即可固定布局');
-  });
-  $('#panelTab').addEventListener('click', () => actions.togglePanelCollapsed());
 
+  // 点抽屉外部关闭筛选抽屉（图例是浮层，只用按钮或 Esc 关）
+  // 这一下点击只负责关抽屉，不会同时点到下面的气泡或节点
+  document.addEventListener('pointerdown', ev => {
+    if (state.get().drawer !== 'filter' || ev.target.closest('#filterDrawer, #filterBtn')) return;
+    actions.setDrawer(null);
+    if (ev.target.closest('#stage')) {
+      const swallow = e => { e.stopPropagation(); e.preventDefault(); };
+      document.addEventListener('click', swallow, { capture: true, once: true });
+      setTimeout(() => document.removeEventListener('click', swallow, { capture: true }), 600);
+    }
+  });
+
+  // ---------- 快捷键 ----------
+  // Esc 的顺序：先关抽屉和浮层，再退出故事线 / 找路径 / 选中，最后返回关系网的上一层
   document.addEventListener('keydown', ev => {
     const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName);
     if (ev.key === '/' && !typing) { ev.preventDefault(); search.focus(); return; }
     if (!typing && !ev.metaKey && !ev.ctrlKey && !ev.altKey && ['1', '2', '3'].includes(ev.key)) { actions.setView(VIEWS[+ev.key - 1]); return; }
-    if (ev.key === 'Escape' && !typing) {
-      const st = state.get();
-      if (st.view === 'timeline' && views.timeline.storyActive()) views.timeline.endStory();
-      else if (st.path.active) actions.exitPath();
-      else if (st.sel) state.set({ sel: null });
-    }
+    if (ev.key !== 'Escape' || typing) return;
+    const st = state.get();
+    if (st.drawer) actions.setDrawer(null);
+    else if (st.view === 'timeline' && views.timeline.storyActive()) views.timeline.endStory();
+    else if (st.path.active) actions.exitPath();
+    else if (st.sel || st.gapList) actions.closePanel();
+    else if (st.view === 'network' && st.net.level !== 'overview') actions.goOverview();
   });
 
-  window.__atlas = { model, state, net, views, actions, vis: () => vis, paths: () => pathRes };   // 方便在控制台里检查
+  window.__atlas = { model, state, views, actions, vis: () => vis, paths: () => pathRes };   // 方便在控制台里检查
 }
 
 start();

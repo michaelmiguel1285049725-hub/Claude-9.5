@@ -58,7 +58,13 @@ export function computeVisibility(model, f, digested = null) {
   };
 }
 
-export const isDefault = f => JSON.stringify({ ...DEFAULT_FILTERS, ...f }) === JSON.stringify(DEFAULT_FILTERS);
+export const isDefault = f => activeCount(f) === 0;
+
+// 生效的筛选条件数（显示在"筛选"按钮的角标上）
+export function activeCount(f) {
+  return f.offTypes.length + f.offStatuses.length + f.offClusters.length + f.offKinds.length
+    + ['sourceOnly', 'gapsOnly', 'hideIsolated', 'undigestedOnly'].filter(k => f[k]).length;
+}
 
 // 两个节点在当前筛选下不连通时：逐项放宽筛选，看放宽哪一项就能连通
 export function relaxSuggestions(model, f, digested, from, to, connectedFn) {
@@ -89,18 +95,18 @@ const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').re
 export function createFilterBar(el, { model, relSample, onChange }) {
   const chip = (f, v, label, extra = '') => `<button type="button" class="chip" data-f="${f}" data-v="${esc(v)}" aria-pressed="true">${extra}${esc(label)}</button>`;
   el.innerHTML = `
-    <div class="fgroup"><span class="flabel">关系</span>${REL_TYPES.map(t => chip('offTypes', t, t, relSample(t))).join('')}</div>
+    <div class="fgroup"><span class="flabel">关系类型</span>${REL_TYPES.map(t => chip('offTypes', t, t, relSample(t))).join('')}</div>
     <div class="fgroup"><span class="flabel">状态</span>${STATUSES.map(s => chip('offStatuses', s, s, relSample('继承', s))).join('')}</div>
-    <div class="fgroup">
-      <button type="button" class="chip key src" data-flag="sourceOnly" aria-pressed="false" title="隐藏所有 Claude 加工的线（中点带空心圆的线）">只看有文献来源的线</button>
-      <button type="button" class="chip key gap" data-flag="gapsOnly" aria-pressed="false" title="只显示空缺线（挂了空缺编号或未验证），并在右侧列出空缺问题">只看空缺</button>
+    <div class="fgroup"><span class="flabel">依据</span>
+      <button type="button" class="chip key src" data-flag="sourceOnly" aria-pressed="false" title="隐藏所有 Claude 加工的关系（中点带空心圆的线）">只看有文献来源的线</button>
+      <button type="button" class="chip key gap" data-flag="gapsOnly" aria-pressed="false" title="只显示空缺线：挂了空缺编号的，以及所有未验证的">只看空缺</button>
     </div>
     <div class="fgroup"><span class="flabel">研究线</span>${model.clusters.map(c => chip('offClusters', c.id, c.name, `<span class="dot" style="background:${c.color}"></span>`)).join('')}</div>
-    <div class="fgroup"><span class="flabel">节点</span>${KINDS.map(k => chip('offKinds', k, k)).join('')}</div>
-    <div class="fgroup">
-      <button type="button" class="chip" data-flag="hideIsolated" aria-pressed="false">隐藏无连线节点</button>
-      <button type="button" class="chip" data-flag="undigestedOnly" aria-pressed="false" hidden>只看未消化</button>
-      <button type="button" class="btn reset" data-reset>重置</button>
+    <div class="fgroup"><span class="flabel">节点类型</span>${KINDS.map(k => chip('offKinds', k, k)).join('')}</div>
+    <div class="fgroup"><span class="flabel">其他</span>
+      <button type="button" class="chip" data-flag="undigestedOnly" aria-pressed="false">只看未消化</button>
+      <button type="button" class="chip" data-flag="hideIsolated" aria-pressed="false" title="成熟度、时间线里隐藏没有可见关系的节点">隐藏无关系节点</button>
+      <button type="button" class="btn reset" data-reset>恢复全部</button>
     </div>`;
 
   let current = { ...DEFAULT_FILTERS };

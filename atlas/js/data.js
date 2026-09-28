@@ -13,14 +13,8 @@ export async function loadPack(packId) {
     throw new Error(`读取内容包 ${base}pack.json 失败（${err.message}）`);
   }
 
-  let layout = null;   // 可选的固定布局；不存在是正常情况
-  try {
-    const r = await fetch(base + 'layout.json', { cache: 'no-cache' });
-    if (r.ok) layout = await r.json();
-  } catch { /* 没有 layout.json */ }
-
   const issues = validatePack(pack);
-  return { ...buildModel(pack), issues, layout, packId };
+  return { ...buildModel(pack), issues, packId };
 }
 
 export function buildModel(pack) {

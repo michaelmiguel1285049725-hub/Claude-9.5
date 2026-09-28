@@ -45,14 +45,28 @@ export function wrapText(s, size, maxWidth, maxLines = 2) {
 }
 
 // ---------- 节点尺寸 ----------
-export const NODE = { nameSize: 12.5, lineH: 16, metaSize: 11, minW: 136, maxInner: 124, padX: 12 };
+// 所有节点卡片统一 168×40：一行"编号 + 中文名"。名称放不下先缩到 12px，再放不下就省略（完整名在悬停提示里）。
+// 透镜中心卡片 180×60：两行（编号、名称）。
+export const CARD = { w: 168, h: 40, idSize: 12, nameSize: 13, minNameSize: 12, pad: 11, gap: 7 };
+export const CENTER = { w: 180, h: 60, idSize: 13, nameSize: 15, pad: 12 };
+
+function fitLine(text, size, minSize, maxWidth) {
+  if (textWidth(text, size) <= maxWidth) return { text, size };
+  if (textWidth(text, minSize) <= maxWidth) return { text, size: minSize };
+  let t = String(text);
+  while (t.length && textWidth(t + '…', minSize) > maxWidth) t = [...t].slice(0, -1).join('');
+  return { text: t + '…', size: minSize, cut: true };
+}
 
 export function nodeBox(n) {
-  const lines = wrapText(n.name || n.id, NODE.nameSize, NODE.maxInner, 2);
-  const inner = Math.max(...lines.map(l => textWidth(l, NODE.nameSize)));
-  const w = Math.round(Math.max(NODE.minW, inner + NODE.padX * 2));
-  const h = 9 + lines.length * NODE.lineH + 17;
-  return { w, h, lines };
+  const idW = monoWidth(n.id, CARD.idSize);
+  const name = fitLine(n.name || n.id, CARD.nameSize, CARD.minNameSize, CARD.w - CARD.pad * 2 - idW - CARD.gap);
+  return { w: CARD.w, h: CARD.h, idW, name };
+}
+
+export function centerBox(n) {
+  const name = fitLine(n.name || n.id, CENTER.nameSize, 13, CENTER.w - CENTER.pad * 2);
+  return { w: CENTER.w, h: CENTER.h, name, center: true };
 }
 
 // ---------- 形状 ----------
@@ -109,27 +123,23 @@ export function drawCornerBadge(g, type, cx, cy) {
   return b;
 }
 
-// 完整节点：外形 + 研究线色点 + 名称 + 编号行 + 角标。
-// 近距离才显示的元素带 lv-near 类，由画布的缩放级别控制显隐。
+// 完整节点卡片：外形 + 编号 + 名称 + 研究线色点 + 角标（"?" 未核验、"!" 警示、"✓" 已消化）。
 export function drawNode(g, n, box, { clusterColor, digested = false } = {}) {
-  const { w, h, lines } = box;
+  const { w, h } = box;
   const x0 = -w / 2, y0 = -h / 2, x1 = w / 2, y1 = h / 2;
   drawShape(g, { kind: n.kind, w, h, ai: !!n.ai_related });
-
-  const name = g.append('text').attr('class', 'nd-name').attr('text-anchor', 'middle');
-  lines.forEach((l, i) => name.append('tspan').attr('x', 0).attr('y', y0 + 9 + 11.5 + i * NODE.lineH).text(l));
-
-  const metaY = y1 - 9;
-  g.append('text').attr('class', 'nd-id').attr('x', x0 + 10).attr('y', metaY).attr('dominant-baseline', 'central').text(n.id);
-  const near = g.append('g').attr('class', 'lv-near');
-  if (n.year != null) near.append('text').attr('class', 'nd-year').attr('x', x0 + 10 + monoWidth(n.id, 11) + 6).attr('y', metaY)
-    .attr('dominant-baseline', 'central').text(n.year);
-  const bw = drawEvidenceBadge(near, n.evidence, x1 - 8, metaY);
-  drawCrowding(near, n.crowding, x1 - 8 - bw - 6, metaY);
-
+  if (box.center) {
+    g.append('text').attr('class', 'nd-id center').attr('x', 0).attr('y', -9).attr('text-anchor', 'middle').attr('dominant-baseline', 'central').text(n.id);
+    g.append('text').attr('class', 'nd-name center').attr('x', 0).attr('y', 11).attr('text-anchor', 'middle').attr('dominant-baseline', 'central')
+      .style('font-size', box.name.size + 'px').text(box.name.text);
+  } else {
+    const shift = KIND[n.kind]?.shape === 'finding' ? 4 : 0;   // 左侧色条让出位置
+    g.append('text').attr('class', 'nd-id').attr('x', x0 + CARD.pad + shift).attr('y', 0).attr('dominant-baseline', 'central').text(n.id);
+    g.append('text').attr('class', 'nd-name').attr('x', x0 + CARD.pad + shift + box.idW + CARD.gap).attr('y', 0).attr('dominant-baseline', 'central')
+      .style('font-size', box.name.size + 'px').text(box.name.text);
+  }
   // 研究线色点：跨在左上角的边框上
   g.append('circle').attr('class', 'nd-cluster').attr('cx', x0 + 12).attr('cy', y0).attr('r', 4.5).style('fill', clusterColor);
-
   // 右上角：先放 "!"，再往左放 "?"
   let cx = x1 - 11;
   if (Array.isArray(n.alerts) && n.alerts.length) { drawCornerBadge(g, 'alert', cx, y0); cx -= 18; }

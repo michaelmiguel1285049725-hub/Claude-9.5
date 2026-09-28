@@ -82,3 +82,8 @@
   --cl-0: #8fa2bc; --cl-1: #b89d7e; --cl-2: #8fae93; --cl-3: #bc97ae;
   --cl-4: #80aeb4; --cl-5: #b7b07e; --cl-6: #a09ac0; --cl-7: #bb988a;
 }
+
+/* 改版 1：第一层气泡。主线用强调色，其他用中性灰 */
+:root { --accent: #3f5f86; --accent-fill: #e3eaf3; --accent-ink: #26405f; --ov-fill: #f1f2f4; --ov-stroke: #a9aeb6; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --accent: #8fb0d6; --accent-fill: #273447; --accent-ink: #cfe0f3; --ov-fill: #262a32; --ov-stroke: #5d636d; } }
+:root[data-theme="dark"] { --accent: #8fb0d6; --accent-fill: #273447; --accent-ink: #cfe0f3; --ov-fill: #262a32; --ov-stroke: #5d636d; }

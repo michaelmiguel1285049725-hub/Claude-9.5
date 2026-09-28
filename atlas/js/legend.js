@@ -1,29 +1,25 @@
-// 图例：全部由编码表生成，保证和画布上的画法一致。常驻左下角，可折叠。
-import { REL_TYPES, REL, STATUSES, STATUS, KINDS, KIND, EVIDENCE, CROWDINGS, CROWDING, relColor } from './encoding.js';
-import { drawShape, drawEvidenceBadge, drawCrowding, drawCornerBadge, styleEdgePath, miniSvg } from './glyph.js';
+// 图例：只列当前画面上实际出现的东西。
+// 视角提供 { nodes, edges, overview, gaps }，这里按固定顺序挑出出现过的类型、状态、形状和角标。
+import { REL_TYPES, REL, STATUSES, STATUS, KINDS, KIND, relColor } from './encoding.js';
+import { drawShape, drawCornerBadge, styleEdgePath, miniSvg } from './glyph.js';
 
-const d3 = window.d3;
 const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 function lineSample(e, { proc = false } = {}) {
   const s = miniSvg(46, 16);
-  const path = s.append('path').attr('d', 'M4,8 L40,8');
-  styleEdgePath(path, e);
+  styleEdgePath(s.append('path').attr('d', 'M4,8 L40,8'), e);
   if (proc) s.append('circle').attr('class', 'edge-proc').attr('cx', 22).attr('cy', 8).attr('r', 4).style('stroke', relColor(e.type));
   return s.node();
 }
-
 function row(sample, label, note) {
   const li = document.createElement('li');
   const sw = document.createElement('span'); sw.className = 'lg-sw';
   if (sample) sw.appendChild(sample);
-  li.appendChild(sw);
   const t = document.createElement('span'); t.className = 'lg-t';
   t.innerHTML = `<b>${esc(label)}</b>${note ? `<span class="lg-n">${esc(note)}</span>` : ''}`;
-  li.appendChild(t);
+  li.append(sw, t);
   return li;
 }
-
 function section(title, items) {
   const sec = document.createElement('section');
   sec.innerHTML = `<h4>${esc(title)}</h4>`;
@@ -33,71 +29,60 @@ function section(title, items) {
   return sec;
 }
 
-export function buildLegend(el, model) {
-  el.innerHTML = '<summary>图例</summary><div class="body"></div>';
-  const body = el.querySelector('.body');
-
-  body.appendChild(section('关系类型 · 颜色', REL_TYPES.map(t => row(lineSample({ type: t, status: '确立' }), t, REL[t].meaning))));
-  body.appendChild(section('关系状态 · 线型', STATUSES.map(s => row(lineSample({ type: '继承', status: s }), s, STATUS[s].rule))));
-  body.appendChild(section('关系依据', [
-    row(lineSample({ type: '解释', status: '确立' }), '来源', '文献结论'),
-    row(lineSample({ type: '解释', status: '确立' }, { proc: true }), '加工', '中点空心圆 = Claude 的推断或连接'),
-  ]));
-
-  body.appendChild(section('节点类型 · 形状', KINDS.map(k => {
-    const s = miniSvg(46, 22);
-    drawShape(s.append('g').attr('transform', 'translate(23,11)'), { kind: k, w: 40, h: 18, ai: false });
-    return row(s.node(), k, KIND[k].desc);
-  })));
-
-  body.appendChild(section('节点填充', [true, false].map(ai => {
-    const s = miniSvg(46, 22);
-    drawShape(s.append('g').attr('transform', 'translate(23,11)'), { kind: '现象', w: 40, h: 18, ai });
-    return row(s.node(), ai ? 'AI 相关' : '其他', ai ? '浅粉填充' : '中性浅灰');
-  })));
-
-  if (model.clusters.length) {
-    body.appendChild(section('研究线 · 节点左上角色点与背景', model.clusters.map(c => {
-      const s = miniSvg(46, 16);
-      s.append('rect').attr('class', 'hull').attr('x', 3).attr('y', 1).attr('width', 40).attr('height', 14).attr('rx', 7).style('--cc', c.color);
-      s.append('circle').attr('class', 'nd-cluster').attr('cx', 23).attr('cy', 8).attr('r', 4.5).style('fill', c.color);
-      const li = row(s.node(), `${c.id} · ${c.name}`, c.main ? '主线' : '');
-      if (c.main) li.classList.add('main');
-      return li;
-    })));
+export function renderLegend(el, { nodes = [], edges = [], overview = false, gaps = false, digested = new Set() } = {}) {
+  el.innerHTML = '';
+  if (overview) {
+    const bubble = main => { const s = miniSvg(46, 26); s.append('circle').attr('cx', 23).attr('cy', 13).attr('r', 11).attr('class', 'ov-core'); if (main) s.select('circle').attr('style', 'fill:var(--accent-fill);stroke:var(--accent);stroke-width:2'); return s.node(); };
+    const link = () => { const s = miniSvg(46, 16); s.append('path').attr('d', 'M4,8 L42,8').attr('class', 'ov-link-line').style('stroke-width', 3.4); s.append('circle').attr('cx', 23).attr('cy', 8).attr('r', 7).attr('class', 'ov-link-badge'); return s.node(); };
+    const ring = () => { const s = miniSvg(46, 26); s.append('circle').attr('cx', 23).attr('cy', 13).attr('r', 10).attr('class', 'ov-ring-bg'); s.append('path').attr('d', 'M23,3 A10,10 0 0 1 33,13').attr('class', 'ov-ring'); return s.node(); };
+    const items = [
+      row(bubble(true), '主线研究线', '气泡越大，节点越多'),
+      row(bubble(false), '其他研究线', ''),
+      row(link(), '汇总连线', '越粗关系越多，圆里是条数'),
+      row(ring(), '外圈绿弧', '已消化的比例'),
+    ];
+    if (gaps) {
+      const s = miniSvg(46, 24); const g = s.append('g').attr('class', 'ov-gap').attr('transform', 'translate(23,12)');
+      g.append('circle').attr('r', 10); g.append('text').attr('text-anchor', 'middle').attr('dominant-baseline', 'central').text('3');
+      items.push(row(s.node(), '琥珀徽章', '相关空缺问题数'));
+    }
+    el.appendChild(section('研究线概览', items));
   }
 
-  body.appendChild(section('证据等级 · 放大后显示', ['A', 'B', 'C', 'N/A'].map(ev => {
-    const s = miniSvg(46, 16);
-    drawEvidenceBadge(s, ev, 36, 8);
-    return row(s.node(), ev, EVIDENCE[ev].meaning);
-  })));
+  const types = REL_TYPES.filter(t => edges.some(e => e.type === t));
+  if (types.length) el.appendChild(section('关系类型', types.map(t => row(lineSample({ type: t, status: '确立' }), t, REL[t].meaning))));
+  const sts = STATUSES.filter(s => edges.some(e => e.status === s));
+  if (sts.length) el.appendChild(section('关系状态', sts.map(s => row(lineSample({ type: '继承', status: s }), s, STATUS[s].rule))));
+  const hasProc = edges.some(e => e.basis === '加工'), hasSrc = edges.some(e => e.basis === '来源');
+  if (hasProc || hasSrc) {
+    const items = [];
+    if (hasSrc) items.push(row(lineSample({ type: '解释', status: '确立' }), '来源', '文献结论'));
+    if (hasProc) items.push(row(lineSample({ type: '解释', status: '确立' }, { proc: true }), '加工', '中点空心圆 = Claude 的推断或连接'));
+    el.appendChild(section('关系依据', items));
+  }
 
-  body.appendChild(section('拥挤度 · 放大后显示', CROWDINGS.map(c => {
-    const s = miniSvg(46, 16);
-    drawCrowding(s, c, 32, 8);
-    return row(s.node(), c, CROWDING[c].meaning);
-  })));
-
-  body.appendChild(section('角标', [
-    ['q', '?', '据已有知识补充，本次未经检索核验'],
-    ['alert', '!', '有重要警示，详见面板'],
-    ['done', '✓', '我已消化'],
-  ].map(([type, label, note]) => {
-    const s = miniSvg(46, 18);
-    drawCornerBadge(s, type, 23, 9);
-    return row(s.node(), label, note);
-  })));
-
-  const p = document.createElement('p');
-  p.className = 'lg-foot';
-  p.textContent = '节点下方为编号；放大后再显示年份、拥挤度和证据等级。';
-  body.appendChild(p);
-
-  // 底部渐隐：提示还能往下滚（沿用 v3 的做法）
-  const sync = () => el.classList.toggle('more', el.open && body.scrollTop + body.clientHeight < body.scrollHeight - 2);
-  body.addEventListener('scroll', sync, { passive: true });
-  el.addEventListener('toggle', sync);
-  addEventListener('resize', sync);
-  requestAnimationFrame(sync);
+  const kinds = KINDS.filter(k => nodes.some(n => n.kind === k));
+  if (kinds.length) {
+    el.appendChild(section('节点类型', kinds.map(k => {
+      const s = miniSvg(46, 22);
+      drawShape(s.append('g').attr('transform', 'translate(23,11)'), { kind: k, w: 40, h: 18, ai: false });
+      return row(s.node(), k, KIND[k].desc);
+    })));
+    const fills = [];
+    if (nodes.some(n => n.ai_related)) fills.push(true);
+    if (nodes.some(n => !n.ai_related)) fills.push(false);
+    el.appendChild(section('节点填充', fills.map(ai => {
+      const s = miniSvg(46, 22);
+      drawShape(s.append('g').attr('transform', 'translate(23,11)'), { kind: '现象', w: 40, h: 18, ai });
+      return row(s.node(), ai ? 'AI 相关' : '其他', ai ? '浅粉填充' : '中性浅灰');
+    })));
+    const marks = [];
+    if (nodes.some(n => n.unverified)) marks.push(['q', '?', '据已有知识补充，本次未经检索核验']);
+    if (nodes.some(n => Array.isArray(n.alerts) && n.alerts.length)) marks.push(['alert', '!', '有重要警示，详见详情']);
+    if (nodes.some(n => digested.has(n.id))) marks.push(['done', '✓', '我已消化']);
+    if (marks.length) el.appendChild(section('角标', marks.map(([type, label, note]) => {
+      const s = miniSvg(46, 18); drawCornerBadge(s, type, 23, 9); return row(s.node(), label, note);
+    })));
+  }
+  if (!el.children.length) el.innerHTML = '<p class="lg-empty">当前画面没有需要说明的图形。</p>';
 }

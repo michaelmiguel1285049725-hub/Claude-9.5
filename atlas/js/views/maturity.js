@@ -193,6 +193,7 @@ export function createMaturityView({ root, model, store, tooltip, actions, getDi
     gGap.selectAll('g.gapcard')
       .classed('sel', g => g.id === gapSel)
       .classed('hi', g => g.id === gapSel || (nodeGaps && nodeGaps.has(g.id)));
+    actions.legendDirty();
   }
 
   function rebuild() {
@@ -223,6 +224,7 @@ export function createMaturityView({ root, model, store, tooltip, actions, getDi
     setVisibility(v) { vis = v; rebuild(); },
     setView(v) { view = { ...view, ...v }; paint(); },
     refreshDigested() { gNode.selectAll('g.node').remove(); drawNodes(); paint(); },
+    legend: () => ({ nodes: model.nodes.filter(n => pos.has(n.id)), edges: gArc.selectAll('g.edge').data() }),
     onShow() { if (!fitted) { cv.fitAll(false); fitted = true; } },
     fitAll: () => cv.fitAll(),
     zoomToNodes(ids) { const b = boxOf(ids); if (b) cv.zoomToBox(b); },

@@ -14,56 +14,58 @@
 <!-- 全局共用的 SVG 定义（箭头 marker 等）：不能用 display:none，否则别的 SVG 引用不到 -->
 <svg id="defs" width="0" height="0" aria-hidden="true" focusable="false"><defs></defs></svg>
 <div id="app">
+  <!-- 顶栏只有一行 -->
   <header class="top">
-    <div class="brand">
-      <h1><span id="title">学习地图</span><span class="ver" id="ver" hidden></span><span class="draft" id="draft" hidden tabindex="0"></span></h1>
-      <p id="subtitle"></p>
+    <div class="brand" id="brand" tabindex="0">
+      <h1 id="title">学习地图</h1>
+      <span class="draft" id="draft" hidden></span>
     </div>
     <div class="seg" role="group" aria-label="视角">
       <button type="button" data-view="network" aria-pressed="true" title="关系网（键盘 1）">关系网</button>
       <button type="button" data-view="maturity" aria-pressed="false" title="成熟度地图（键盘 2）">成熟度</button>
       <button type="button" data-view="timeline" aria-pressed="false" title="时间线（键盘 3）">时间线</button>
     </div>
-    <div class="searchbox">
-      <input type="search" id="search" placeholder="搜索编号 / 名称　按 / 聚焦" autocomplete="off" spellcheck="false" aria-label="搜索节点" aria-controls="searchList">
-      <ul id="searchList" role="listbox" hidden></ul>
-    </div>
-    <div class="top-actions">
-      <button type="button" class="btn" id="themeBtn"></button>
+    <div class="top-right">
+      <div class="searchbox">
+        <input type="search" id="search" placeholder="搜索编号 / 名称（/）" autocomplete="off" spellcheck="false" aria-label="搜索节点" aria-controls="searchList">
+        <ul id="searchList" role="listbox" hidden></ul>
+      </div>
+      <button type="button" class="tbtn" id="pathBtn" aria-pressed="false" title="找两个节点之间的关系链">找路径</button>
+      <button type="button" class="tbtn" id="filterBtn" aria-expanded="false" aria-controls="filterDrawer">筛选<span class="badge" id="filterCount" hidden></span></button>
+      <button type="button" class="tbtn" id="gapBtn" aria-pressed="false" title="列出全部空缺问题">空缺</button>
+      <label class="tswitch" title="隐藏所有 Claude 加工的关系（中点带空心圆的线）"><input type="checkbox" id="sourceOnly"><span>只看文献来源</span></label>
+      <button type="button" class="tbtn" id="legendBtn" aria-expanded="false" aria-controls="legend">图例</button>
+      <button type="button" class="tbtn icon" id="themeBtn" aria-label="深浅色"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.8 A6.2 6.2 0 0 1 8 14.2 Z" fill="currentColor"/></svg></button>
     </div>
   </header>
-  <nav id="filterbar" aria-label="筛选"></nav>
   <div id="issues" role="alert" hidden></div>
-  <div id="main">
-    <main id="stage">
-      <div id="views">
-        <div class="view" data-view="network"></div>
-        <div class="view" data-view="maturity" hidden></div>
-        <div class="view" data-view="timeline" hidden></div>
-      </div>
+  <main id="stage">
+    <div id="views">
+      <div class="view" data-view="network"></div>
+      <div class="view" data-view="maturity" hidden></div>
+      <div class="view" data-view="timeline" hidden></div>
+    </div>
+    <div class="canvas-top-left">
+      <nav id="trail" aria-label="路径导航" hidden></nav>
       <button type="button" id="filterSummary" hidden></button>
-      <div class="canvas-tools">
-        <span class="view-tools" data-for="maturity" hidden></span>
-        <span class="view-tools" data-for="timeline" hidden></span>
-        <button type="button" class="btn" id="pathBtn" aria-pressed="false" title="依次点击两个节点，找它们之间的关系链">找路径</button>
-        <button type="button" class="btn" id="focusBtn" title="缩放到当前选中的对象" disabled>回到选中</button>
-        <button type="button" class="btn" id="fitBtn" title="缩放到能看到全部节点">适配全部</button>
-        <span class="sep net-only"></span>
-        <button type="button" class="btn net-only" id="resetLayoutBtn" title="清除拖动过的位置，回到自动布局">重置布局</button>
-        <button type="button" class="btn net-only" id="exportLayoutBtn" title="把当前布局下载为 layout.json">导出布局</button>
-      </div>
-      <details id="legend" open></details>
-      <div id="toast" role="status" hidden></div>
-    </main>
-    <aside id="panel" aria-label="详情面板">
-      <button type="button" id="panelTab" title="展开 / 收起面板" aria-label="展开或收起面板"></button>
+    </div>
+    <div class="canvas-tools">
+      <span class="view-tools" data-for="maturity" hidden></span>
+      <span class="view-tools" data-for="timeline" hidden></span>
+      <button type="button" class="btn zoom-only" id="focusBtn" title="缩放到当前选中的对象" disabled>回到选中</button>
+      <button type="button" class="btn zoom-only" id="fitBtn" title="缩放到能看到全部节点">适配全部</button>
+    </div>
+    <!-- 覆盖在画布上的抽屉与浮层 -->
+    <nav id="filterDrawer" class="drawer-top" aria-label="筛选" hidden></nav>
+    <aside id="legend" aria-label="图例" hidden></aside>
+    <aside id="panel" aria-label="详情面板" aria-hidden="true">
       <div class="p-head">
-        <button type="button" class="icon" data-act="collapse" title="收起面板" aria-label="收起面板">»</button>
         <button type="button" class="icon" data-act="close" title="关闭（Esc）" aria-label="关闭">×</button>
       </div>
       <div class="p-body"></div>
     </aside>
-  </div>
+    <div id="toast" role="status" hidden></div>
+  </main>
 </div>
 </body>
 </html>

@@ -149,10 +149,10 @@ export function createPanel(el, { model, actions }) {
     if (st.path.active) { mode = 'path'; html = pathHtml(st, extra.pathRes || { paths: [] }); }
     else if (st.sel?.kind === 'node' && model.nodeById.has(st.sel.id)) { mode = 'node'; html = nodeHtml(model.nodeById.get(st.sel.id), st, vis); }
     else if (st.sel?.kind === 'edge' && model.edgeById.has(st.sel.id)) { mode = 'edge'; html = edgeHtml(model.edgeById.get(st.sel.id), vis); }
-    else if (st.sel?.kind === 'gap' || (st.filters.gapsOnly && !st.panelHidden)) { mode = 'gaps'; html = gapsHtml(st); }
+    else if (st.sel?.kind === 'gap' || st.gapList) { mode = 'gaps'; html = gapsHtml(st); }
     else mode = null;
     el.classList.toggle('open', !!mode);
-    el.classList.toggle('collapsed', !!mode && st.panelCollapsed);
+    el.setAttribute('aria-hidden', String(!mode));
     el.dataset.mode = mode || '';
     const scroll = body.scrollTop;
     body.innerHTML = html;
@@ -168,7 +168,6 @@ export function createPanel(el, { model, actions }) {
     if (t.dataset.path) return actions.choosePath(+t.dataset.path);
     switch (t.dataset.act) {
       case 'close': return actions.closePanel();
-      case 'collapse': return actions.togglePanelCollapsed();
       case 'copy-id': return actions.copy(model.nodeById.get(actions.state().sel.id).id, '编号已复制');
       case 'path-from': return actions.startPath(actions.state().sel.id);
       case 'exit-path': return actions.exitPath();

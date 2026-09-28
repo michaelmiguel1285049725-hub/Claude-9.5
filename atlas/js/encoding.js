@@ -64,8 +64,4 @@ export function clusterColor(cluster, index) {
   return `var(--cl-${index % CLUSTER_PALETTE_SIZE})`;
 }
 
-// 语义缩放阈值（相对于"适配全部"时的缩放比例 = 1）
-export const ZOOM_FAR = 0.6;
-export const ZOOM_NEAR = 1.4;
-
 export const TEXT_LIMITS = { gist: 20, reason: 24 };

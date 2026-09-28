@@ -1,7 +1,7 @@
 // 视角三：时间线。横轴年份按 domain.timeline_breaks 分段压缩，纵向每条研究线一条泳道。
-// 默认只画"对话型"关系（继承、支持、挑战、修正），其余四种可打开；另有"逐步展开"的故事线模式。
+// 默认不画关系线，悬停或选中节点时才画它的关系；可打开"常显对话型关系"（继承、支持、挑战、修正）。
+// 另有"逐步展开"的故事线模式（逐步展开时画对话型关系）。
 import { nodeBox, drawNode } from '../glyph.js';
-import { REL_TYPES } from '../encoding.js';
 import { clusterOf } from '../data.js';
 import { computeHighlight, applyHighlight, joinEdges, arcBetween, bindInteractions, createZoomCanvas, esc } from './shared.js';
 
@@ -22,7 +22,7 @@ export function createTimelineView({ root, model, store, tooltip, actions, getDi
   const boxes = new Map(model.nodes.map(n => [n.id, nodeBox(n)]));
   let vis = null, view = { sel: null, depth: 1 }, hover = {};
   let pos = new Map(), laneBottom = TOP;
-  let allTypes = store.get('timelineAllTypes', false) === true;
+  let showArcs = store.get('timelineArcs', false) === true;
   let story = null;   // { years: [...], step }
 
   // ---------- 时间比例尺：分段线性 ----------
@@ -37,12 +37,12 @@ export function createTimelineView({ root, model, store, tooltip, actions, getDi
 
   // ---------- 工具栏 ----------
   toolsEl.innerHTML = `
-    <button type="button" class="btn" data-t="types" aria-pressed="${allTypes}" title="默认只显示继承、支持、挑战、修正（谁在回应谁）">显示其余四种关系</button>
+    <button type="button" class="btn" data-t="types" aria-pressed="${showArcs}" title="一直显示继承、支持、挑战、修正四种关系（谁在回应谁）">常显对话型关系</button>
     <button type="button" class="btn" data-t="story" aria-pressed="false" title="从最早的年份开始，一步一步出现">逐步展开</button>`;
   toolsEl.querySelector('[data-t="types"]').addEventListener('click', ev => {
-    allTypes = !allTypes; store.set('timelineAllTypes', allTypes);
-    ev.currentTarget.setAttribute('aria-pressed', String(allTypes));
-    drawEdges(); paint();
+    showArcs = !showArcs; store.set('timelineArcs', showArcs);
+    ev.currentTarget.setAttribute('aria-pressed', String(showArcs));
+    paint();
   });
   toolsEl.querySelector('[data-t="story"]').addEventListener('click', () => (story ? endStory() : startStory()));
 
@@ -148,12 +148,10 @@ export function createTimelineView({ root, model, store, tooltip, actions, getDi
       .attr('transform', n => `translate(${pos.get(n.id).x},${pos.get(n.id).y})`);
   }
 
-  function arcTypesOn() { return allTypes ? REL_TYPES : DIALOG; }
-  function drawEdges() {
-    const types = new Set(arcTypesOn());
-    const edges = vis.visibleEdgeList.filter(e => types.has(e.type) && pos.has(e.from) && pos.has(e.to));
-    const geo = new Map(edges.map(e => [e.id, arcBetween(pos.get(e.from), boxes.get(e.from), pos.get(e.to), boxes.get(e.to), 0.2)]));
-    joinEdges(gEdge, edges, geo);
+  // 平时画哪些关系：常显开关或故事线模式下画对话型，否则一条都不画
+  function baseEdges() {
+    if (!showArcs && !story) return [];
+    return vis.visibleEdgeList.filter(e => DIALOG.includes(e.type) && pos.has(e.from) && pos.has(e.to));
   }
 
   // ---------- 故事线 ----------
@@ -161,6 +159,7 @@ export function createTimelineView({ root, model, store, tooltip, actions, getDi
     const years = [...new Set(model.nodes.filter(n => vis.nodes.has(n.id)).map(n => n.year))].sort((a, b) => a - b);
     if (!years.length) return;
     story = { years, step: 0 };
+    paint();
     toolsEl.querySelector('[data-t="story"]').setAttribute('aria-pressed', 'true');
     bar.attr('hidden', null);
     setStep(0);
@@ -170,6 +169,7 @@ export function createTimelineView({ root, model, store, tooltip, actions, getDi
     toolsEl.querySelector('[data-t="story"]').setAttribute('aria-pressed', 'false');
     bar.attr('hidden', true);
     svg.classed('story', false);
+    paint();
     gNode.selectAll('g.node').classed('st-hidden', false).classed('st-new', false);
     gEdge.selectAll('g.edge').classed('st-hidden', false);
   }
@@ -191,13 +191,12 @@ export function createTimelineView({ root, model, store, tooltip, actions, getDi
     const h = computeHighlight(model, vis, view, hover);
     // 聚焦时，被聚焦对象的关系不受"对话型"开关限制，全部画出
     const extra = h ? model.edges.filter(e => (h.edges.has(e.id) || h.edges2.has(e.id)) && pos.has(e.from) && pos.has(e.to)) : [];
-    const types = new Set(arcTypesOn());
-    const base = vis.visibleEdgeList.filter(e => types.has(e.type) && pos.has(e.from) && pos.has(e.to));
-    const all = [...new Map([...base, ...extra].map(e => [e.id, e])).values()];
+    const all = [...new Map([...baseEdges(), ...extra].map(e => [e.id, e])).values()];
     const geo = new Map(all.map(e => [e.id, arcBetween(pos.get(e.from), boxes.get(e.from), pos.get(e.to), boxes.get(e.to), 0.2)]));
     joinEdges(gEdge, all, geo);
     applyHighlight(svg, gNode.selectAll('g.node'), gEdge.selectAll('g.edge'), h, view);
     if (story) setStep(story.step);
+    actions.legendDirty();
   }
 
   function rebuild() {
@@ -205,7 +204,6 @@ export function createTimelineView({ root, model, store, tooltip, actions, getDi
     drawLanes(lanes);
     drawAxis();
     drawNodes();
-    drawEdges();
     cv.setBounds({ x0: 0, y0: -48, x1: LANE_X + AXIS_W + 30, y1: laneBottom + 12 });
     if (story) startStory();
     paint();
@@ -234,6 +232,7 @@ export function createTimelineView({ root, model, store, tooltip, actions, getDi
     zoomToNodes(ids) { const b = boxOf(ids); if (b) cv.zoomToBox(b); },
     ensureVisible(id) { const b = boxOf([id]); if (b) cv.ensureVisible(b); },
     storyActive: () => !!story,
+    legend: () => ({ nodes: model.nodes.filter(n => pos.has(n.id)), edges: gEdge.selectAll('g.edge').data() }),
     endStory,
   };
 }
