@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>学习地图</title>
+<script>/* 首帧前套用保存的深浅色，避免闪烁 */try{var t=JSON.parse(localStorage.getItem('atlas._global.theme'));if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}</script>
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/app.css">
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script type="module" src="js/main.js"></script>
+</head>
+<body>
+<!-- 全局共用的 SVG 定义（箭头 marker 等）：不能用 display:none，否则别的 SVG 引用不到 -->
+<svg id="defs" width="0" height="0" aria-hidden="true" focusable="false"><defs></defs></svg>
+<div id="app">
+  <header class="top">
+    <div class="brand">
+      <h1><span id="title">学习地图</span><span class="ver" id="ver" hidden></span><span class="draft" id="draft" hidden tabindex="0"></span></h1>
+      <p id="subtitle"></p>
+    </div>
+    <div class="seg" role="group" aria-label="视角">
+      <button type="button" data-view="network" aria-pressed="true">关系网</button>
+      <button type="button" data-view="maturity" aria-pressed="false" disabled title="阶段 3 实现">成熟度</button>
+      <button type="button" data-view="timeline" aria-pressed="false" disabled title="阶段 3 实现">时间线</button>
+    </div>
+    <div class="top-actions">
+      <button type="button" class="btn" id="themeBtn"></button>
+    </div>
+  </header>
+  <div id="issues" role="alert" hidden></div>
+  <main id="stage">
+    <div id="views"></div>
+    <div class="canvas-tools">
+      <button type="button" class="btn" id="fitBtn" title="缩放到能看到全部节点">适配全部</button>
+    </div>
+    <details id="legend" open></details>
+  </main>
+</div>
+</body>
+</html>

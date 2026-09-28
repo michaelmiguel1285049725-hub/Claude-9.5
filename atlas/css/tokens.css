@@ -1,0 +1,84 @@
+/* 设计变量：画布、卡片、墨色、字体沿用 v3；关系颜色按说明第 6.1 节；深色模式同色相、提高亮度 */
+:root {
+  color-scheme: light;
+  --ground: #e9ebee; --surface: #f7f8f9; --panel: #ffffff; --panel-2: #f1f2f4;
+  --ink: #1c1f24; --ink-2: #4c525c; --muted: #7a808a; --line: #cfd3d9; --line-2: #e2e5e9;
+  --shadow: 0 8px 28px rgba(28, 31, 36, .14);
+  --focus: #378ADD;
+
+  --tag-src-bg: #dcf2e4; --tag-src-fg: #1b6a3d; --tag-src-line: #3a9a66;
+  --tag-proc-bg: #fdebd3; --tag-proc-fg: #8a4a00; --tag-proc-line: #BA7517;
+  --danger: #c63b3a; --danger-bg: #fde8e7; --danger-line: #eaa3a2;
+
+  /* 八种关系 */
+  --rel-inherit: #888780; --rel-explain: #1D9E75; --rel-support: #639922; --rel-challenge: #E24B4A;
+  --rel-modify: #BA7517; --rel-weaken: #7F77DD; --rel-worsen: #D85A30; --rel-mirror: #378ADD;
+
+  /* 节点填充：AI 相关 / 其他 */
+  --node-ai-fill: #FBEAF0; --node-ai-stroke: #993556;
+  --node-fill: #f4f5f7; --node-stroke: #8d939c;
+
+  /* 证据徽章 */
+  --ev-a-bg: #dcf2e4; --ev-a-fg: #1b6a3d; --ev-a-line: #3a9a66;
+  --ev-b-bg: #fdebd3; --ev-b-fg: #8a4a00; --ev-b-line: #c98a2e;
+  --ev-c-bg: #eceef1; --ev-c-fg: #4c525c; --ev-c-line: #9aa0a8;
+  --ev-na-fg: #7a808a; --ev-na-line: #9aa0a8;
+
+  --badge-q-bg: #eceef1; --badge-q-fg: #4c525c;
+  --badge-alert: #d23b3a; --done: #2f8a57;
+
+  /* 研究线：低饱和，和关系颜色明显不同 */
+  --cl-0: #7d8fa8; --cl-1: #a3896a; --cl-2: #7c9a80; --cl-3: #a8839a;
+  --cl-4: #6d9aa0; --cl-5: #a39c6a; --cl-6: #8c86ab; --cl-7: #a78476;
+
+  --sans: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --ease: 240ms cubic-bezier(.2, .7, .2, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #12141a; --surface: #1c1f25; --panel: #20242c; --panel-2: #272c35;
+    --ink: #e6e8eb; --ink-2: #b4b9c2; --muted: #8a9099; --line: #3a3f48; --line-2: #2c313a;
+    --shadow: 0 8px 28px rgba(0, 0, 0, .5);
+    --focus: #5ea6f0;
+    --tag-src-bg: #243d36; --tag-src-fg: #9fe3bd; --tag-src-line: #4fb37c;
+    --tag-proc-bg: #4a3a2b; --tag-proc-fg: #f5c07a; --tag-proc-line: #db9536;
+    --danger: #f08a89; --danger-bg: #3d2224; --danger-line: #7a3a3b;
+    --rel-inherit: #a6a59e; --rel-explain: #34c192; --rel-support: #88c043; --rel-challenge: #f0706f;
+    --rel-modify: #dd9a3c; --rel-weaken: #a39cf2; --rel-worsen: #ee7d55; --rel-mirror: #62a8f2;
+    --node-ai-fill: #3b2430; --node-ai-stroke: #e27ba1;
+    --node-fill: #262a32; --node-stroke: #707782;
+    --ev-a-bg: #243d36; --ev-a-fg: #9fe3bd; --ev-a-line: #4fb37c;
+    --ev-b-bg: #4a3a2b; --ev-b-fg: #f5c07a; --ev-b-line: #c98a2e;
+    --ev-c-bg: #2f343d; --ev-c-fg: #b4b9c2; --ev-c-line: #707782;
+    --ev-na-fg: #8a9099; --ev-na-line: #707782;
+    --badge-q-bg: #3a3f48; --badge-q-fg: #d4d8de;
+    --badge-alert: #f0605f; --done: #56c07f;
+    --cl-0: #8fa2bc; --cl-1: #b89d7e; --cl-2: #8fae93; --cl-3: #bc97ae;
+    --cl-4: #80aeb4; --cl-5: #b7b07e; --cl-6: #a09ac0; --cl-7: #bb988a;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #12141a; --surface: #1c1f25; --panel: #20242c; --panel-2: #272c35;
+  --ink: #e6e8eb; --ink-2: #b4b9c2; --muted: #8a9099; --line: #3a3f48; --line-2: #2c313a;
+  --shadow: 0 8px 28px rgba(0, 0, 0, .5);
+  --focus: #5ea6f0;
+  --tag-src-bg: #243d36; --tag-src-fg: #9fe3bd; --tag-src-line: #4fb37c;
+  --tag-proc-bg: #4a3a2b; --tag-proc-fg: #f5c07a; --tag-proc-line: #db9536;
+  --danger: #f08a89; --danger-bg: #3d2224; --danger-line: #7a3a3b;
+  --rel-inherit: #a6a59e; --rel-explain: #34c192; --rel-support: #88c043; --rel-challenge: #f0706f;
+  --rel-modify: #dd9a3c; --rel-weaken: #a39cf2; --rel-worsen: #ee7d55; --rel-mirror: #62a8f2;
+  --node-ai-fill: #3b2430; --node-ai-stroke: #e27ba1;
+  --node-fill: #262a32; --node-stroke: #707782;
+  --ev-a-bg: #243d36; --ev-a-fg: #9fe3bd; --ev-a-line: #4fb37c;
+  --ev-b-bg: #4a3a2b; --ev-b-fg: #f5c07a; --ev-b-line: #c98a2e;
+  --ev-c-bg: #2f343d; --ev-c-fg: #b4b9c2; --ev-c-line: #707782;
+  --ev-na-fg: #8a9099; --ev-na-line: #707782;
+  --badge-q-bg: #3a3f48; --badge-q-fg: #d4d8de;
+  --badge-alert: #f0605f; --done: #56c07f;
+  --cl-0: #8fa2bc; --cl-1: #b89d7e; --cl-2: #8fae93; --cl-3: #bc97ae;
+  --cl-4: #80aeb4; --cl-5: #b7b07e; --cl-6: #a09ac0; --cl-7: #bb988a;
+}

@@ -1,0 +1,125 @@
+/* 页面样式：顶栏、画布、图例沿用 v3 的卡片语言（白底、细描边、12px 圆角、少阴影） */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--sans); font-size: 14px; line-height: 1.5; overflow: hidden; }
+button, select, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+#app { position: fixed; inset: 0; display: flex; flex-direction: column; min-width: 0; }
+#app > header, #issues { flex: none; }
+
+/* ---------- 顶栏 ---------- */
+header.top { display: flex; align-items: center; gap: 18px; padding: 10px 18px; background: var(--panel); border-bottom: 1px solid var(--line); z-index: 5; flex-wrap: wrap; min-width: 0; }
+.brand { display: flex; flex-direction: column; min-width: 0; flex: 1 1 320px; }
+.brand h1 { margin: 0; font: 700 19px/1.25 var(--sans); letter-spacing: .02em; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.brand .ver { font: 500 11px var(--mono); color: var(--muted); border: 1px solid var(--line); border-radius: 5px; padding: 1px 6px; }
+.brand .draft { font: 500 11px var(--sans); color: var(--tag-proc-fg); background: var(--tag-proc-bg); border-radius: 999px; padding: 1px 9px; cursor: help; }
+.brand p { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; flex: none; }
+.seg button { background: var(--panel-2); border: 0; padding: 5px 14px; font-size: 13px; cursor: pointer; color: var(--ink-2); border-right: 1px solid var(--line); }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--panel); }
+.seg button:disabled { cursor: not-allowed; color: var(--muted); opacity: .6; }
+.top-actions { display: flex; gap: 8px; align-items: center; }
+.btn { background: var(--panel); border: 1px solid var(--line); border-radius: 7px; padding: 4px 10px; font-size: 12.5px; color: var(--ink-2); cursor: pointer; white-space: nowrap; }
+.btn:hover { background: var(--panel-2); color: var(--ink); }
+
+/* ---------- 校验提示条 ---------- */
+#issues { background: var(--danger-bg); border-bottom: 1px solid var(--danger-line); color: var(--danger); font-size: 12.5px; z-index: 4; }
+#issues summary { cursor: pointer; padding: 6px 18px; font-weight: 500; }
+#issues ul { margin: 0; padding: 0 18px 8px 36px; max-height: 30vh; overflow: auto; }
+#issues li { margin: 2px 0; }
+#issues li b { font-family: var(--mono); margin-right: 8px; }
+#issues li .f { font-family: var(--mono); color: var(--ink-2); margin-right: 8px; }
+
+/* ---------- 画布 ---------- */
+#stage { position: relative; overflow: hidden; min-height: 0; flex: 1 1 auto; }
+#views { position: absolute; inset: 0; }
+svg.canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; user-select: none; cursor: grab; }
+svg.canvas:active { cursor: grabbing; }
+svg text { font-family: var(--sans); fill: var(--ink); }
+.canvas-tools { position: absolute; top: 12px; right: 14px; display: flex; gap: 6px; z-index: 6; }
+.fatal { max-width: 560px; margin: 12vh auto; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px 24px; }
+.fatal h2 { margin: 0 0 8px; font-size: 18px; }
+.fatal .hint { color: var(--muted); font-size: 13px; }
+.fatal code { font-family: var(--mono); background: var(--panel-2); padding: 1px 5px; border-radius: 4px; }
+
+/* 簇背景 */
+.hull { fill: var(--cc); fill-opacity: .075; stroke: var(--cc); stroke-opacity: .28; stroke-width: 1; }
+.hull-label { font: 500 13px var(--sans); fill: var(--ink-2); letter-spacing: .03em; }
+.hull-label.main { font-weight: 700; fill: var(--ink); }
+.hull-label .hull-id { font: 400 11px var(--mono); fill: var(--muted); }
+
+/* 关系线 */
+.edge-line { fill: none; stroke-linecap: round; }
+.edge-line.st-dash { stroke-dasharray: 7 4; }
+.edge-line.st-dot { stroke-dasharray: 2 4; }
+.edge-hit { fill: none; stroke: transparent; stroke-width: 12; pointer-events: stroke; }
+.edge-proc { fill: var(--ground); stroke-width: 1.4; }
+marker .mk-fill { fill: var(--mc); }
+marker .mk-hollow { fill: var(--ground); stroke: var(--mc); stroke-width: 1.4; stroke-linejoin: round; }
+marker .mk-tee { fill: none; stroke: var(--mc); stroke-width: 2.4; stroke-linecap: round; }
+marker .mk-double { fill: none; stroke: var(--mc); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+/* 节点 */
+.node { cursor: pointer; }
+.nd-shape { fill: var(--node-fill); stroke: var(--node-stroke); stroke-width: 1.3; }
+.nd-shape.is-ai { fill: var(--node-ai-fill); stroke: var(--node-ai-stroke); }
+.nd-shape.shape-concept { stroke-dasharray: 4 3; }
+.nd-bar { fill: var(--node-stroke); }
+.nd-bar.is-ai { fill: var(--node-ai-stroke); }
+.nd-name { font-size: 12.5px; font-weight: 500; fill: var(--ink); }
+.nd-id { font: 500 11px var(--mono); fill: var(--ink-2); }
+.nd-year { font: 400 11px var(--mono); fill: var(--muted); }
+.nd-cluster { stroke: var(--ground); stroke-width: 2; }
+.ev-badge rect { stroke-width: 1; }
+.ev-badge text { font: 600 11px var(--mono); }
+.ev-a rect { fill: var(--ev-a-bg); stroke: var(--ev-a-line); } .ev-a text { fill: var(--ev-a-fg); }
+.ev-b rect { fill: var(--ev-b-bg); stroke: var(--ev-b-line); } .ev-b text { fill: var(--ev-b-fg); }
+.ev-c rect { fill: var(--ev-c-bg); stroke: var(--ev-c-line); } .ev-c text { fill: var(--ev-c-fg); }
+.ev-na rect { fill: none; stroke: var(--ev-na-line); stroke-dasharray: 2.5 2; } .ev-na text { fill: var(--ev-na-fg); font-weight: 500; }
+.crowd circle { stroke-width: 1; stroke: var(--ink-2); }
+.crowd .on { fill: var(--ink-2); }
+.crowd .off { fill: none; stroke: var(--muted); }
+.corner circle { stroke: var(--ground); stroke-width: 1.5; }
+.corner text { font: 700 11px var(--sans); }
+.corner-q circle { fill: var(--badge-q-bg); } .corner-q text { fill: var(--badge-q-fg); }
+.corner-alert circle { fill: var(--badge-alert); } .corner-alert text { fill: #fff; }
+.corner-done circle { fill: var(--done); } .corner-done path { fill: none; stroke: #fff; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* 语义缩放：近距离才显示的细节 */
+svg.canvas .lv-near { display: none; }
+svg.canvas[data-level="near"] .lv-near { display: inline; }
+
+/* ---------- 图例（沿用 v3 的折叠框） ---------- */
+#legend { position: absolute; left: 14px; bottom: 14px; width: 330px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); z-index: 6; font-size: 12px; }
+#legend > summary { cursor: pointer; padding: 9px 14px; font-weight: 500; color: var(--ink-2); list-style: none; display: flex; justify-content: space-between; align-items: center; }
+#legend > summary::-webkit-details-marker { display: none; }
+#legend > summary::after { content: "▾"; color: var(--muted); }
+#legend:not([open]) > summary::after { content: "▸"; }
+#legend .body { padding: 2px 14px 12px; display: grid; gap: 12px; max-height: calc(100vh - 230px); overflow-y: auto; overscroll-behavior: contain; }
+#legend h4 { margin: 0 0 5px; font: 500 11px var(--sans); letter-spacing: .08em; color: var(--muted); }
+#legend ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }
+#legend li { display: flex; align-items: flex-start; gap: 8px; color: var(--ink-2); }
+#legend .lg-sw { flex: none; width: 46px; display: flex; justify-content: center; padding-top: 1px; }
+#legend .lg-sw svg { overflow: visible; }
+#legend .lg-t b { font-weight: 500; color: var(--ink); margin-right: 6px; }
+#legend .lg-n { color: var(--muted); font-size: 11.5px; }
+#legend li.main .lg-t b { font-weight: 700; }
+#legend .lg-foot { margin: 0; color: var(--muted); font-size: 11.5px; border-top: 1px solid var(--line-2); padding-top: 8px; }
+#legend::after { content: ""; position: absolute; left: 1px; right: 1px; bottom: 1px; height: 30px; border-radius: 0 0 11px 11px; background: linear-gradient(to top, var(--panel) 30%, transparent); pointer-events: none; opacity: 0; transition: opacity .15s; }
+#legend.more::after { opacity: 1; }
+#legend .body::-webkit-scrollbar { width: 9px; }
+#legend .body::-webkit-scrollbar-thumb { background: var(--line); border: 2px solid var(--panel); border-radius: 5px; }
+
+@media (max-width: 760px) {
+  header.top { gap: 8px 10px; padding: 8px 10px; }
+  .brand { flex-basis: 100%; }
+  .brand h1 { font-size: 16px; }
+  #legend { width: auto; right: 10px; left: 10px; bottom: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+.hull-label { paint-order: stroke; stroke: var(--ground); stroke-width: 4px; stroke-linejoin: round; }
