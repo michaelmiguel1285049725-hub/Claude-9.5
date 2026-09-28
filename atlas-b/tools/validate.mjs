@@ -1,6 +1,6 @@
 // 命令行校验内容包，与浏览器用同一套规则（js/validate.js）。
-// 用法（在 atlas 目录里）：node tools/validate.mjs packs/ai-bias
-// 也可以在仓库根目录：node atlas/tools/validate.mjs atlas/packs/ai-bias
+// 用法（在 atlas-b 目录里）：node tools/validate.mjs packs/ai-bias
+// 也可以在仓库根目录：node atlas-b/tools/validate.mjs atlas-b/packs/ai-bias
 import { readFileSync, existsSync, statSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';

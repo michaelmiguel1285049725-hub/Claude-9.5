@@ -1,5 +1,5 @@
 // localStorage 封装：所有读写都包在 try/catch 里，读不到或写不进时页面照常工作。
-const NS = 'atlas';
+const NS = 'atlas-b';   // 与同站点上的 atlas/ 分开保存，互不干扰
 
 export function createStore(packId) {
   const k = key => `${NS}.${packId}.${key}`;

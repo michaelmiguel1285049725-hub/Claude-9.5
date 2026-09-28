@@ -50,7 +50,7 @@ function showIssues(issues, pack) {
 
 function fatal(msg) {
   $('#stage').innerHTML = `<div class="fatal"><h2>页面没能加载</h2><p>${esc(msg)}</p>
-    <p class="hint">如果是在自己电脑上直接双击打开的：需要先在仓库目录运行 <code>python3 -m http.server</code>，再访问 <code>http://localhost:8000/atlas/</code>。</p></div>`;
+    <p class="hint">如果是在自己电脑上直接双击打开的：需要先在仓库目录运行 <code>python3 -m http.server</code>，再访问 <code>http://localhost:8000/atlas-b/</code>。</p></div>`;
 }
 
 let toastTimer = null;

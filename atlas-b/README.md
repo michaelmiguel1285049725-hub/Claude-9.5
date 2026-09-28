@@ -1,8 +1,10 @@
-# 领域学习地图（atlas）
+# 领域学习地图（atlas-b）
 
-一套可以反复使用的"学习地图"网页。网页本身不写任何领域内容，所有节点、关系、空缺问题都来自一个**内容包**（`pack.json`）。换一个内容包，就是另一张地图。
+一套可以反复使用的"学习地图"网页。
 
-- 线上地址：`https://michaelmiguel1285049725-hub.github.io/Claude-9.5/atlas/`
+> 同一个仓库里还有另一个会话做的版本 `atlas/`，两者互不依赖、并排上线；本目录是其中的 **atlas-b**（关系网三层下钻：概览 → 研究线 → 关系透镜）。学习进度等本机数据也分开保存。网页本身不写任何领域内容，所有节点、关系、空缺问题都来自一个**内容包**（`pack.json`）。换一个内容包，就是另一张地图。
+
+- 线上地址：`https://michaelmiguel1285049725-hub.github.io/Claude-9.5/atlas-b/`
 - 当前内容包：`packs/ai-bias/pack.json`（AI × 认知偏差 × 决策）
 
 ---
@@ -46,13 +48,13 @@
 python3 -m http.server
 ```
 
-然后在浏览器打开 `http://localhost:8000/atlas/`。按 `Ctrl + C` 停止。
+然后在浏览器打开 `http://localhost:8000/atlas-b/`。按 `Ctrl + C` 停止。
 
 ---
 
 ## 三、检查内容包有没有写错
 
-改完 `pack.json` 后，在 `atlas` 文件夹里运行：
+改完 `pack.json` 后，在 `atlas-b` 文件夹里运行：
 
 ```
 node tools/validate.mjs packs/ai-bias
@@ -85,7 +87,7 @@ node tools/validate.mjs packs/ai-bias
 2. 把新内容包存成 `packs/munger/pack.json`，里面的 `domain.pack_id` 也写 `munger`。
 3. 校验：`node tools/validate.mjs packs/munger`
 4. 打开网址时在后面加 `?pack=编号`：
-   `https://michaelmiguel1285049725-hub.github.io/Claude-9.5/atlas/?pack=munger`
+   `https://michaelmiguel1285049725-hub.github.io/Claude-9.5/atlas-b/?pack=munger`
 
 不加 `?pack=` 时默认打开 `ai-bias`。每个内容包的学习进度、Notion 链接、筛选各自分开保存。
 
@@ -104,7 +106,7 @@ node tools/validate.mjs packs/ai-bias
 ## 七、文件说明
 
 ```
-atlas/
+atlas-b/
   index.html              页面入口
   css/tokens.css          颜色、字体等设计变量（浅色 / 深色）
   css/app.css             页面样式
