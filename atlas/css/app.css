@@ -442,3 +442,9 @@ dl.kv dd { margin: 0; color: var(--ink-2); display: flex; align-items: center; g
 .pathv .edge:hover .edge-line { stroke-width: 3px !important; }
 .lens-curves .edge.gap-hi .edge-line { stroke-width: 3.6px !important; }
 .lens-curves .edge.gap-hi .edge-proc { stroke-width: 2; }
+
+/* 键盘焦点：卡片和气泡都有明显的蓝色描边 */
+.node:focus-visible .nd-shape { stroke: var(--focus) !important; stroke-width: 3px !important; }
+.ov-bubble:focus-visible .ov-core, .cl-bubble:focus-visible circle, .bubble:focus-visible circle { stroke: var(--focus); stroke-width: 3.5px; }
+.lens-more:focus-visible rect, .lens-gap:focus-visible rect { stroke: var(--focus); stroke-width: 2.5px; }
+.lens-hidden:focus-visible { outline: 2px solid var(--focus); }
