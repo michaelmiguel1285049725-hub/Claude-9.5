@@ -234,7 +234,7 @@ export function createLens({ svgEl, stageEl, model, actions, visibleFn }) {
     const s = get();
     const hi = hoverEdge || s.edge;
     root.classed('has-hover', !!hi);
-    gLines.selectAll('g.edge').each(function (d) { this.classList.toggle('hi', !!hi && d.id === hi); this.classList.toggle('dim', !!hi && d.id !== hi); this.classList.toggle('active', s.edge === d.id); });
+    gLines.selectAll('g.edge').each(function (d) { this.classList.toggle('hi', !!hi && d.id === hi); this.classList.toggle('dim', !!hi && d.id !== hi); this.classList.toggle('active', s.edge === d.id); this.classList.toggle('gaphi', !!s.gap && d.ref.gap === s.gap); });
     gCols.selectAll('g.lens-card').each(function () { const id = this.dataset.edge; this.classList.toggle('hi', !!hi && id === hi); this.classList.toggle('dim', !!hi && id !== hi); });
   }
 

@@ -63,8 +63,8 @@ export function initPanel({ el, model, actions }) {
       ${n.unverified ? `<p class="p-unv">? ${esc(enc.UNVERIFIED_TEXT)}</p>` : ''}
       ${n.note ? `<p class="p-note">${esc(n.note)}</p>` : ''}
       <div class="p-actions">
-        <label class="p-toggle"><input type="checkbox" data-act="depth" ${s.depth >= 2 ? 'checked' : ''}> 显示两跳</label>
-        <button type="button" class="icon-btn small" data-act="zoom">缩放过去</button>
+        ${s.view === 'network' && s.mode === 'lens' ? '' : '<button type="button" class="icon-btn small primary" data-act="open-lens">在关系透镜中打开</button>'}
+        ${s.view === 'network' ? '' : `<label class="p-toggle"><input type="checkbox" data-act="depth" ${s.depth >= 2 ? 'checked' : ''}> 显示两跳</label><button type="button" class="icon-btn small" data-act="zoom">缩放过去</button>`}
       </div>
       <div class="p-actions main">
         <button type="button" class="icon-btn small primary" data-act="copy-prompt" title="把讲解请求模板复制到剪贴板，粘贴给 Claude">复制给 Claude 的提问</button>
@@ -111,15 +111,29 @@ export function initPanel({ el, model, actions }) {
       <div class="p-actions"><button type="button" class="icon-btn small" data-act="zoom">缩放过去</button></div>`;
   }
 
-  /* ---------- 路径 ---------- */
+  /* ---------- 路径：横向链条 ---------- */
+  function connectorHTML(step) {
+    const t = step.edge.type, r = enc.relByZh[t] || enc.REL[0];
+    const dash = enc.STATUS[step.edge.status]?.dash;
+    const rev = step.reverse; /* 逆向经过：箭头朝左 */
+    const d = rev ? 'M52 12 L8 12' : 'M8 12 L52 12';
+    const start = r.both ? ` marker-start="url(#mk-${r.key}-start)"` : '';
+    return `<span class="pc-conn" title="${esc(step.edge.reason)}"><span class="pc-type" style="color:${enc.relColor(t)}">${esc(t)}</span><svg viewBox="0 0 60 24" aria-hidden="true"><path d="${d}" style="stroke:${enc.relColor(t)}" stroke-width="${r.width + 0.4}"${dash ? ` stroke-dasharray="${dash}"` : ''} marker-end="url(#mk-${r.key})"${start}/>${step.edge.basis === '加工' ? `<circle cx="30" cy="12" r="3.5" class="proc" style="stroke:${enc.relColor(t)}"/>` : ''}</svg></span>`;
+  }
   function chainHTML(p) {
-    const parts = [`<span class="c-node">${esc(nodeLabel(p.nodes[0]))}</span>`];
-    p.steps.forEach((st, i) => {
-      const t = st.edge.type;
-      parts.push(`<span class="c-rel" style="--c:${enc.relColor(t)}">${st.reverse ? `←${esc(t)}—` : `—${esc(t)}→`}</span>`);
-      parts.push(`<span class="c-node">${esc(nodeLabel(p.nodes[i + 1]))}</span>`);
+    const parts = [];
+    p.nodes.forEach((id, i) => {
+      const n = model.byId.get(id);
+      const c = model.clusterById.get(n._cluster);
+      parts.push(`<button type="button" class="pc-node${n.ai_related ? ' ai' : ''}" data-act="lens-node" data-id="${esc(id)}" title="${esc(n.gist)}"><i class="dot" style="--c:${c?._color}"></i><span class="r-id">${esc(id)}</span><span class="pc-name">${esc(n.name)}</span></button>`);
+      if (i < p.steps.length) parts.push(connectorHTML(p.steps[i]));
     });
-    return parts.join(' ');
+    return `<div class="pc-chain">${parts.join('')}</div>`;
+  }
+  function pathText(p) {
+    let out = `${p.nodes[0]} ${model.byId.get(p.nodes[0]).name}`;
+    p.steps.forEach((st, i) => { out += st.reverse ? ` ←${st.edge.type}— ` : ` —${st.edge.type}→ `; out += `${p.nodes[i + 1]} ${model.byId.get(p.nodes[i + 1]).name}`; });
+    return out;
   }
   function pathKey(p) { return p.edges.join('>'); }
   function renderPath(s) {
@@ -127,6 +141,7 @@ export function initPanel({ el, model, actions }) {
     const vis = computeVisibility(model, s.filters);
     const opts = model.nodes.map((n) => `<option value="${esc(n.id)}">${esc(n.id)} ${esc(n.name)}</option>`).join('');
     let results = '';
+    lastResults = [];
     if (q.from && q.to && model.byId.has(q.from) && model.byId.has(q.to)) {
       const main = q.sourceFirst ? pf.weightedShortest(model, vis.edgeVis, q.from, q.to) : pf.shortest(model, vis.edgeVis, q.from, q.to);
       if (!main) {
@@ -134,14 +149,15 @@ export function initPanel({ el, model, actions }) {
         results = `<div class="p-warn">在当前筛选下，${esc(nodeLabel(q.from))} 和 ${esc(nodeLabel(q.to))} 不连通。${bl.connectedAtAll ? `<br>可以放宽：${bl.hints.length ? bl.hints.map(esc).join('、') : '（某些被隐藏的节点或线）'}` : '<br>即使不做任何筛选，两者之间也没有关系链。'}</div>`;
       } else {
         const alts = pf.alternatives(model, vis.edgeVis, q.from, q.to, main, 5, 3);
+        const list = [main, ...alts];
+        lastResults = list;
         const cur = s.path ? pathKey(s.path) : null;
-        const card = (p, label) => { const st = pf.pathStats(p); return `<button type="button" class="path-card${cur === pathKey(p) ? ' cur' : ''}" data-act="path" data-key="${esc(pathKey(p))}"><div class="path-label">${label}</div><div class="path-chain">${chainHTML(p)}</div><div class="path-stats">共 ${st.len} 步，其中 ${st.proc} 条是 Claude 加工，${st.unv} 条未验证</div></button>`; };
-        results = card(main, q.sourceFirst ? '文献优先的最短路径' : '最短路径') + (alts.length ? `<h3 class="p-sub">备选路径（长度 ≤ 5）</h3>` + alts.map((p, i) => card(p, `备选 ${i + 1}`)).join('') : '<p class="empty">没有其他长度 ≤ 5 的路径。</p>');
-        cacheResults([main, ...alts]);
+        results = `<div class="path-head"><span class="p-sub" style="margin:0">${list.length} 条路径${q.sourceFirst ? '（文献优先）' : ''}</span><button type="button" class="icon-btn tiny" data-act="copy-path" title="复制当前高亮的路径（没有就复制路径 1）">复制路径</button></div>` +
+          list.map((p, i) => { const st = pf.pathStats(p); return `<div class="path-card${cur === pathKey(p) ? ' cur' : ''}" data-key="${esc(pathKey(p))}"><button type="button" class="path-label link" data-act="path" data-key="${esc(pathKey(p))}" title="在画布上高亮这条路径">路径 ${i + 1}（${st.len} 步，其中 ${st.proc} 条加工、${st.unv} 条未验证）${i === 0 ? ' · 最短' : ''}</button>${chainHTML(p)}</div>`; }).join('');
       }
     }
     el.innerHTML = header('找路径') + `
-      <p class="p-help">依次点击画布上的两个节点，或在下面输入编号。路径只走当前筛选下可见的线。</p>
+      <p class="p-help">依次点击画布上的两个节点，或在下面输入编号。路径只走当前筛选下可见的线。点链条里的节点进入它的透镜。</p>
       <div class="path-form">
         <label>起点 <input list="nodeOptions" data-field="from" value="${esc(q.from || '')}" placeholder="如 R-04"></label>
         <label>终点 <input list="nodeOptions" data-field="to" value="${esc(q.to || '')}" placeholder="如 C-04"></label>
@@ -155,7 +171,6 @@ export function initPanel({ el, model, actions }) {
       <div class="path-results">${results}</div>`;
   }
   let lastResults = [];
-  function cacheResults(list) { lastResults = list; }
 
   /* ---------- 空缺 ---------- */
   function gapItem(g, s) {
@@ -169,7 +184,21 @@ export function initPanel({ el, model, actions }) {
   function renderGaps(s) {
     const order = ['几乎空白', '有初步工作', '已基本解决'];
     const sorted = [...model.gaps].sort((a, b) => order.indexOf(a.status) - order.indexOf(b.status) || (b.key - a.key));
-    el.innerHTML = header('空缺问题') + `<p class="p-help">点击一个空缺，画布高亮它的节点和相关的线。★ 是你标记的重点问题。</p><ul class="gap-list">${sorted.map((g) => gapItem(g, s)).join('')}</ul>`;
+    let detail = '';
+    const g = s.gap ? model.gapById.get(s.gap) : null;
+    if (g) {
+      const edges = model.edgesByGap.get(g.id) || [];
+      const inLens = s.view === 'network' && s.mode === 'lens';
+      detail = `<div class="gap-detail">
+        <div class="gap-row"><span class="r-id">${esc(g.id)}</span>${g.key ? '<span class="gap-star">★</span>' : ''}<span class="gap-title">${esc(g.title)}</span>${gapPill(g.status)}</div>
+        <p class="p-gist">${esc(g.summary)}</p>
+        <h3 class="p-sub">涉及的节点 <span class="p-count">${(g.nodes || []).length}</span>${inLens ? '<span class="pop-sub"> · 点击切换中心</span>' : ''}</h3>
+        <div class="gap-nodes">${(g.nodes || []).map((id) => { const n = model.byId.get(id); if (!n) return ''; const c = model.clusterById.get(n._cluster); return `<button type="button" class="pc-node${n.ai_related ? ' ai' : ''}${s.node === id ? ' cur' : ''}" data-act="lens-node" data-id="${esc(id)}"><i class="dot" style="--c:${c?._color}"></i><span class="r-id">${esc(id)}</span><span class="pc-name">${esc(n.name)}</span></button>`; }).join('')}</div>
+        <h3 class="p-sub">属于这个空缺的关系 <span class="p-count">${edges.length}</span></h3>
+        ${edges.length ? `<ul class="rel-col"><ul>${edges.map((e) => { const a = model.byId.get(e.from), b = model.byId.get(e.to); return `<li><button type="button" class="rel-item${s.edge === e.id ? ' cur' : ''}" data-act="edge" data-id="${esc(e.id)}" title="${esc(e.reason)}"><span class="r-id">${esc(a.id)}</span><span class="r-name">${esc(a.name)}</span><span class="r-dir" style="--c:${enc.relColor(e.type)}">—${esc(e.type)}→</span><span class="r-id">${esc(b.id)}</span><span class="r-name">${esc(b.name)}</span><span class="r-meta">${esc(e.status)}</span>${basisTag(e.basis)}</button></li>`; }).join('')}</ul></ul>` : '<p class="empty">没有关系线直接属于这个空缺。</p>'}
+      </div>`;
+    }
+    el.innerHTML = header('空缺问题') + detail + `<p class="p-help">${g ? '其他空缺：' : '点击一个空缺，进入它第一个节点的透镜，并加粗属于它的关系。'}★ 是你标记的重点问题。</p><ul class="gap-list">${sorted.map((x) => gapItem(x, s)).join('')}</ul>`;
   }
 
   function render() {
@@ -189,8 +218,10 @@ export function initPanel({ el, model, actions }) {
     const act = b.dataset.act, id = b.dataset.id;
     const s = get();
     if (act === 'close') actions.closePanel();
-    else if (act === 'node') actions.selectNode(id, { zoom: true });
-    else if (act === 'edge') actions.selectEdge(id, { zoom: true });
+    else if (act === 'node') { if (s.view === 'network') actions.openLens(id); else actions.selectNode(id, { zoom: true }); }
+    else if (act === 'lens-node') actions.openLens(id, { keepGap: s.panel === 'gaps' });
+    else if (act === 'copy-path') { const cur = s.path ? lastResults.find((x) => pathKey(x) === pathKey(s.path)) : null; const p = cur || lastResults[0]; if (p) actions.copy(pathText(p), '已复制路径'); }
+    else if (act === 'edge') actions.selectEdge(id, { zoom: s.view !== 'network' });
     else if (act === 'gap') actions.selectGap(id);
     else if (act === 'copy-id') actions.copy(s.node);
     else if (act === 'copy-prompt') actions.copyPrompt(s.node);
@@ -226,7 +257,7 @@ export function initPanel({ el, model, actions }) {
 
   subscribe((s, patch) => {
     if ('node' in patch) editingNotion = false;
-    if (['panel', 'node', 'edge', 'gap', 'path', 'pathQuery', 'depth', 'filters', 'progressTick'].some((k) => k in patch)) render();
+    if (['panel', 'node', 'edge', 'gap', 'path', 'pathQuery', 'depth', 'filters', 'progressTick', 'view', 'mode'].some((k) => k in patch)) render();
   });
   render();
   return { render };

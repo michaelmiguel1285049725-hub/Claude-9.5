@@ -120,13 +120,13 @@ async function boot() {
       else set({ node: id, edge: null, path: null, gap: null, panel: 'node' });
     },
     /* 关系网层级 */
-    enterLens(id) {
+    enterLens(id, { gap = null, panel = 'closed' } = {}) {
       const s = get();
       if (!model.byId.has(id)) return;
       let trail;
       if (s.mode === 'lens') { trail = s.trail[s.trail.length - 1] === id ? [...s.trail] : [...s.trail, id]; }
       else { trail = [id]; lensOrigin = s.mode === 'cluster' ? { mode: 'cluster', cluster: s.focusCluster } : { mode: 'overview', cluster: null }; }
-      set({ mode: 'lens', node: id, trail, edge: null, path: null, gap: null, panel: 'closed', hoverNode: null });
+      set({ mode: 'lens', node: id, trail, edge: null, path: null, gap, panel, hoverNode: null });
     },
     lensHop(id) { actions.enterLens(id); },
     goTrailNode(id) {
@@ -152,9 +152,27 @@ async function boot() {
     closePanel() { const s = get(); set({ node: actions.keepCenter(), edge: null, path: null, gap: null, panel: 'closed', pathQuery: s.panel === 'path' ? null : s.pathQuery }); },
     selectNode(id, { zoom = false } = {}) { if (!model.byId.has(id)) return; set({ node: id, edge: null, path: null, gap: null, panel: 'node' }); if (zoom) current().zoomToNode(id); },
     selectEdge(id, { zoom = false } = {}) { if (!model.edgeById.has(id)) return; set({ edge: id, path: null, gap: null, panel: 'edge' }); if (zoom) { const e = model.edgeById.get(id); current().fitNodes([e.from, e.to]); } },
-    selectGap(id, { zoom = true } = {}) { if (!model.gapById.has(id)) return; set({ gap: id, node: actions.keepCenter(), edge: null, path: null, panel: 'gaps' }); if (zoom && get().mode !== 'lens') current().fitNodes(network.gapNodeIds(id)); },
+    selectGap(id, { zoom = true } = {}) {
+      const g = model.gapById.get(id); if (!g) return;
+      const s = get();
+      if (s.view === 'network') {
+        /* 关系网里：进入它第一个节点的透镜（已在透镜里就保留中心），属于它的关系加粗 */
+        const first = (g.nodes || []).find((x) => model.byId.has(x));
+        if (s.mode === 'lens' && s.node) set({ gap: id, edge: null, path: null, panel: 'gaps' });
+        else if (first) actions.enterLens(first, { gap: id, panel: 'gaps' });
+        else set({ gap: id, node: null, edge: null, path: null, panel: 'gaps' });
+        return;
+      }
+      set({ gap: id, node: null, edge: null, path: null, panel: 'gaps' });
+      if (zoom) current().fitNodes(network.gapNodeIds(id));
+    },
     openGaps() { const s = get(); if (s.panel === 'gaps') actions.closePanel(); else set({ panel: 'gaps', node: actions.keepCenter(), edge: null, path: null }); },
-    openLens(id) { if (get().view !== 'network') set({ view: 'network' }); actions.enterLens(id); },
+    openLens(id, { keepGap = false } = {}) {
+      const s = get();
+      if (s.view !== 'network') set({ view: 'network' });
+      const gap = keepGap && s.gap ? s.gap : null;
+      actions.enterLens(id, { gap, panel: gap ? 'gaps' : 'closed' });
+    },
     back() { current().backToSelection(); },
     async copy(text, msg) { toast((await copyText(text)) ? (msg || `已复制 ${text}`) : '复制失败，请手动选择'); },
     async copyPrompt(id) { const t = buildPrompt(model, id); toast((await copyText(t)) ? '已复制讲解请求，去粘贴给 Claude' : '复制失败'); },
@@ -214,10 +232,12 @@ async function boot() {
   });
   const topbar = initTopbar({
     model,
-    onOpen(name) { if (name === 'legendPop') { refreshLegend(); extraInset.right = 340; current().fitAll(true); } if (name === 'drawer') drawer.refresh(); },
-    onClose(name) { if (name === 'legendPop') { extraInset.right = 0; current().fitAll(true); } },
+    onOpen(name) { if (name === 'legendPop') { refreshLegend(); extraInset.right = 340; clipCanvas(340); current().fitAll(true); } if (name === 'drawer') drawer.refresh(); },
+    onClose(name) { if (name === 'legendPop') { extraInset.right = 0; clipCanvas(0); current().fitAll(true); } },
   });
   window.__atlas.topbar = topbar;
+  /* 图例展开时把画布右侧裁掉，滚动模式下的成熟度 / 时间线也不会被遮挡 */
+  function clipCanvas(px) { for (const id of ['canvas', 'maturity', 'timeline']) $(id).style.clipPath = px ? `inset(0 ${px}px 0 0)` : ''; }
   function refreshLegend() { if (topbar.isOpen() === 'legendPop') renderLegend($('legendBody'), model, svgOf[get().view] || $('canvas')); }
   $('gapsBtn').addEventListener('click', () => actions.openGaps());
 

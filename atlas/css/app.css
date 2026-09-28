@@ -568,3 +568,45 @@ svg#canvas.simple .hulls,svg#canvas.simple .summary,svg#canvas.simple .edges,svg
 #trail:not([hidden])~#lensBack{top:50px}
 #lensBack:not([hidden])~#summary{top:88px}
 .lens-center text,.lens-card text{pointer-events:none}
+/* 阶段 D：横向路径链条、空缺详情 */
+.path-head{display:flex;align-items:center;justify-content:space-between;margin:0 0 8px}
+.path-card{display:grid;gap:6px}
+.path-card .path-label{text-align:left;font:500 12px var(--sans);color:var(--ink-2);padding:0}
+.path-card.cur .path-label{color:var(--ink);font-weight:600}
+.pc-chain{display:flex;align-items:center;gap:2px;overflow-x:auto;padding:4px 2px 6px;scrollbar-width:thin}
+.pc-node{display:inline-flex;align-items:center;gap:5px;border:1.3px solid var(--node-stroke);background:var(--node-fill);border-radius:7px;padding:4px 8px;cursor:pointer;font-size:12px;white-space:nowrap;flex:none;color:var(--ink)}
+.pc-node.ai{background:var(--ai-fill);border-color:var(--ai-stroke)}
+.pc-node:hover,.pc-node.cur{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.pc-node .dot{width:7px;height:7px;border-radius:50%;background:var(--c);flex:none}
+.pc-node .pc-name{font-weight:500}
+.pc-conn{display:inline-flex;flex-direction:column;align-items:center;flex:none;width:60px;line-height:1}
+.pc-conn .pc-type{font-size:10.5px;font-weight:600;margin-bottom:-2px}
+.pc-conn svg{width:60px;height:24px;overflow:visible}
+.pc-conn svg path{fill:none}
+.pc-conn svg .proc{fill:var(--panel);stroke-width:1.3}
+.gap-detail{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0 0 12px;background:var(--panel-2)}
+.gap-detail .p-gist{margin:8px 0 10px;background:var(--panel)}
+.gap-nodes{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.lens .edge.gaphi .line{stroke-width:3.4}
+.lens .edge.gaphi .halo{opacity:.22}
+/* 阶段 D：成熟度固定表头、时间线固定泳道名 */
+#maturity .heads .head-bg{fill:var(--ground)}
+#maturity .head-corner{fill:var(--ground)}
+#maturity .cell-count{font:500 12px var(--mono)}
+#maturity .head-title{font-size:15px}
+#maturity .head-sub{font-size:11px}
+#timeline .lane-labels .label-bg{fill:var(--panel);stroke:var(--line);stroke-width:1}
+#timeline .lane-labels .lane-label{font:500 14px var(--sans);fill:var(--ink-2)}
+#timeline .lane-labels .lane-label.main{font-weight:700;fill:var(--ink)}
+#timeline .lane-labels .lane-count{font:400 11px var(--mono);fill:var(--muted)}
+#timeline .lane-labels .lane-desc{font:400 10.5px var(--sans);fill:var(--muted)}
+#timeline .lane-labels .axis-name{font:500 10.5px var(--sans);fill:var(--muted);letter-spacing:.1em}
+#timeline .node.shifted .cl-dot{stroke:var(--warn)}
+#timeline .seg-label{font-size:11px}
+#timeline .tick text{font-size:12px}
+#timeline .axis-fixed .axis-bg{fill:var(--ground)}
+#timeline .axis-fixed{pointer-events:none}
+#timeline .axis-fixed .tick,#timeline .axis-fixed .axis-break{pointer-events:all}
+#timeline .lane-labels{pointer-events:none}
+#timeline rect.lane{fill:var(--panel)}
+#timeline rect.lane.alt{fill:var(--surface)}

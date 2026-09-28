@@ -413,7 +413,7 @@ export function createNetwork({ svgEl, stageEl, model, actions }) {
     if ('filters' in patch || 'progressTick' in patch) { refreshVisibility(); return; }
     if ('mode' in patch || 'focusCluster' in patch) { applyState(); if (s.mode === 'cluster') zoomToCluster(s.focusCluster); else if (s.mode === 'overview') fitAll(true); return; }
     if ('node' in patch && s.mode === 'lens') { lens.show(s.node); return; }
-    if ('edge' in patch && s.mode === 'lens') { lens.applyHover(); return; }
+    if (('edge' in patch || 'gap' in patch) && s.mode === 'lens') { lens.applyHover(); return; }
     if (['node', 'edge', 'gap', 'path', 'hoverNode', 'hoverEdge'].some((k) => k in patch)) applyState();
   });
 
