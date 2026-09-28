@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f7f8f9">
+<title>领域学习地图</title>
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/app.css">
+<script>/* 首帧前套用手动主题，避免闪烁 */(function(){try{var t=JSON.parse(localStorage.getItem('atlas.theme'));if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">
+      <h1><span id="title">领域学习地图</span><span class="ver" id="ver" hidden></span><span class="draft" id="draft" hidden></span></h1>
+      <p id="subtitle"></p>
+    </div>
+    <div class="seg" role="group" aria-label="视角" id="views">
+      <button type="button" data-view="network" aria-pressed="true">关系网 <kbd>1</kbd></button>
+      <button type="button" data-view="maturity" aria-pressed="false">成熟度 <kbd>2</kbd></button>
+      <button type="button" data-view="timeline" aria-pressed="false">时间线 <kbd>3</kbd></button>
+    </div>
+    <div class="tools">
+      <input id="search" type="search" placeholder="搜索编号 / 中文名 / 英文名（/）" autocomplete="off" spellcheck="false" aria-label="搜索节点">
+      <button type="button" class="icon-btn" id="theme" title="切换浅色 / 深色" aria-label="切换主题">◐</button>
+    </div>
+  </header>
+  <div id="filters" aria-label="筛选栏"><span class="placeholder">筛选栏（阶段 2）</span></div>
+  <details id="banner" hidden open></details>
+  <div id="main">
+    <div id="stage">
+      <svg id="canvas" data-level="2" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+        <defs id="defs"></defs>
+        <g id="world"></g>
+      </svg>
+      <div class="stage-tools">
+        <span class="zoom-readout" data-zoom-readout>100%</span>
+        <button type="button" class="icon-btn" id="fit" title="适配全部">适配全部</button>
+        <button type="button" class="icon-btn" id="back" title="回到选中节点" disabled>回到选中</button>
+      </div>
+      <details id="legend" open>
+        <summary>图例</summary>
+        <div class="body" id="legendBody"></div>
+      </details>
+      <div id="hint">拖动平移 · 滚轮缩放 · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> 切换视角 · <kbd>/</kbd> 搜索 · <kbd>Esc</kbd> 取消</div>
+    </div>
+    <aside id="panel" aria-live="polite">
+      <div id="panelBody"><p class="empty">点击节点或关系查看详情（阶段 2 实现）。</p></div>
+    </aside>
+  </div>
+</div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
