@@ -1,0 +1,64 @@
+/* atlas · 设计变量。浅色为默认；深色通过系统偏好或 :root[data-theme="dark"] 覆盖。
+   颜色语义（关系类型、节点填充、证据等级）在三个视角里共用，只在这里定义。 */
+:root{
+  color-scheme:light;
+  /* 与 v3 一致的画布 / 面板 / 文字 */
+  --ground:#e9ebee; --surface:#f7f8f9; --panel:#ffffff; --panel-2:#f1f2f4;
+  --ink:#1c1f24; --ink-2:#4c525c; --muted:#7a808a; --line:#cfd3d9; --line-2:#e2e5e9;
+  --shadow:0 8px 28px rgba(28,31,36,.14);
+  --sans:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --accent:#378ADD; --danger:#E24B4A; --warn:#BA7517;
+  /* 来源 / 加工 标签（沿用 v3） */
+  --tag-src-bg:#dcf2e4; --tag-src-fg:#1b6a3d; --tag-src-line:#3a9a66;
+  --tag-proc-bg:#fdebd3; --tag-proc-fg:#8a4a00; --tag-proc-line:#BA7517;
+  /* 八种关系类型 */
+  --rel-inherit:#888780; --rel-explain:#1D9E75; --rel-support:#639922; --rel-challenge:#E24B4A;
+  --rel-revise:#BA7517; --rel-reduce:#7F77DD; --rel-worsen:#D85A30; --rel-mirror:#378ADD;
+  /* 节点填充：人类侧中性灰 / AI 侧浅粉 */
+  --node-fill:#f3f4f6; --node-stroke:#8a9099; --ai-fill:#FBEAF0; --ai-stroke:#993556;
+  --node-text:#1c1f24;
+  /* 证据等级徽章 */
+  --ev-a:#639922; --ev-b:#BA7517; --ev-c:#888780; --ev-na:#7a808a;
+  /* 空缺状态 */
+  --gap-blank:#E24B4A; --gap-some:#BA7517; --gap-done:#639922;
+  /* 研究线色板（低饱和，按内容包里簇的顺序分配；引擎不知道簇是什么） */
+  --cl-0:#6F86B3; --cl-1:#B37C8F; --cl-2:#8FA36F; --cl-3:#9E7CB3;
+  --cl-4:#6FA3A3; --cl-5:#B39E6F; --cl-6:#8A8AB3; --cl-7:#B3886F;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --ground:#12141a; --surface:#1c1f25; --panel:#20242c; --panel-2:#272c35;
+    --ink:#e6e8eb; --ink-2:#b4b9c2; --muted:#8a9099; --line:#3a3f48; --line-2:#2c313a;
+    --shadow:0 8px 28px rgba(0,0,0,.5);
+    --accent:#62A6F0; --danger:#F06B6A; --warn:#DB9A3A;
+    --tag-src-bg:#243d36; --tag-src-fg:#9fe3bd; --tag-src-line:#4fb37c;
+    --tag-proc-bg:#4a3a2b; --tag-proc-fg:#f5c07a; --tag-proc-line:#DB9A3A;
+    --rel-inherit:#A3A29A; --rel-explain:#3FBF95; --rel-support:#8CC04A; --rel-challenge:#F06B6A;
+    --rel-revise:#DB9A3A; --rel-reduce:#A099F0; --rel-worsen:#F07B55; --rel-mirror:#62A6F0;
+    --node-fill:#272c35; --node-stroke:#8a9099; --ai-fill:#3B2530; --ai-stroke:#E08AAE;
+    --node-text:#e6e8eb;
+    --ev-a:#8CC04A; --ev-b:#DB9A3A; --ev-c:#A3A29A; --ev-na:#8a9099;
+    --gap-blank:#F06B6A; --gap-some:#DB9A3A; --gap-done:#8CC04A;
+    --cl-0:#8CA0CC; --cl-1:#CC98AA; --cl-2:#A9BD8C; --cl-3:#B79ACC;
+    --cl-4:#8CBDBD; --cl-5:#CCB98C; --cl-6:#A4A4CC; --cl-7:#CCA48C;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#12141a; --surface:#1c1f25; --panel:#20242c; --panel-2:#272c35;
+  --ink:#e6e8eb; --ink-2:#b4b9c2; --muted:#8a9099; --line:#3a3f48; --line-2:#2c313a;
+  --shadow:0 8px 28px rgba(0,0,0,.5);
+  --accent:#62A6F0; --danger:#F06B6A; --warn:#DB9A3A;
+  --tag-src-bg:#243d36; --tag-src-fg:#9fe3bd; --tag-src-line:#4fb37c;
+  --tag-proc-bg:#4a3a2b; --tag-proc-fg:#f5c07a; --tag-proc-line:#DB9A3A;
+  --rel-inherit:#A3A29A; --rel-explain:#3FBF95; --rel-support:#8CC04A; --rel-challenge:#F06B6A;
+  --rel-revise:#DB9A3A; --rel-reduce:#A099F0; --rel-worsen:#F07B55; --rel-mirror:#62A6F0;
+  --node-fill:#272c35; --node-stroke:#8a9099; --ai-fill:#3B2530; --ai-stroke:#E08AAE;
+  --node-text:#e6e8eb;
+  --ev-a:#8CC04A; --ev-b:#DB9A3A; --ev-c:#A3A29A; --ev-na:#8a9099;
+  --gap-blank:#F06B6A; --gap-some:#DB9A3A; --gap-done:#8CC04A;
+  --cl-0:#8CA0CC; --cl-1:#CC98AA; --cl-2:#A9BD8C; --cl-3:#B79ACC;
+  --cl-4:#8CBDBD; --cl-5:#CCB98C; --cl-6:#A4A4CC; --cl-7:#CCA48C;
+}
