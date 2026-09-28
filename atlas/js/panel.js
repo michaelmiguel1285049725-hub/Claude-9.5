@@ -6,7 +6,7 @@ import { relSampleSvg } from './glyph.js';
 
 const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-export function createPanel(el, { model, actions }) {
+export function createPanel(el, { model, actions, getDigested, getNotion }) {
   const nodeName = id => model.nodeById.get(id)?.name ?? id;
   const dot = c => `<span class="dot" style="background:${c}"></span>`;
   const basisTag = b => `<span class="btag ${b === '加工' ? 'proc' : 'src'}" title="${esc(BASIS[b]?.long || '')}">${esc(b || '?')}</span>`;
@@ -30,6 +30,10 @@ export function createPanel(el, { model, actions }) {
         <span class="mono">${esc(other)}</span><span class="nm">${esc(nodeName(other))}</span>
         <span class="marks">${e.status !== '确立' ? `<i class="st ${e.status === '初步' ? 'dash' : 'dot'}" title="${esc(e.status)}"></i>` : ''}${e.basis === '加工' ? '<i class="proc" title="Claude 加工"></i>' : ''}</span></button></li>`;
     const gaps = model.gaps.filter(g => Array.isArray(g.nodes) && g.nodes.includes(n.id));
+    const done = getDigested().has(n.id);
+    const notion = getNotion(n.id);
+    const inLens = st.view === 'network' && st.net.level === 'lens' && st.net.trail[st.net.pos] === n.id;
+    const lensBtn = inLens ? '' : '<button type="button" class="btn primary" data-act="open-lens">在关系透镜中打开</button>';
     return `
       <div class="p-toolbar">
         <label class="switch"><input type="checkbox" data-act="depth" ${st.depth === 2 ? 'checked' : ''}> 显示两跳</label>
@@ -61,7 +65,16 @@ export function createPanel(el, { model, actions }) {
       </section>
       ${gaps.length ? `<section><h3>相关空缺 · ${gaps.length}</h3><ul class="gap-mini">${gaps.map(g => `<li><button type="button" data-gap="${esc(g.id)}"><span class="mono">${esc(g.id)}</span>${g.key ? '<span class="star" title="重点问题">★</span>' : ''}${esc(g.title)}<span class="gs ${gapStatusCls(g.status)}">${esc(g.status)}</span></button></li>`).join('')}</ul></section>` : ''}
       <div class="actions">
+        ${lensBtn}
+        <button type="button" class="btn" data-act="copy-prompt" title="复制一段提问，粘贴到和 Claude 的对话里请它讲解">复制给 Claude 的提问</button>
+        <button type="button" class="btn${done ? ' on' : ''}" data-act="digest" aria-pressed="${done}">${done ? '✓ 已消化' : '标记已消化'}</button>
         <button type="button" class="btn" data-act="path-from">从这里出发找路径</button>
+      </div>
+      <div class="notion">
+        ${notion && !st.notionEdit
+          ? `<a class="btn" href="${esc(notion)}" target="_blank" rel="noopener noreferrer">在 Notion 打开</a><button type="button" class="mini" data-act="notion-edit">修改链接</button>`
+          : `<label for="notionInput">Notion 链接</label><div class="notion-row"><input id="notionInput" type="url" placeholder="粘贴这个节点的 Notion 页面链接" value="${esc(notion || '')}" autocomplete="off" spellcheck="false"><button type="button" class="btn" data-act="notion-save">保存</button></div>
+             <p class="notion-err" hidden></p>`}
       </div>`;
   }
 
@@ -147,9 +160,9 @@ export function createPanel(el, { model, actions }) {
   function render(st, vis, extra = {}) {
     let html = '';
     if (st.path.active) { mode = 'path'; html = pathHtml(st, extra.pathRes || { paths: [] }); }
-    else if (st.sel?.kind === 'node' && model.nodeById.has(st.sel.id)) { mode = 'node'; html = nodeHtml(model.nodeById.get(st.sel.id), st, vis); }
-    else if (st.sel?.kind === 'edge' && model.edgeById.has(st.sel.id)) { mode = 'edge'; html = edgeHtml(model.edgeById.get(st.sel.id), vis); }
-    else if (st.sel?.kind === 'gap' || st.gapList) { mode = 'gaps'; html = gapsHtml(st); }
+    else if (st.panel === 'gaps' || (st.panel === 'detail' && st.sel?.kind === 'gap')) { mode = 'gaps'; html = gapsHtml(st); }
+    else if (st.panel === 'detail' && st.sel?.kind === 'node' && model.nodeById.has(st.sel.id)) { mode = 'node'; html = nodeHtml(model.nodeById.get(st.sel.id), st, vis); }
+    else if (st.panel === 'detail' && st.sel?.kind === 'edge' && model.edgeById.has(st.sel.id)) { mode = 'edge'; html = edgeHtml(model.edgeById.get(st.sel.id), vis); }
     else mode = null;
     el.classList.toggle('open', !!mode);
     el.setAttribute('aria-hidden', String(!mode));
@@ -162,7 +175,7 @@ export function createPanel(el, { model, actions }) {
   el.addEventListener('click', ev => {
     const t = ev.target.closest('button, [data-act]');
     if (!t || !el.contains(t)) return;
-    if (t.dataset.node) return actions.selectNode(t.dataset.node, { zoom: true });
+    if (t.dataset.node) return actions.selectNode(t.dataset.node, { zoom: true, detail: true });
     if (t.dataset.edge) return actions.selectEdge(t.dataset.edge, { zoom: true });
     if (t.dataset.gap) return actions.selectGap(t.dataset.gap);
     if (t.dataset.path) return actions.choosePath(+t.dataset.path);
@@ -170,6 +183,16 @@ export function createPanel(el, { model, actions }) {
       case 'close': return actions.closePanel();
       case 'copy-id': return actions.copy(model.nodeById.get(actions.state().sel.id).id, '编号已复制');
       case 'path-from': return actions.startPath(actions.state().sel.id);
+      case 'open-lens': return actions.openLens(actions.state().sel.id, { from: 'other' });
+      case 'copy-prompt': return actions.copyPrompt(actions.state().sel.id);
+      case 'digest': return actions.toggleDigested(actions.state().sel.id);
+      case 'notion-edit': return actions.editNotion(true);
+      case 'notion-save': {
+        const input = el.querySelector('#notionInput'), err = el.querySelector('.notion-err');
+        const v = input.value.trim();
+        if (v && !/^https?:\/\/\S+$/i.test(v)) { err.hidden = false; err.textContent = '链接要以 http:// 或 https:// 开头'; return; }
+        return actions.setNotion(actions.state().sel.id, v);
+      }
       case 'exit-path': return actions.exitPath();
       case 'swap': return actions.swapPath();
     }

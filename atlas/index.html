@@ -47,9 +47,13 @@
     </div>
     <div class="canvas-top-left">
       <nav id="trail" aria-label="路径导航" hidden></nav>
-      <button type="button" id="filterSummary" hidden></button>
+      <div class="ctl-row">
+        <button type="button" class="btn" id="backBtn" title="返回研究线（Esc）" hidden>‹ 回到研究线</button>
+        <button type="button" id="filterSummary" hidden></button>
+      </div>
     </div>
     <div class="canvas-tools">
+      <span class="view-tools" data-for="network" hidden></span>
       <span class="view-tools" data-for="maturity" hidden></span>
       <span class="view-tools" data-for="timeline" hidden></span>
       <button type="button" class="btn zoom-only" id="focusBtn" title="缩放到当前选中的对象" disabled>回到选中</button>

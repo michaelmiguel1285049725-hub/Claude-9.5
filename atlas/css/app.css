@@ -371,3 +371,73 @@ dl.kv dd { margin: 0; color: var(--ink-2); display: flex; align-items: center; g
 .ov-name, .ov-count { paint-order: stroke; stroke: var(--ground); stroke-width: 3px; stroke-linejoin: round; }
 .ov-bubble .ov-name { stroke: var(--ov-fill); } .ov-bubble.main .ov-name, .ov-bubble.main .ov-count { stroke: var(--accent-fill); }
 .ov-bubble .ov-count { stroke: var(--ov-fill); }
+
+/* ================= 改版 1 · 阶段 C：研究线展开、关系透镜、路径导航 ================= */
+/* 路径导航 */
+#trail { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.tr-line { display: flex; align-items: center; flex-wrap: wrap; gap: 2px 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 3px 6px; font-size: 13px; }
+.tr-seg { border: 0; background: transparent; border-radius: 6px; min-height: 28px; padding: 2px 8px; color: var(--ink-2); cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+.tr-seg:hover { background: var(--panel-2); color: var(--ink); }
+.tr-seg[aria-current="page"] { color: var(--ink); font-weight: 600; background: var(--panel-2); }
+.tr-seg .mono { font-size: 12px; color: var(--muted); }
+.tr-sep { color: var(--muted); }
+.tr-more { color: var(--muted); padding: 0 4px; cursor: help; }
+.tr-copy { margin-left: 6px; border: 1px solid var(--line); background: var(--panel); border-radius: 6px; min-height: 28px; padding: 2px 9px; font-size: 12.5px; color: var(--ink-2); cursor: pointer; }
+.tr-copy:hover { background: var(--panel-2); color: var(--ink); }
+.seg.small button { min-height: 30px; padding: 3px 11px; font-size: 13px; }
+
+/* 第二层 */
+.cl-rowlabel { font-size: 13px; font-weight: 600; fill: var(--muted); }
+.cl-intra .edge { opacity: .35; transition: opacity 150ms; }
+.net.cl-hover .cl-intra .edge { opacity: .1; }
+.net.cl-hover .cl-intra .edge.hi { opacity: 1; }
+.net.cl-hover .cl .node:not(.hi) { opacity: .45; }
+.cl .node { transition: opacity 150ms; }
+.cl-bubble { cursor: pointer; }
+.cl-bubble:focus { outline: none; }
+.cl-bubble circle { fill: var(--ov-fill); stroke: var(--ov-stroke); stroke-width: 1.5; }
+.cl-bubble.main circle { fill: var(--accent-fill); stroke: var(--accent); }
+.cl-bubble:hover circle, .cl-bubble:focus-visible circle { stroke-width: 3; }
+.cl-b-count { font: 600 13px var(--mono); fill: var(--ink-2); pointer-events: none; }
+.cl-b-name { font-size: 12.5px; fill: var(--ink-2); pointer-events: none; paint-order: stroke; stroke: var(--ground); stroke-width: 3px; }
+.cl-b-hover { font-size: 12.5px; font-weight: 600; fill: var(--focus); pointer-events: none; paint-order: stroke; stroke: var(--ground); stroke-width: 3px; }
+
+/* 第三层：关系透镜 */
+.lens-title { font-size: 14px; font-weight: 600; fill: var(--ink-2); letter-spacing: .04em; }
+.lens-group-t { font-size: 13px; font-weight: 600; }
+.lens-card { cursor: pointer; transition: opacity 150ms; }
+.lens-card.filtered { opacity: .55; }
+.lens-card.filtered .nd-shape { stroke-dasharray: 3 3; }
+.node.center .nd-shape { stroke: var(--accent); stroke-width: 2.6; }
+.node.center { cursor: pointer; }
+.lens-more { cursor: pointer; }
+.lens-more rect { fill: transparent; stroke: var(--line); stroke-dasharray: 4 3; }
+.lens-more:hover rect { fill: var(--panel-2); }
+.lens-more text { font-size: 12.5px; fill: var(--focus); }
+.lens-gap rect { fill: var(--tag-proc-bg); stroke: var(--tag-proc-line); stroke-width: 1; }
+.lens-gap text { font: 600 12px var(--mono); fill: var(--tag-proc-fg); pointer-events: none; }
+.lens-gap { cursor: pointer; }
+.lens-gap:hover rect { stroke-width: 2; }
+.lens-gap-label { font-size: 12px; fill: var(--tag-proc-fg); }
+.lens-empty { font-size: 13px; fill: var(--muted); }
+.lens-hidden { font-size: 12.5px; fill: var(--focus); cursor: pointer; }
+.lens-hidden:hover { text-decoration: underline; }
+.lens-scrollbar { fill: var(--line); }
+.lens-curves .edge.filtered { opacity: .5; }
+.lens.lens-hover .lens-curves .edge:not(.hi) { opacity: .25; }
+.lens.lens-hover .lens-card:not(.hi) { opacity: .5; }
+.lens-curves .edge.hi .edge-line { stroke-width: 3px !important; }
+.lens-card:focus, .lens-more:focus, .lens-gap:focus { outline: none; }
+.lens-card:focus-visible .nd-shape, .lens-gap:focus-visible rect { stroke-width: 2.6; stroke: var(--focus); }
+
+/* 节点详情里的按钮 */
+.btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn.primary:hover { filter: brightness(1.08); background: var(--accent); color: #fff; }
+.btn.on { background: var(--tag-src-bg); color: var(--tag-src-fg); border-color: var(--tag-src-line); }
+.notion { margin-top: 12px; display: grid; gap: 6px; font-size: 12.5px; color: var(--muted); }
+.notion a.btn { display: inline-flex; align-items: center; text-decoration: none; justify-self: start; }
+.notion-row { display: flex; gap: 6px; }
+.notion-row input { flex: 1; min-width: 0; min-height: 30px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 7px; padding: 4px 9px; font-size: 13px; }
+.notion-err { color: var(--danger); margin: 0; }
+.notion .mini { justify-self: start; }
+.ctl-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
