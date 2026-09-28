@@ -24,18 +24,40 @@
       <button type="button" data-view="maturity" aria-pressed="false" disabled title="阶段 3 实现">成熟度</button>
       <button type="button" data-view="timeline" aria-pressed="false" disabled title="阶段 3 实现">时间线</button>
     </div>
+    <div class="searchbox">
+      <input type="search" id="search" placeholder="搜索编号 / 名称　按 / 聚焦" autocomplete="off" spellcheck="false" aria-label="搜索节点" aria-controls="searchList">
+      <ul id="searchList" role="listbox" hidden></ul>
+    </div>
     <div class="top-actions">
       <button type="button" class="btn" id="themeBtn"></button>
     </div>
   </header>
+  <nav id="filterbar" aria-label="筛选"></nav>
   <div id="issues" role="alert" hidden></div>
-  <main id="stage">
-    <div id="views"></div>
-    <div class="canvas-tools">
-      <button type="button" class="btn" id="fitBtn" title="缩放到能看到全部节点">适配全部</button>
-    </div>
-    <details id="legend" open></details>
-  </main>
+  <div id="main">
+    <main id="stage">
+      <div id="views"></div>
+      <button type="button" id="filterSummary" hidden></button>
+      <div class="canvas-tools">
+        <button type="button" class="btn" id="pathBtn" aria-pressed="false" title="依次点击两个节点，找它们之间的关系链">找路径</button>
+        <button type="button" class="btn" id="focusBtn" title="缩放到当前选中的对象" disabled>回到选中</button>
+        <button type="button" class="btn" id="fitBtn" title="缩放到能看到全部节点">适配全部</button>
+        <span class="sep"></span>
+        <button type="button" class="btn" id="resetLayoutBtn" title="清除拖动过的位置，回到自动布局">重置布局</button>
+        <button type="button" class="btn" id="exportLayoutBtn" title="把当前布局下载为 layout.json">导出布局</button>
+      </div>
+      <details id="legend" open></details>
+      <div id="toast" role="status" hidden></div>
+    </main>
+    <aside id="panel" aria-label="详情面板">
+      <button type="button" id="panelTab" title="展开 / 收起面板" aria-label="展开或收起面板"></button>
+      <div class="p-head">
+        <button type="button" class="icon" data-act="collapse" title="收起面板" aria-label="收起面板">»</button>
+        <button type="button" class="icon" data-act="close" title="关闭（Esc）" aria-label="关闭">×</button>
+      </div>
+      <div class="p-body"></div>
+    </aside>
+  </div>
 </div>
 </body>
 </html>

@@ -182,3 +182,11 @@ export function miniSvg(w, h) {
   svg.setAttribute('aria-hidden', 'true');
   return d3.select(svg);
 }
+
+// 关系线小样（HTML 字符串，筛选栏和面板用），与画布上的画法一致
+export function relSampleSvg(type, status = '确立', w = 30) {
+  const rel = REL[type] || REL['继承'];
+  const st = status === '确立' ? 'solid' : status === '初步' ? 'dash' : 'dot';
+  const mk = `url(#${markerId(type)})`;
+  return `<svg class="rel-sample" width="${w}" height="10" aria-hidden="true"><path d="M2,5 L${w - 4},5" class="edge-line st-${st}" style="stroke:${relColor(type)};stroke-width:${rel.width}" marker-end="${mk}"${rel.head === 'dots' ? ` marker-start="${mk}"` : ''}/></svg>`;
+}
