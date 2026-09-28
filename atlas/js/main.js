@@ -280,8 +280,18 @@ async function start() {
     else if (st.sel.kind === 'gap') cur().zoomToNodes(gapNodeIds(st.sel.id));
   });
   $('#pathBtn').addEventListener('click', () => (state.get().path.active ? actions.exitPath() : actions.startPath(state.get().sel?.kind === 'node' ? state.get().sel.id : null)));
-  $('#resetLayoutBtn').addEventListener('click', () => {
-    if (net.hasCustomLayout() && !confirm('重置后，你拖动过的节点会回到自动布局的位置。继续吗？')) return;
+  // 重置布局：拖动过节点时要点两次（页面内确认，不用浏览器弹窗）
+  let resetArmed = null;
+  $('#resetLayoutBtn').addEventListener('click', ev => {
+    const btn = ev.currentTarget;
+    if (net.hasCustomLayout() && !resetArmed) {
+      btn.textContent = '再点一次确认重置';
+      btn.classList.add('armed');
+      resetArmed = setTimeout(() => { resetArmed = null; btn.textContent = '重置布局'; btn.classList.remove('armed'); }, 3000);
+      return;
+    }
+    clearTimeout(resetArmed); resetArmed = null;
+    btn.textContent = '重置布局'; btn.classList.remove('armed');
     net.resetLayout();
     toast('布局已重置');
   });

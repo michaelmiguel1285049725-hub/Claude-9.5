@@ -395,3 +395,4 @@ dl.kv dd { margin: 0; color: var(--ink-2); display: flex; align-items: center; g
 .storybar .sb-step { color: var(--ink-2); }
 .storybar .sb-year { font: 700 15px var(--mono); margin-right: 6px; }
 .storybar[hidden] { display: none; }
+.btn.armed { background: var(--danger-bg); color: var(--danger); border-color: var(--danger-line); }
