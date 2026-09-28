@@ -210,7 +210,7 @@ export function createMaturity({ svgEl, stageEl, model, actions, toolsEl }) {
   function relayout() { computeLayout(); drawGrid(); drawNodes(); drawGapCards(); }
 
   /* ---- 缩放 ---- */
-  const zoomer = makeZoomable({ svg, world, stageEl, inset: { top: 56, right: 10, bottom: 44, left: 10 }, onZoom: (t) => { const z = stageEl.querySelector('[data-zoom-readout]'); if (z && active) z.textContent = `${Math.round((t.k / kFit) * 100)}%`; } });
+  const zoomer = makeZoomable({ svg, world, stageEl, inset: { top: 56, right: 40, bottom: 40, left: 40 }, onZoom: (t) => { const z = stageEl.querySelector('[data-zoom-readout]'); if (z && active) z.textContent = `${Math.round((t.k / kFit) * 100)}%`; } });
   let kFit = 1;
   function bounds() { return { x0: -10, y0: -10, x1: layout.totalW + 10, y1: layout.totalH + 10, w: layout.totalW + 20, h: layout.totalH + 20 }; }
   function fitAll(animate = true) { kFit = zoomer.fitBounds(bounds(), animate) || 1; const z = stageEl.querySelector('[data-zoom-readout]'); if (z) z.textContent = '100%'; }

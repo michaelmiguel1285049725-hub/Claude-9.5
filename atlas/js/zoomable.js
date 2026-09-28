@@ -1,6 +1,9 @@
 /* 成熟度地图与时间线共用的缩放 / 平移 / 适配。 */
 export function prefersReduced() { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
 
+/* 额外的适配边距：图例弹层展开时右侧预留宽度，让"适配全部"避开它，任何视角都不被遮挡 */
+export const extraInset = { right: 0 };
+
 export function makeZoomable({ svg, world, stageEl, extent = [0.15, 6], inset = { top: 10, right: 10, bottom: 44, left: 10 }, onZoom }) {
   const d3 = window.d3;
   let transform = d3.zoomIdentity;
@@ -9,7 +12,7 @@ export function makeZoomable({ svg, world, stageEl, extent = [0.15, 6], inset = 
   const sel = (animate) => (animate && !prefersReduced() ? svg.transition().duration(300) : svg);
   function fitBounds(b, animate = true, maxK) {
     const r = stageEl.getBoundingClientRect();
-    const aw = r.width - inset.left - inset.right, ah = r.height - inset.top - inset.bottom;
+    const aw = r.width - inset.left - inset.right - extraInset.right, ah = r.height - inset.top - inset.bottom;
     let k = Math.min(aw / b.w, ah / b.h);
     if (maxK) k = Math.min(k, maxK);
     const t = d3.zoomIdentity.translate(inset.left + (aw - b.w * k) / 2 - b.x0 * k, inset.top + (ah - b.h * k) / 2 - b.y0 * k).scale(k);

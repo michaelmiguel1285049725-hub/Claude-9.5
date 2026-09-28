@@ -204,7 +204,7 @@ export function createTimeline({ svgEl, stageEl, model, actions, toolsEl }) {
 
   /* ---- 缩放 ---- */
   let kFit = 1;
-  const zoomer = makeZoomable({ svg, world, stageEl, inset: { top: 56, right: 10, bottom: 44, left: 10 }, onZoom: (t) => { const z = stageEl.querySelector('[data-zoom-readout]'); if (z && active) z.textContent = `${Math.round((t.k / kFit) * 100)}%`; } });
+  const zoomer = makeZoomable({ svg, world, stageEl, inset: { top: 56, right: 40, bottom: 40, left: 40 }, onZoom: (t) => { const z = stageEl.querySelector('[data-zoom-readout]'); if (z && active) z.textContent = `${Math.round((t.k / kFit) * 100)}%`; } });
   function bounds() { return { x0: -10, y0: -50, x1: layout.totalW + 10, y1: layout.totalH + 10, w: layout.totalW + 20, h: layout.totalH + 60 }; }
   function fitAll(animate = true) { kFit = zoomer.fitBounds(bounds(), animate) || 1; const z = stageEl.querySelector('[data-zoom-readout]'); if (z) z.textContent = '100%'; }
   function fitNodes(ids, animate = true) { const list = ids.map((id) => snById.get(id)).filter((d) => d && visible.nodeVis.has(d.id)); if (list.length) zoomer.fitBounds(boundsOf(list, 40), animate, kFit * 2.2); }

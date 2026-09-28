@@ -61,8 +61,8 @@ export const GAP_STATUS = {
 export const UNVERIFIED_TEXT = '据已有知识补充，本次未经检索核验';
 
 /* 节点尺寸（世界坐标） */
-export const NODE_W = 132;
-export const NODE_H = 56;
+export const NODE_W = 156;
+export const NODE_H = 54;
 
 /* 研究线颜色：按内容包里簇的顺序取色板；内容包可用可选字段 color 覆盖 */
 export const CLUSTER_PALETTE_SIZE = 8;

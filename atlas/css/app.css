@@ -408,3 +408,85 @@ svg.viewsvg[hidden]{display:none}
 #main.panel-closed #panel{display:none}
 #panelToggle[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
 @media (max-width:1100px){ #progress{left:284px;width:200px} }
+
+/* ===== 改版 2 · 阶段 B：顶栏一行、弹层、覆盖式面板 ===== */
+#topbar{display:flex;align-items:center;gap:12px;padding:0 14px;height:52px;max-height:56px;background:var(--panel);border-bottom:1px solid var(--line);z-index:6;flex-wrap:nowrap;min-width:0}
+#topbar .brand{flex:0 1 auto;min-width:0;display:flex;flex-direction:row;align-items:center;gap:8px;cursor:help}
+#topbar .brand h1{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+#topbar .seg button{padding:4px 10px;font-size:12.5px}
+#topbar .tools{margin-left:auto;gap:6px;min-width:0}
+#topbar .search-wrap{position:relative;min-width:0}
+#topbar #search{width:200px;max-width:26vw}
+#topbar .icon-btn{min-height:28px;padding:3px 9px;font-size:12.5px;position:relative}
+#topbar .chip{font-size:12px}
+#topbar .badge{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--accent);color:#fff;font:600 10px var(--mono);margin-left:4px}
+#topbar .icon-btn.has-active{border-color:var(--accent);color:var(--ink)}
+.ring-btn .ring{width:18px;height:18px;transform:rotate(-90deg)}
+.ring-btn .ring-bg{fill:none;stroke:var(--line);stroke-width:3}
+.ring-btn .ring-fg{fill:none;stroke:var(--ev-a);stroke-width:3;stroke-linecap:round;stroke-dasharray:0 100}
+.ring-btn #progressText{font:500 11px var(--mono)}
+.popover{position:fixed;z-index:40;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:10px 14px 12px;font-size:12.5px;color:var(--ink-2);overflow-y:auto;overscroll-behavior:contain}
+#drawer{width:min(760px,calc(100vw - 16px))}
+#legendPop{width:320px;max-width:calc(100vw - 16px)}
+#progressPop{width:320px}
+.pop-head{font:600 13px var(--sans);color:var(--ink);margin:0 0 8px;display:flex;align-items:baseline;gap:8px}
+.pop-sub{font:400 11px var(--sans);color:var(--muted)}
+.pop-note{color:var(--muted);font-size:11px;margin:8px 0 0}
+.pop-toggle{margin-top:8px;display:flex}
+#drawer .fgroup{margin:4px 0}
+#drawer .flabel{min-width:56px}
+#drawer .fgroup.actions{margin-top:8px;padding-top:8px;border-top:1px solid var(--line-2);justify-content:flex-end}
+.pg-list{list-style:none;margin:0;padding:0;display:grid;gap:5px}
+.pg-list li{display:grid;grid-template-columns:auto 1fr 90px auto;align-items:center;gap:8px}
+.pg-list .dot{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.pg-list .pg-name.main{font-weight:600;color:var(--ink)}
+.pg-list .pg-bar{height:6px;background:var(--panel-2);border:1px solid var(--line-2);border-radius:3px;overflow:hidden}
+.pg-list .pg-bar i{display:block;height:100%}
+.pg-list b{font:500 11px var(--mono);color:var(--ink-2)}
+/* 图例弹层复用旧图例样式 */
+#legendPop .body{display:grid;gap:10px}
+#legendPop h4{margin:0 0 4px;font:500 10.5px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+#legendPop ul{list-style:none;margin:0;padding:0;display:grid;gap:3px}
+#legendPop li{display:flex;align-items:center;gap:8px;color:var(--ink-2);min-height:18px}
+#legendPop li>span:not(.ex){white-space:nowrap;flex:none}
+#legendPop li .ex{color:var(--muted);margin-left:auto;font-size:10.5px;text-align:right;line-height:1.25;flex:1 1 auto;white-space:normal}
+#legendPop svg.sw{width:44px;height:16px;flex:none;overflow:visible}
+#legendPop svg.sw path.l{fill:none;stroke:var(--c);stroke-width:1.6}
+#legendPop svg.sw circle.proc{fill:var(--panel);stroke:var(--c);stroke-width:1.4}
+#legendPop .shape{width:28px;height:14px;flex:none;border:1.4px solid var(--node-stroke);background:var(--node-fill);position:relative}
+#legendPop .shape.ai{background:var(--ai-fill);border-color:var(--ai-stroke)}
+#legendPop .shape.bar::before{content:"";position:absolute;left:1px;top:2px;bottom:2px;width:3px;border-radius:2px;background:var(--node-stroke)}
+#legendPop .dot{width:10px;height:10px;border-radius:50%;background:var(--c);flex:none;border:1px solid var(--panel)}
+#legendPop .pill{font:600 10px var(--mono);color:#fff;background:var(--c);border-radius:8px;padding:1px 6px;flex:none;min-width:24px;text-align:center}
+#legendPop .pill.na{color:var(--muted);background:transparent;border:1px dashed var(--ev-na)}
+#legendPop .mk{width:15px;height:15px;border-radius:50%;border:1.2px solid var(--muted);background:var(--panel);font:700 10px var(--mono);display:inline-flex;align-items:center;justify-content:center;color:var(--ink-2);flex:none}
+#legendPop .mk.alert{background:var(--danger);border-color:var(--danger);color:#fff}
+#legendPop .mk.done{background:var(--ev-a);border-color:var(--ev-a);color:#fff}
+#legendPop .bubble-sw{width:18px;height:18px;border-radius:50%;background:color-mix(in oklab,var(--cl-0) 25%,var(--panel));border:2px solid var(--cl-0);flex:none}
+/* 主区域：单列；面板覆盖在画布之上 */
+#main{grid-template-columns:minmax(0,1fr)}
+#panel{position:absolute;top:0;right:0;bottom:0;width:380px;max-width:92vw;border-left:1px solid var(--line);box-shadow:var(--shadow);z-index:20;transform:translateX(24px);opacity:0;transition:transform .2s,opacity .2s;display:block}
+#panel.open{transform:none;opacity:1}
+#main{position:relative}
+/* 画布上的浮层 */
+#summary{top:12px;left:12px}
+#summary:not([hidden])~#viewTools{top:50px}
+#viewTools{top:12px}
+.stage-tools{top:12px;right:12px}
+#hint{bottom:14px;opacity:0;transition:opacity .6s}
+#hint.show{opacity:1}
+/* 节点卡片：编号 + 中文名 */
+.lbl{padding:4px 10px 4px 12px;align-items:flex-start;text-align:left;justify-content:center;gap:1px}
+.lbl .id{font:500 11px var(--mono);color:var(--muted);letter-spacing:.02em;line-height:1.2}
+.lbl .name{font-size:13px;font-weight:500;line-height:1.25;-webkit-line-clamp:2}
+.node .ev{display:none}
+svg[data-badges] .node .ev{display:block}
+svg[data-level="2"] .lv3,svg[data-level="1"] .lv3{display:block}
+@media (max-width:1100px){ #topbar #search{width:140px} #topbar .brand h1{max-width:160px} }
+/* 研究线区域（网格布局） */
+.hull-area{stroke:none;stroke-width:0;opacity:.09}
+.hull-label{font:500 14px var(--sans);fill:var(--ink-2);text-anchor:start;letter-spacing:.02em}
+.hull-label.main{font-weight:700;fill:var(--ink)}
+.hull-label .hull-count,.hull-label .hull-prog{font:400 11px var(--mono);fill:var(--muted)}
+.gap-badge circle{fill:var(--tag-proc-bg);stroke:var(--warn);stroke-width:1.2}
+.gap-badge text{font:600 10.5px var(--mono);fill:var(--tag-proc-fg);text-anchor:middle}

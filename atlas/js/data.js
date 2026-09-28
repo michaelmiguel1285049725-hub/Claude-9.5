@@ -12,10 +12,8 @@ export async function fetchJSON(url, { optional = false } = {}) {
 }
 
 export async function loadPack(packId) {
-  const base = `packs/${packId}/`;
-  const pack = await fetchJSON(base + 'pack.json');
-  const layout = await fetchJSON(base + 'layout.json', { optional: true });
-  return { pack, layout };
+  const pack = await fetchJSON(`packs/${packId}/pack.json`);
+  return { pack };
 }
 
 export function buildModel(pack) {

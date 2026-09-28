@@ -179,7 +179,7 @@ export function initPanel({ el, model, actions }) {
       case 'edge': renderEdge(s); break;
       case 'path': renderPath(s); break;
       case 'gaps': renderGaps(s); break;
-      default: el.innerHTML = `<p class="empty">点击节点或关系查看详情。<br>悬停看连线，滚轮缩放，<kbd>Esc</kbd> 取消选择。</p>`;
+      default: el.innerHTML = '';
     }
     el.parentElement.scrollTop = 0;
   }
@@ -188,7 +188,7 @@ export function initPanel({ el, model, actions }) {
     const b = ev.target.closest('[data-act]'); if (!b) return;
     const act = b.dataset.act, id = b.dataset.id;
     const s = get();
-    if (act === 'close') actions.clear();
+    if (act === 'close') actions.closePanel();
     else if (act === 'node') actions.selectNode(id, { zoom: true });
     else if (act === 'edge') actions.selectEdge(id, { zoom: true });
     else if (act === 'gap') actions.selectGap(id);
@@ -208,6 +208,7 @@ export function initPanel({ el, model, actions }) {
     else if (act === 'path-from') actions.pathFrom(s.node);
     else if (act === 'swap') { const q = s.pathQuery || {}; set({ pathQuery: { ...q, from: q.to || null, to: q.from || null }, path: null }); }
     else if (act === 'clear-path') set({ pathQuery: { from: null, to: null, sourceFirst: !!(s.pathQuery && s.pathQuery.sourceFirst) }, path: null });
+    else if (act === 'open-lens') actions.openLens(s.node);
     else if (act === 'path') { const p = lastResults.find((x) => pathKey(x) === b.dataset.key); if (p) actions.showPath(p); }
   });
   el.addEventListener('keydown', (ev) => { if (ev.target.dataset?.act === 'notion-input' && ev.key === 'Enter') { ev.preventDefault(); el.querySelector('[data-act="notion-save"]')?.click(); } });

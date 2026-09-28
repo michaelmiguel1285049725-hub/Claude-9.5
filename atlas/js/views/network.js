@@ -3,46 +3,21 @@
    阶段 2：语义缩放（簇视图）、悬停、聚焦、筛选可见性、路径 / 空缺高亮、拖动固定、缩放到目标。 */
 import * as enc from '../encoding.js';
 import { get, set, subscribe } from '../state.js';
-import * as storage from '../storage.js';
 import * as tooltip from '../tooltip.js';
 import * as progress from '../progress.js';
 import { computeVisibility } from '../filters.js';
 import { appendNodeGlyph, appendEdgeGlyph, setEdgePath, nodeTip as glyphNodeTip, edgeTip as glyphEdgeTip, borderPoint } from '../glyph.js';
 import { computeHighlight, applyClasses } from '../highlight.js';
+import { extraInset } from '../zoomable.js';
 
-export const WORLD_W = 1360;
-export const WORLD_H = 880;
-const HULL_PAD = 30;
+/* 全览网格布局：每个研究线一个区域，区域内按年份排列；列数按节点数：≤3 → 1 列，4–8 → 2 列，≥9 → 3 列 */
+const GX = 12, GY = 10, PAD = 16, TITLE_H = 30, REGION_GAP = 48;
 const esc = tooltip.esc;
-
-/* 矩形防重叠力：按节点实际尺寸 + 间距推开；不同研究线的节点之间留更大空隙，让簇背景尽量不重叠
-   （n ≤ 200 时 O(n²) 足够快，只在加载时跑 300 次） */
-function rectCollide(pad, crossPad, strength) {
-  let nodes = [];
-  function force() {
-    for (let i = 0; i < nodes.length; i++) {
-      const a = nodes[i];
-      for (let j = i + 1; j < nodes.length; j++) {
-        const b = nodes[j];
-        let dx = b.x - a.x, dy = b.y - a.y;
-        if (dx === 0 && dy === 0) { dx = 0.01 * (i - j); dy = 0.01; }
-        const p = a.ref._cluster === b.ref._cluster ? pad : crossPad;
-        const ox = (a.w + b.w) / 2 + p[0] - Math.abs(dx);
-        const oy = (a.h + b.h) / 2 + p[1] - Math.abs(dy);
-        if (ox > 0 && oy > 0) {
-          if (ox < oy) { const s = (dx < 0 ? -1 : 1) * ox * 0.5 * strength; if (a.fx == null) a.x -= s; if (b.fx == null) b.x += s; }
-          else { const s = (dy < 0 ? -1 : 1) * oy * 0.5 * strength; if (a.fy == null) a.y -= s; if (b.fy == null) b.y += s; }
-        }
-      }
-    }
-  }
-  force.initialize = (n) => { nodes = n; };
-  return force;
-}
+function colsFor(n) { return n <= 3 ? 1 : n <= 8 ? 2 : 3; }
 
 function prefersReduced() { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
 
-export function createNetwork({ svgEl, stageEl, model, layout, onNodeClick }) {
+export function createNetwork({ svgEl, stageEl, model, onNodeClick }) {
   const d3 = window.d3;
   const svg = d3.select(svgEl);
   const world = svg.select('#world');
@@ -62,42 +37,36 @@ export function createNetwork({ svgEl, stageEl, model, layout, onNodeClick }) {
     if (!pairGroups.has(key)) pairGroups.set(key, []);
     pairGroups.get(key).push(e);
   }
-  const anchorOf = (d) => {
-    const c = model.clusterById.get(d.ref._cluster);
-    const a = (c && c.anchor) || [0.5, 0.5];
-    return [a[0] * WORLD_W, a[1] * WORLD_H];
-  };
-
-  let layoutSource = 'sim';
-  function computeLayout({ ignorePinned = false } = {}) {
-    const rnd = d3.randomLcg(42);
-    for (const d of sn) {
-      const [ax, ay] = anchorOf(d);
-      d.x = ax + (rnd() - 0.5) * 140; d.y = ay + (rnd() - 0.5) * 140; d.fx = null; d.fy = null;
-    }
-    const fromFile = layout && layout.positions && typeof layout.positions === 'object' ? layout.positions : null;
-    let useFile = false;
-    if (fromFile) {
-      let hit = 0;
-      for (const d of sn) { const p = fromFile[d.id]; if (Array.isArray(p) && p.length === 2) { d.x = p[0]; d.y = p[1]; hit++; } }
-      useFile = hit === sn.length;
-    }
-    if (!useFile) {
-      layoutSource = 'sim';
-      const sim = d3.forceSimulation(sn).randomSource(rnd)
-        .force('link', d3.forceLink(se).id((d) => d.id).distance(140).strength(0.08))
-        .force('charge', d3.forceManyBody().strength(-200).distanceMax(240))
-        .force('x', d3.forceX((d) => anchorOf(d)[0]).strength(0.3))
-        .force('y', d3.forceY((d) => anchorOf(d)[1]).strength(0.3))
-        .force('rect', rectCollide([16, 14], [84, 90], 0.7))
-        .stop();
-      for (let i = 0; i < 300; i++) sim.tick();
-    } else layoutSource = 'file';
-    for (const d of sn) { d.x = Math.round(d.x); d.y = Math.round(d.y); }
-    if (!ignorePinned) {
-      const pinned = storage.load('pinned', {}) || {};
-      for (const d of sn) { const p = pinned[d.id]; if (Array.isArray(p) && p.length === 2) { d.x = p[0]; d.y = p[1]; d.fx = p[0]; d.fy = p[1]; } }
-    }
+  /* 区域：{ c, nodes, cols, rows, x, y, w, h } */
+  let regions = [];
+  function computeLayout() {
+    const bucket = (v) => (v < 0.34 ? 0 : v < 0.67 ? 1 : 2);
+    regions = model.clusters.map((c) => {
+      const nodes = sn.filter((d) => d.ref._cluster === c.id).sort((p, q) => p.ref.year - q.ref.year || p.id.localeCompare(q.id));
+      const cols = colsFor(nodes.length), rows = Math.max(1, Math.ceil(nodes.length / cols));
+      const a = c.anchor || [0.5, 0.5];
+      return { c, nodes, cols, rows, gx: bucket(a[0]), gy: a[1], w: PAD * 2 + cols * enc.NODE_W + (cols - 1) * GX, h: TITLE_H + PAD + rows * enc.NODE_H + (rows - 1) * GY + PAD };
+    }).filter((r) => r.nodes.length);
+    /* 三列，每列按 anchor.y 从上到下堆叠 */
+    const columns = [0, 1, 2].map((i) => regions.filter((r) => r.gx === i).sort((p, q) => p.gy - q.gy));
+    const colW = columns.map((col) => Math.max(0, ...col.map((r) => r.w)));
+    const colH = columns.map((col) => col.reduce((h, r) => h + r.h, 0) + Math.max(0, col.length - 1) * REGION_GAP);
+    const totalH = Math.max(...colH);
+    let x = 0;
+    columns.forEach((col, i) => {
+      if (!col.length) return;
+      let y = (totalH - colH[i]) / 2;
+      for (const r of col) {
+        r.x = x + (colW[i] - r.w) / 2; r.y = y;
+        r.nodes.forEach((d, k) => {
+          const ci = k % r.cols, ri = Math.floor(k / r.cols);
+          d.x = Math.round(r.x + PAD + ci * (enc.NODE_W + GX) + enc.NODE_W / 2);
+          d.y = Math.round(r.y + TITLE_H + PAD + ri * (enc.NODE_H + GY) + enc.NODE_H / 2);
+        });
+        y += r.h + REGION_GAP;
+      }
+      x += colW[i] + REGION_GAP;
+    });
   }
   computeLayout();
 
@@ -118,35 +87,38 @@ export function createNetwork({ svgEl, stageEl, model, layout, onNodeClick }) {
     const mid = off ? [0.25 * p0[0] + 0.5 * cx + 0.25 * p1[0], 0.25 * p0[1] + 0.5 * cy + 0.25 * p1[1]] : [(p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2];
     return { d, mid };
   }
-  function hullPath(nodes) {
-    const pts = [];
-    for (const n of nodes) pts.push([n.x - n.w / 2, n.y - n.h / 2], [n.x + n.w / 2, n.y - n.h / 2], [n.x + n.w / 2, n.y + n.h / 2], [n.x - n.w / 2, n.y + n.h / 2]);
-    const hull = pts.length >= 3 ? d3.polygonHull(pts) : pts;
-    return 'M' + hull.map((p) => p.join(',')).join('L') + 'Z';
-  }
-
-  /* ---- 绘制 ---- */
+  /* ---- 研究线区域 ---- */
   function drawHulls() {
-    const data = model.clusters.map((c) => ({ c, nodes: sn.filter((d) => d.ref._cluster === c.id) })).filter((d) => d.nodes.length);
-    const sel = gHulls.selectAll('g.hull').data(data, (d) => d.c.id);
+    const sel = gHulls.selectAll('g.hull').data(regions, (d) => d.c.id);
     const ent = sel.enter().append('g').attr('class', 'hull').attr('data-cluster', (d) => d.c.id).style('--c', (d) => d.c._color);
-    ent.append('path').attr('class', 'hull-area');
+    ent.append('rect').attr('class', 'hull-area').attr('rx', 14);
     ent.append('text').attr('class', 'hull-label').classed('main', (d) => !!d.c.main);
+    ent.append('g').attr('class', 'gap-badge');
     ent.on('dblclick', (ev, d) => { ev.stopPropagation(); zoomToCluster(d.c.id); });
-    ent.append('title').text((d) => `${d.c.name}${d.c.desc ? '：' + d.c.desc : ''}\n双击缩放到这条研究线`);
+    ent.append('title').text((d) => `${d.c.name}${d.c.desc ? '：' + d.c.desc : ''}`);
     positionHulls();
   }
   function positionHulls() {
     gHulls.selectAll('g.hull').each(function (d) {
       const vis = d.nodes.filter((n) => visible.nodeVis.has(n.id));
       const g = d3.select(this).classed('empty', !vis.length);
-      if (!vis.length) return;
-      g.select('path').attr('d', hullPath(vis));
-      const t = g.select('text').attr('x', d3.mean(vis, (n) => n.x)).attr('y', d3.min(vis, (n) => n.y - n.h / 2) - HULL_PAD - 10);
+      g.select('rect').attr('x', d.x).attr('y', d.y).attr('width', d.w).attr('height', d.h);
+      const t = g.select('text').attr('x', d.x + 12).attr('y', d.y + 20);
       t.selectAll('tspan').remove(); t.text(d.c.name);
       t.append('tspan').attr('class', 'hull-count').attr('dx', 6).text(vis.length);
       const pr = progress.clusterProgress(model, d.c.id);
       if (pr.done) t.append('tspan').attr('class', 'hull-prog').attr('dx', 8).text(`✓ ${pr.done}/${pr.total}`);
+      /* 相关空缺数：琥珀色小徽章 */
+      const gapIds = new Set(); for (const n of d.nodes) for (const gp of model.gapsOfNode.get(n.id) || []) gapIds.add(gp.id);
+      const gb = g.select('g.gap-badge'); gb.selectAll('*').remove();
+      if (gapIds.size) {
+        const tw = t.node().getComputedTextLength ? t.node().getComputedTextLength() : 80;
+        const bx = d.x + 12 + tw + 14;
+        gb.attr('transform', `translate(${bx},${d.y + 15})`);
+        gb.append('circle').attr('r', 8);
+        gb.append('text').attr('y', 3.5).text(gapIds.size);
+        gb.append('title').text(`这条研究线涉及 ${gapIds.size} 个空缺问题：${[...gapIds].join('、')}`);
+      }
     });
   }
 
@@ -172,15 +144,6 @@ export function createNetwork({ svgEl, stageEl, model, layout, onNodeClick }) {
       .on('mouseleave', () => { set({ hoverNode: null }); tooltip.hide(); })
       .on('click', (ev, d) => { ev.stopPropagation(); tooltip.hide(); if (onNodeClick && onNodeClick(d.id)) return; toggleSelect(d.id); })
       .on('keydown', (ev, d) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); if (onNodeClick && onNodeClick(d.id)) return; toggleSelect(d.id); } });
-    ent.call(d3.drag()
-      .container(() => world.node())
-      .on('start', () => tooltip.hide())
-      .on('drag', (ev, d) => { d.x = ev.x; d.y = ev.y; d.fx = ev.x; d.fy = ev.y; positionAll(); })
-      .on('end', (ev, d) => {
-        d.x = Math.round(d.x); d.y = Math.round(d.y); d.fx = d.x; d.fy = d.y;
-        const pinned = storage.load('pinned', {}) || {}; pinned[d.id] = [d.x, d.y]; storage.save('pinned', pinned);
-        positionAll(); notifyTransform();
-      }));
     positionNodes();
   }
   function positionNodes() { gNodes.selectAll('g.node').attr('transform', (d) => `translate(${d.x},${d.y})`); }
@@ -251,7 +214,6 @@ export function createNetwork({ svgEl, stageEl, model, layout, onNodeClick }) {
     const s = get();
     const hl = computeHighlight(model, s, visible);
     applyClasses({ nodeEls: gNodes.node().children, edgeEls: gEdges.node().children, hl, visible, s });
-    gNodes.selectAll('g.node').each(function (d) { this.classList.toggle('pinned', d.fx != null); });
     svgEl.dataset.mode = hl.mode;
     if (svgEl.getAttribute('data-level') === '1') drawBubbles();
   }
@@ -259,13 +221,13 @@ export function createNetwork({ svgEl, stageEl, model, layout, onNodeClick }) {
   /* ---- 选择 ---- */
   function toggleSelect(id) {
     const s = get();
-    if (s.node === id && !s.edge && !s.path && !s.gap) set({ node: null, edge: null, panel: s.filters.gapsOnly ? 'gaps' : 'closed' });
+    if (s.node === id && !s.edge && !s.path && !s.gap) set({ node: null, edge: null, panel: 'closed' });
     else set({ node: id, edge: null, path: null, gap: null, panel: 'node' });
   }
   function selectEdge(id) { set({ edge: id, path: null, gap: null, panel: 'edge' }); }
   function clearSelection() {
     const s = get();
-    const panel = s.panel === 'path' ? 'path' : s.filters.gapsOnly ? 'gaps' : 'closed';
+    const panel = s.panel === 'path' ? 'path' : s.panel === 'gaps' ? 'gaps' : 'closed';
     set({ node: null, edge: null, path: null, gap: null, panel });
   }
   svg.on('click', (ev) => { if (ev.target === svgEl || ev.target.closest('.hulls')) clearSelection(); });
@@ -273,14 +235,11 @@ export function createNetwork({ svgEl, stageEl, model, layout, onNodeClick }) {
   /* ---- 缩放 / 平移 + 语义级别（相对于"适配全部"的倍率） ---- */
   let kFit = 1;
   let transform = d3.zoomIdentity;
-  const transformSubs = new Set();
-  const notifyTransform = () => transformSubs.forEach((f) => f(transform));
   const zoom = d3.zoom().scaleExtent([0.12, 6]).on('zoom', (ev) => {
     transform = ev.transform;
     world.attr('transform', transform);
     updateLevel(transform.k);
     if (svgEl.getAttribute('data-level') === '1') drawBubbles();
-    notifyTransform();
   });
   svg.call(zoom).on('dblclick.zoom', null);
   function updateLevel(k) {
@@ -289,15 +248,16 @@ export function createNetwork({ svgEl, stageEl, model, layout, onNodeClick }) {
     if (svgEl.getAttribute('data-level') !== String(lvl)) { svgEl.setAttribute('data-level', String(lvl)); set({ level: lvl }); if (lvl === 1) drawBubbles(); }
     const z = stageEl.querySelector('[data-zoom-readout]'); if (z) z.textContent = `${Math.round(rel * 100)}%`;
   }
-  function bounds(list = sn) {
-    const x0 = d3.min(list, (d) => d.x - d.w / 2) - HULL_PAD - 12, x1 = d3.max(list, (d) => d.x + d.w / 2) + HULL_PAD + 12;
-    const y0 = d3.min(list, (d) => d.y - d.h / 2) - HULL_PAD - 34, y1 = d3.max(list, (d) => d.y + d.h / 2) + HULL_PAD + 12;
+  function bounds(list) {
+    if (!list) { const x0 = d3.min(regions, (r) => r.x), y0 = d3.min(regions, (r) => r.y), x1 = d3.max(regions, (r) => r.x + r.w), y1 = d3.max(regions, (r) => r.y + r.h); return { x0, y0, x1, y1, w: x1 - x0, h: y1 - y0 }; }
+    const x0 = d3.min(list, (d) => d.x - d.w / 2) - 24, x1 = d3.max(list, (d) => d.x + d.w / 2) + 24;
+    const y0 = d3.min(list, (d) => d.y - d.h / 2) - 24, y1 = d3.max(list, (d) => d.y + d.h / 2) + 24;
     return { x0, y0, x1, y1, w: x1 - x0, h: y1 - y0 };
   }
-  const FIT_INSET = { top: 10, right: 10, bottom: 44, left: 10 };
+  const FIT_INSET = { top: 40, right: 40, bottom: 40, left: 40 };
   function fitBounds(b, animate, maxK) {
     const r = stageEl.getBoundingClientRect();
-    const aw = r.width - FIT_INSET.left - FIT_INSET.right, ah = r.height - FIT_INSET.top - FIT_INSET.bottom;
+    const aw = r.width - FIT_INSET.left - FIT_INSET.right - extraInset.right, ah = r.height - FIT_INSET.top - FIT_INSET.bottom;
     let k = Math.min(aw / b.w, ah / b.h);
     if (maxK) k = Math.min(k, maxK);
     const t = d3.zoomIdentity.translate(FIT_INSET.left + (aw - b.w * k) / 2 - b.x0 * k, FIT_INSET.top + (ah - b.h * k) / 2 - b.y0 * k).scale(k);
@@ -307,7 +267,7 @@ export function createNetwork({ svgEl, stageEl, model, layout, onNodeClick }) {
   function fitAll(animate = true) {
     const r = stageEl.getBoundingClientRect();
     const b = bounds();
-    kFit = Math.min((r.width - FIT_INSET.left - FIT_INSET.right) / b.w, (r.height - FIT_INSET.top - FIT_INSET.bottom) / b.h);
+    kFit = Math.min((r.width - FIT_INSET.left - FIT_INSET.right - extraInset.right) / b.w, (r.height - FIT_INSET.top - FIT_INSET.bottom) / b.h);
     fitBounds(b, animate);
   }
   function fitNodes(ids, animate = true, maxRel = 2.2) {
@@ -323,7 +283,7 @@ export function createNetwork({ svgEl, stageEl, model, layout, onNodeClick }) {
     const t = d3.zoomIdentity.translate(r.width / 2 - d.x * k, r.height / 2 - d.y * k).scale(k);
     (prefersReduced() ? svg : svg.transition().duration(300)).call(zoom.transform, t);
   }
-  function zoomToCluster(cid) { fitNodes(sn.filter((d) => d.ref._cluster === cid && visible.nodeVis.has(d.id)).map((d) => d.id), true, 2.4); }
+  function zoomToCluster(cid) { const r = regions.find((x) => x.c.id === cid); if (r) fitBounds({ x0: r.x - 12, y0: r.y - 12, x1: r.x + r.w + 12, y1: r.y + r.h + 12, w: r.w + 24, h: r.h + 24 }, true, kFit * 2.4); }
   function centerAt(wx, wy) {
     const r = stageEl.getBoundingClientRect();
     const k = transform.k;
@@ -342,17 +302,6 @@ export function createNetwork({ svgEl, stageEl, model, layout, onNodeClick }) {
     return [...ids];
   }
 
-  /* ---- 布局重置 / 导出 ---- */
-  function resetLayout() {
-    storage.remove('pinned');
-    computeLayout({ ignorePinned: true });
-    positionAll(); applyState(); fitAll(true); notifyTransform();
-  }
-  function exportLayout() {
-    const positions = {}; for (const d of sn) positions[d.id] = [Math.round(d.x), Math.round(d.y)];
-    return { version: 1, world: [WORLD_W, WORLD_H], generated: new Date().toISOString().slice(0, 10), positions };
-  }
-
   drawHulls(); drawEdges(); drawNodes();
   applyState();
   fitAll(false);
@@ -363,14 +312,10 @@ export function createNetwork({ svgEl, stageEl, model, layout, onNodeClick }) {
   });
 
   return {
-    fitAll, fitNodes, zoomBy, zoomToNode, zoomToCluster, centerAt, backToSelection, resetLayout, exportLayout, refreshVisibility, applyState,
+    fitAll, fitNodes, zoomBy, zoomToNode, zoomToCluster, centerAt, backToSelection, refreshVisibility, applyState,
     gapNodeIds,
-    nodes: sn, edges: se,
-    layoutSource: () => layoutSource,
+    nodes: sn, edges: se, regions: () => regions,
     getTransform: () => transform,
-    onTransform: (f) => { transformSubs.add(f); return () => transformSubs.delete(f); },
-    worldBounds: () => bounds(),
-    stageSize: () => { const r = stageEl.getBoundingClientRect(); return { w: r.width, h: r.height }; },
     visibility: () => visible,
   };
 }

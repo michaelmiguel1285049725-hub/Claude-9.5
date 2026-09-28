@@ -25,26 +25,19 @@ export function appendNodeGlyph(ent, model) {
   ent.filter((d) => enc.KINDS[d.ref.kind]?.bar).append('line').attr('class', 'kind-bar')
     .attr('x1', (d) => -d.w / 2 + 4).attr('x2', (d) => -d.w / 2 + 4).attr('y1', (d) => -d.h / 2 + 7).attr('y2', (d) => d.h / 2 - 7);
   const fo = ent.append('foreignObject').attr('x', (d) => -d.w / 2).attr('y', (d) => -d.h / 2).attr('width', (d) => d.w).attr('height', (d) => d.h);
+  /* 卡片默认只显示编号（等宽小字）和中文名；年份、拥挤度、英文名在悬停提示和面板里 */
   fo.append('xhtml:div').attr('class', 'lbl').each(function (d) {
+    const id = document.createElement('div'); id.className = 'id'; id.textContent = d.id;
     const name = document.createElement('div'); name.className = 'name'; name.textContent = d.ref.name;
-    const sub = document.createElement('div'); sub.className = 'sub lv3';
-    const id = document.createElement('span'); id.className = 'id'; id.textContent = d.id;
-    const yr = document.createElement('span'); yr.className = 'yr'; yr.textContent = d.ref.year;
-    sub.append(id, yr); this.append(name, sub);
+    this.append(id, name);
   });
   ent.append('circle').attr('class', 'cl-dot').attr('cx', (d) => -d.w / 2).attr('cy', (d) => -d.h / 2).attr('r', 5);
-  const det = ent.append('g').attr('class', 'lv3 details');
+  const det = ent.append('g').attr('class', 'details');
+  /* 证据徽章：只在 svg[data-badges] 的视角（成熟度、时间线）里显示，由 CSS 控制 */
   const ev = det.append('g').attr('class', 'ev').attr('data-ev', (d) => d.ref.evidence).attr('transform', (d) => `translate(${d.w / 2 - 10},${d.h / 2})`);
   ev.append('rect').attr('x', -15).attr('y', -8).attr('width', 30).attr('height', 16).attr('rx', 8);
   ev.append('text').attr('y', 4).text((d) => d.ref.evidence);
   ev.append('title').text((d) => `证据等级 ${d.ref.evidence}：${enc.EVIDENCE[d.ref.evidence]?.desc || ''}`);
-  const cr = det.append('g').attr('class', 'crowd').attr('transform', (d) => `translate(0,${d.h / 2})`);
-  cr.each(function (d) {
-    const n = enc.CROWDING[d.ref.crowding]?.n || 1;
-    const g = d3.select(this);
-    for (let i = 0; i < n; i++) g.append('circle').attr('cx', (i - (n - 1) / 2) * 7).attr('r', 2.4);
-    g.append('title').text(`拥挤度 ${d.ref.crowding}：${enc.CROWDING[d.ref.crowding]?.desc || ''}`);
-  });
   const marks = det.append('g').attr('class', 'marks').attr('transform', (d) => `translate(${d.w / 2},${-d.h / 2})`);
   marks.each(function (d) {
     const g = d3.select(this);
