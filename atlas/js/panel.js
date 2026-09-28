@@ -4,6 +4,8 @@ import { get, set, subscribe } from './state.js';
 import { esc } from './tooltip.js';
 import * as pf from './pathfinder.js';
 import { computeVisibility } from './filters.js';
+import * as progress from './progress.js';
+import * as storage from './storage.js';
 
 export function initPanel({ el, model, actions }) {
   const nodeLabel = (id) => { const n = model.byId.get(id); return n ? `${n.id} ${n.name}` : id; };
@@ -15,6 +17,15 @@ export function initPanel({ el, model, actions }) {
   function header(title, closeTo) {
     return `<div class="p-top"><span class="p-kind">${title}</span><button type="button" class="p-close" data-act="close" aria-label="关闭">×</button></div>`;
   }
+
+  /* ---------- Notion 链接 ---------- */
+  const notionLinks = () => storage.load('notion', {}) || {};
+  function notionBlock(id) {
+    const url = notionLinks()[id];
+    if (url && !editingNotion) return `<div class="p-notion"><a class="icon-btn small notion" href="${esc(url)}" target="_blank" rel="noopener">在 Notion 打开 ↗</a><button type="button" class="link small" data-act="notion-edit">改链接</button></div>`;
+    return `<div class="p-notion"><input type="url" data-act="notion-input" placeholder="粘贴这个节点的 Notion 页面链接" value="${esc(url || '')}" spellcheck="false"><button type="button" class="icon-btn small" data-act="notion-save">保存</button>${url ? '<button type="button" class="link small" data-act="notion-cancel">取消</button>' : ''}</div>`;
+  }
+  let editingNotion = false;
 
   /* ---------- 节点 ---------- */
   function renderNode(s) {
@@ -45,6 +56,7 @@ export function initPanel({ el, model, actions }) {
         ${evBadge(n.evidence)}
         <span class="tag" title="${esc(enc.CROWDING[n.crowding]?.desc || '')}">${esc(n.crowding)}</span>
         ${n.ai_related ? '<span class="tag ai">AI 相关</span>' : ''}
+        ${progress.has(n.id) ? '<span class="tag done">✓ 已消化</span>' : ''}
       </div>
       ${Array.isArray(n.alerts) && n.alerts.length ? `<div class="p-alert"><b>! 重要警示</b>${n.alerts.map((a) => `<div>${esc(a)}</div>`).join('')}</div>` : ''}
       <p class="p-gist">${esc(n.gist)} ${basisTag(n.gist_basis)}</p>
@@ -52,9 +64,14 @@ export function initPanel({ el, model, actions }) {
       ${n.note ? `<p class="p-note">${esc(n.note)}</p>` : ''}
       <div class="p-actions">
         <label class="p-toggle"><input type="checkbox" data-act="depth" ${s.depth >= 2 ? 'checked' : ''}> 显示两跳</label>
-        <button type="button" class="icon-btn small" data-act="path-from">从这里出发找路径</button>
         <button type="button" class="icon-btn small" data-act="zoom">缩放过去</button>
       </div>
+      <div class="p-actions main">
+        <button type="button" class="icon-btn small primary" data-act="copy-prompt" title="把讲解请求模板复制到剪贴板，粘贴给 Claude">复制给 Claude 的提问</button>
+        <button type="button" class="icon-btn small" data-act="digest" aria-pressed="${progress.has(n.id)}">${progress.has(n.id) ? '✓ 已消化' : '标记已消化'}</button>
+        <button type="button" class="icon-btn small" data-act="path-from">从这里出发找路径</button>
+      </div>
+      ${notionBlock(n.id)}
       <section class="p-sec"><h3>代表文献</h3>${n.refs?.length ? `<ul class="p-refs">${n.refs.map((r) => `<li>${esc(r)}</li>`).join('')}</ul>` : '<p class="empty">无</p>'}</section>
       <section class="p-sec"><h3>关系 <span class="p-count">${out.length + inc.length}</span></h3>
         ${groups.length ? groups.map((g) => `<div class="rel-group" style="--c:${enc.relColor(g.t)}"><div class="rel-title">${relSw(g.t)}${esc(g.t)}<span class="rel-desc">${esc(enc.relByZh[g.t].desc)}</span></div>
@@ -176,14 +193,27 @@ export function initPanel({ el, model, actions }) {
     else if (act === 'edge') actions.selectEdge(id, { zoom: true });
     else if (act === 'gap') actions.selectGap(id);
     else if (act === 'copy-id') actions.copy(s.node);
+    else if (act === 'copy-prompt') actions.copyPrompt(s.node);
+    else if (act === 'digest') { actions.toggleDigested(s.node); }
+    else if (act === 'notion-edit') { editingNotion = true; render(); el.querySelector('[data-act="notion-input"]')?.focus(); }
+    else if (act === 'notion-cancel') { editingNotion = false; render(); }
+    else if (act === 'notion-save') {
+      const v = (el.querySelector('[data-act="notion-input"]')?.value || '').trim();
+      const links = notionLinks();
+      if (!v) { delete links[s.node]; storage.save('notion', links); editingNotion = false; render(); return; }
+      if (!/^https?:\/\//i.test(v)) { actions.toast('链接需要以 http:// 或 https:// 开头'); return; }
+      links[s.node] = v; storage.save('notion', links); editingNotion = false; render(); actions.toast('已保存 Notion 链接');
+    }
     else if (act === 'zoom') actions.back();
     else if (act === 'path-from') actions.pathFrom(s.node);
     else if (act === 'swap') { const q = s.pathQuery || {}; set({ pathQuery: { ...q, from: q.to || null, to: q.from || null }, path: null }); }
     else if (act === 'clear-path') set({ pathQuery: { from: null, to: null, sourceFirst: !!(s.pathQuery && s.pathQuery.sourceFirst) }, path: null });
     else if (act === 'path') { const p = lastResults.find((x) => pathKey(x) === b.dataset.key); if (p) actions.showPath(p); }
   });
+  el.addEventListener('keydown', (ev) => { if (ev.target.dataset?.act === 'notion-input' && ev.key === 'Enter') { ev.preventDefault(); el.querySelector('[data-act="notion-save"]')?.click(); } });
   el.addEventListener('change', (ev) => {
     const t = ev.target; const s = get();
+    if (t.dataset.act === 'notion-input') return;
     if (t.dataset.act === 'depth') set({ depth: t.checked ? 2 : 1 });
     else if (t.dataset.act === 'source-first') set({ pathQuery: { ...(s.pathQuery || {}), sourceFirst: t.checked }, path: null });
     else if (t.dataset.field) {
@@ -194,7 +224,8 @@ export function initPanel({ el, model, actions }) {
   });
 
   subscribe((s, patch) => {
-    if (['panel', 'node', 'edge', 'gap', 'path', 'pathQuery', 'depth', 'filters'].some((k) => k in patch)) render();
+    if ('node' in patch) editingNotion = false;
+    if (['panel', 'node', 'edge', 'gap', 'path', 'pathQuery', 'depth', 'filters', 'progressTick'].some((k) => k in patch)) render();
   });
   render();
   return { render };

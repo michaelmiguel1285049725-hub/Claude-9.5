@@ -12,6 +12,8 @@ import { initSearch } from './search.js';
 import { createMinimap } from './minimap.js';
 import * as tooltip from './tooltip.js';
 import * as progress from './progress.js';
+import { initRouter } from './router.js';
+import { buildPrompt } from './prompt.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = tooltip.esc;
@@ -176,6 +178,9 @@ async function boot() {
     selectGap(id, { zoom = true } = {}) { if (!model.gapById.has(id)) return; set({ gap: id, node: null, edge: null, path: null, panel: 'gaps' }); if (zoom) current().fitNodes(network.gapNodeIds(id)); },
     back() { current().backToSelection(); },
     async copy(text) { toast((await copyText(text)) ? `已复制 ${text}` : '复制失败，请手动选择'); },
+    async copyPrompt(id) { const t = buildPrompt(model, id); toast((await copyText(t)) ? '已复制讲解请求，去粘贴给 Claude' : '复制失败'); },
+    toggleDigested(id) { const now = progress.toggle(id); set({ progressTick: get().progressTick + 1 }); toast(now ? `已标记 ${id} 为已消化` : `已取消 ${id} 的已消化标记`); renderProgress(); },
+    toast,
     pathFrom(id) { const q = get().pathQuery || {}; set({ pathQuery: { from: id, to: null, sourceFirst: !!q.sourceFirst }, path: null, node: null, edge: null, gap: null, panel: 'path' }); },
     showPath(p) { set({ path: { nodes: p.nodes, edges: p.edges, steps: p.steps }, node: null, edge: null, gap: null }); current().fitNodes(p.nodes); },
   };
@@ -223,6 +228,29 @@ async function boot() {
   initSearch($('search'), model, (id) => actions.selectNode(id, { zoom: true }));
   createMinimap({ container: $('minimap'), network, model });
 
+  /* ---- 学习进度条 ---- */
+  function renderProgress() {
+    const el = $('progress');
+    const total = model.nodes.length, done = model.nodes.filter((n) => progress.has(n.id)).length;
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    el.innerHTML = `<div class="pg-total"><span class="pg-label">已消化</span><span class="pg-bar"><i style="width:${pct}%"></i></span><span class="pg-num">${done} / ${total}</span></div>` +
+      `<div class="pg-clusters">${model.clusters.map((c) => { const pr = progress.clusterProgress(model, c.id); const p2 = pr.total ? Math.round((pr.done / pr.total) * 100) : 0; return `<span class="pg-c" title="${esc(c.name)}：已消化 ${pr.done} / ${pr.total}"><i class="dot" style="--c:${c._color}"></i>${esc(c.name)} <b>${pr.done}/${pr.total}</b><span class="pg-mini"><i style="width:${p2}%;background:${c._color}"></i></span></span>`; }).join('')}</div>`;
+  }
+  renderProgress();
+  window.__atlas.renderProgress = renderProgress;
+
+  /* ---- 面板收起 / 展开 ---- */
+  const panelToggle = $('panelToggle');
+  function setPanelOpen(open) {
+    $('main').classList.toggle('panel-closed', !open);
+    panelToggle.setAttribute('aria-pressed', String(!open));
+    panelToggle.title = open ? '收起右侧面板' : '展开右侧面板';
+    storage.saveGlobal('panelOpen', open);
+    setTimeout(() => current().fitAll(false), 20);
+  }
+  panelToggle.addEventListener('click', () => setPanelOpen($('main').classList.contains('panel-closed')));
+  if (storage.loadGlobal('panelOpen', true) === false) setPanelOpen(false);
+
   /* ---- 画布上方的筛选摘要 ---- */
   function renderSummary() {
     const s = get();
@@ -242,6 +270,9 @@ async function boot() {
 
   subscribe((s, patch) => {
     if ('filters' in patch) { filterBar.refresh(); renderSummary(); }
+    if ('progressTick' in patch) { renderSummary(); renderProgress(); }
+    /* 选中节点时若面板收起，自动展开 */
+    if (('node' in patch || 'edge' in patch || 'gap' in patch || 'path' in patch) && (s.node || s.edge || s.gap || s.path) && $('main').classList.contains('panel-closed')) setPanelOpen(true);
     if ('panel' in patch) filterBar.refresh();
     if (['node', 'edge', 'path', 'gap'].some((k) => k in patch)) updateBack();
   });
@@ -260,7 +291,10 @@ async function boot() {
     else if (e.key === '2') set({ view: 'maturity' });
     else if (e.key === '3') set({ view: 'timeline' });
   });
-  showView(get().view, { keepSelection: false });
+  /* ---- URL hash：恢复与后退 ---- */
+  const router = initRouter({ model });
+  router.applyCurrent();
+  showView(get().view, { keepSelection: true });
 }
 
 boot();

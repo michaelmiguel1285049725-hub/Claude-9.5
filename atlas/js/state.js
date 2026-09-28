@@ -27,6 +27,7 @@ const state = {
   level: 2,             // 关系网语义缩放级别 1 | 2 | 3
   filters: defaultFilters(null),
   panel: 'closed',      // closed | node | edge | path | gaps
+  progressTick: 0,      // 已消化集合变化时 +1，让各视角刷新
 };
 
 const subs = new Set();

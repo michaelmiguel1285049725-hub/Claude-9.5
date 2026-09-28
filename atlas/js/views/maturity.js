@@ -230,7 +230,7 @@ export function createMaturity({ svgEl, stageEl, model, actions, toolsEl }) {
   svg.on('click', (ev) => { if (ev.target === svgEl || ev.target.closest('.grid') || ev.target.closest('.heads')) actions.clearCanvas(); });
   subscribe((s, patch) => {
     if (!active) return;
-    if ('filters' in patch) { visible = computeVisibility(model, s.filters); relayout(); applyState(); return; }
+    if ('filters' in patch || 'progressTick' in patch) { visible = computeVisibility(model, s.filters); relayout(); applyState(); return; }
     if (['node', 'edge', 'gap', 'path', 'hoverNode', 'hoverEdge', 'depth'].some((k) => k in patch)) applyState();
   });
 

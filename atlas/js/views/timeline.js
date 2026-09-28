@@ -243,7 +243,7 @@ export function createTimeline({ svgEl, stageEl, model, actions, toolsEl }) {
   });
   subscribe((s, patch) => {
     if (!active) return;
-    if ('filters' in patch) { visible = computeVisibility(model, s.filters); relayout(); applyState(); return; }
+    if ('filters' in patch || 'progressTick' in patch) { visible = computeVisibility(model, s.filters); relayout(); applyState(); return; }
     if (['node', 'edge', 'gap', 'path', 'hoverNode', 'hoverEdge', 'depth'].some((k) => k in patch)) applyState();
   });
 

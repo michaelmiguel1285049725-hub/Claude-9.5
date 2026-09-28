@@ -145,6 +145,8 @@ export function createNetwork({ svgEl, stageEl, model, layout, onNodeClick }) {
       const t = g.select('text').attr('x', d3.mean(vis, (n) => n.x)).attr('y', d3.min(vis, (n) => n.y - n.h / 2) - HULL_PAD - 10);
       t.selectAll('tspan').remove(); t.text(d.c.name);
       t.append('tspan').attr('class', 'hull-count').attr('dx', 6).text(vis.length);
+      const pr = progress.clusterProgress(model, d.c.id);
+      if (pr.done) t.append('tspan').attr('class', 'hull-prog').attr('dx', 8).text(`✓ ${pr.done}/${pr.total}`);
     });
   }
 
@@ -356,7 +358,7 @@ export function createNetwork({ svgEl, stageEl, model, layout, onNodeClick }) {
   fitAll(false);
 
   subscribe((s, patch) => {
-    if ('filters' in patch) { refreshVisibility(); return; }
+    if ('filters' in patch || 'progressTick' in patch) { refreshVisibility(); return; }
     if (['node', 'edge', 'gap', 'path', 'hoverNode', 'hoverEdge', 'depth'].some((k) => k in patch)) applyState();
   });
 

@@ -43,12 +43,14 @@
         <span class="zoom-readout" data-zoom-readout>100%</span>
         <button type="button" class="icon-btn" id="fit" title="适配全部">适配全部</button>
         <button type="button" class="icon-btn" id="back" title="回到选中节点" disabled>回到选中</button>
+        <button type="button" class="icon-btn" id="panelToggle" title="收起右侧面板" aria-pressed="false">▤</button>
       </div>
       <details id="legend" open>
         <summary>图例</summary>
         <div class="body" id="legendBody"></div>
       </details>
       <div id="minimap" aria-label="小地图"></div>
+      <div id="progress" aria-label="学习进度"></div>
       <div id="hint">拖动平移 · 滚轮缩放 · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> 切换视角 · <kbd>/</kbd> 搜索 · <kbd>Esc</kbd> 取消</div>
     </div>
     <aside id="panel" aria-live="polite">
