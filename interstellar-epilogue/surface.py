@@ -284,6 +284,8 @@ def draw_shape(img, polys, fill, rim=None, rim_off=(2.0, -1.0), ellipses=(), lin
     cx0, cy0 = max(x0, 0), max(y0, 0)
     cx1, cy1 = min(x1, W), min(y1, H)
     a = a[cy0 - y0:cy1 - y0, cx0 - x0:cx1 - x0]
+    if a.size == 0 or a.shape[0] < 2 or a.shape[1] < 2:
+        return
     reg = img[cy0:cy1, cx0:cx1]
     reg *= (1 - a)[..., None]
     reg += a[..., None] * np.float32(fill)
