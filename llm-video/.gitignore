@@ -1,0 +1,4 @@
+__pycache__/
+*.parts/
+audio/
+preview_*.png
