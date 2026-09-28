@@ -1,11 +1,18 @@
-/* 启动：读 ?pack= → 加载内容包 → 校验 → 建索引 → 渲染头部 / 图例 / 关系网。 */
+/* 启动：读 ?pack= → 加载内容包 → 校验 → 建索引 → 渲染头部 / 筛选栏 / 图例 / 关系网 / 面板。 */
 import { loadPack, buildModel } from './data.js';
 import * as enc from './encoding.js';
 import * as storage from './storage.js';
 import { get, set, subscribe } from './state.js';
 import { createNetwork } from './views/network.js';
+import { buildFilterBar, computeVisibility, restoreFilters } from './filters.js';
+import { initPanel } from './panel.js';
+import { initSearch } from './search.js';
+import { createMinimap } from './minimap.js';
+import * as tooltip from './tooltip.js';
+import * as progress from './progress.js';
 
 const $ = (id) => document.getElementById(id);
+const esc = tooltip.esc;
 
 function fatal(title, detail) {
   const div = document.createElement('div');
@@ -42,8 +49,6 @@ function renderBanner(model) {
   if (warnings.length) console.info('内容包提示：', warnings);
 }
 
-function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
-
 function swLine(rel) {
   const c = `var(--rel-${rel.key})`;
   const start = rel.both ? ` marker-start="url(#mk-${rel.key}-start)"` : '';
@@ -77,7 +82,7 @@ function renderLegend(model) {
     <li><span class="mk alert">!</span>重要警示</li>
     <li><span class="mk done">✓</span>已消化</li>
   </ul></section>`);
-  parts.push(`<p class="note">节点位置只表示所属研究线和相邻关系，不表示重要性。簇背景淡色 = 研究线。</p>`);
+  parts.push(`<p class="note">节点位置只表示所属研究线和相邻关系，不表示重要性。簇背景淡色 = 研究线。缩小到 60% 以下进入簇视图，放大到 140% 以上显示细节。</p>`);
   $('legendBody').innerHTML = parts.join('');
 }
 
@@ -87,11 +92,30 @@ function setupTheme() {
   btn.addEventListener('click', () => {
     const cur = document.documentElement.getAttribute('data-theme');
     const sysDark = (() => { try { return matchMedia('(prefers-color-scheme: dark)').matches; } catch (e) { return false; } })();
-    /* 顺序：跟随系统 → 与系统相反 → 跟随系统 */
     const next = cur ? null : (sysDark ? 'light' : 'dark');
     apply(next); storage.saveGlobal('theme', next);
     btn.title = next ? `当前：${next === 'dark' ? '深色' : '浅色'}（点击恢复跟随系统）` : '当前：跟随系统';
   });
+}
+
+function toast(msg) {
+  let t = $('toast');
+  if (!t) { t = document.createElement('div'); t.id = 'toast'; document.body.appendChild(t); }
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._h); toast._h = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; }
+  catch (e) {
+    try { const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); ta.remove(); return ok; } catch (e2) { return false; }
+  }
+}
+
+function downloadJSON(name, obj) {
+  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
 }
 
 async function boot() {
@@ -103,29 +127,95 @@ async function boot() {
   catch (e) { fatal('内容包加载失败', e.message); return; }
   const model = buildModel(loaded.pack);
   storage.setPrefix(model.domain.pack_id || packId);
+  progress.load();
+  set({ filters: restoreFilters(model) });
   window.__atlas = { model, layout: loaded.layout };
 
   $('defs').innerHTML = enc.markerDefsHTML();
+  tooltip.init();
   renderHeader(model);
   renderBanner(model);
   renderLegend(model);
   setupTheme();
 
-  const network = createNetwork({ svgEl: $('canvas'), stageEl: $('stage'), model, layout: loaded.layout });
+  /* ---- 关系网 ---- */
+  const network = createNetwork({
+    svgEl: $('canvas'), stageEl: $('stage'), model, layout: loaded.layout,
+    /* 路径模式下点节点 = 填起点 / 终点 */
+    onNodeClick(id) {
+      const s = get();
+      if (s.panel !== 'path') return false;
+      const q = s.pathQuery || { from: null, to: null, sourceFirst: false };
+      if (!q.from || (q.from && q.to)) set({ pathQuery: { ...q, from: id, to: null }, path: null });
+      else if (id !== q.from) set({ pathQuery: { ...q, to: id }, path: null });
+      return true;
+    },
+  });
   window.__atlas.network = network;
-  $('fit').addEventListener('click', () => network.fitAll(true));
-  window.addEventListener('resize', () => network.fitAll(false));
-  window.addEventListener('keydown', (e) => {
-    if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
-    if (e.key === '+' || e.key === '=') network.zoomBy(1.25);
-    else if (e.key === '-') network.zoomBy(0.8);
-    else if (e.key === '0') network.fitAll(true);
+
+  const actions = {
+    clear() { set({ node: null, edge: null, path: null, gap: null, panel: get().filters.gapsOnly ? 'gaps' : 'closed' }); },
+    selectNode(id, { zoom = false } = {}) { if (!model.byId.has(id)) return; set({ node: id, edge: null, path: null, gap: null, panel: 'node' }); if (zoom) network.zoomToNode(id); },
+    selectEdge(id, { zoom = false } = {}) { if (!model.edgeById.has(id)) return; set({ edge: id, path: null, gap: null, panel: 'edge' }); if (zoom) { const e = model.edgeById.get(id); network.fitNodes([e.from, e.to]); } },
+    selectGap(id) { if (!model.gapById.has(id)) return; set({ gap: id, node: null, edge: null, path: null, panel: 'gaps' }); network.fitNodes(network.gapNodeIds(id)); },
+    back() { network.backToSelection(); },
+    async copy(text) { toast((await copyText(text)) ? `已复制 ${text}` : '复制失败，请手动选择'); },
+    pathFrom(id) { const q = get().pathQuery || {}; set({ pathQuery: { from: id, to: null, sourceFirst: !!q.sourceFirst }, path: null, node: null, edge: null, gap: null, panel: 'path' }); },
+    showPath(p) { set({ path: { nodes: p.nodes, edges: p.edges, steps: p.steps }, node: null, edge: null, gap: null }); network.fitNodes(p.nodes); },
+  };
+  window.__atlas.actions = actions;
+
+  /* ---- 筛选栏 ---- */
+  const filterBar = buildFilterBar($('filters'), model, {
+    onPathMode() {
+      const s = get();
+      if (s.panel === 'path') set({ panel: s.filters.gapsOnly ? 'gaps' : 'closed', path: null });
+      else set({ panel: 'path', node: null, edge: null, gap: null, path: null, pathQuery: get().pathQuery || { from: null, to: null, sourceFirst: false } });
+    },
+    onResetLayout() { network.resetLayout(); toast('已恢复自动布局'); },
+    onExportLayout() { downloadJSON('layout.json', network.exportLayout()); toast('已下载 layout.json'); },
   });
 
-  const stat = document.createElement('span');
-  stat.className = 'placeholder';
-  stat.textContent = ` · ${model.nodes.length} 个节点 · ${model.edges.length} 条关系 · ${model.gaps.length} 个空缺 · 布局来源：${network.layoutSource() === 'file' ? 'layout.json' : '种子力导向（seed 42）'}`;
-  $('filters').appendChild(stat);
+  /* ---- 面板 / 搜索 / 小地图 ---- */
+  initPanel({ el: $('panelBody'), model, actions });
+  initSearch($('search'), model, (id) => actions.selectNode(id, { zoom: true }));
+  createMinimap({ container: $('minimap'), network, model });
+
+  /* ---- 画布上方的筛选摘要 ---- */
+  function renderSummary() {
+    const s = get();
+    const v = computeVisibility(model, s.filters);
+    const el = $('summary');
+    if (!v.hiddenEdges && !v.hiddenNodes) { el.hidden = true; return; }
+    el.innerHTML = `已隐藏 ${v.hiddenEdges} 条线、${v.hiddenNodes} 个节点 <button type="button" id="restoreFilters">恢复</button>`;
+    el.hidden = false;
+    $('restoreFilters').addEventListener('click', () => { $('filters').querySelector('.fgroup.actions button').click(); });
+  }
+  renderSummary();
+
+  $('fit').addEventListener('click', () => network.fitAll(true));
+  $('back').addEventListener('click', () => network.backToSelection());
+  const updateBack = () => { const s = get(); $('back').disabled = !(s.node || s.edge || s.path || s.gap); };
+  updateBack();
+
+  subscribe((s, patch) => {
+    if ('filters' in patch) { filterBar.refresh(); renderSummary(); }
+    if ('panel' in patch) filterBar.refresh();
+    if (['node', 'edge', 'path', 'gap'].some((k) => k in patch)) updateBack();
+  });
+  window.addEventListener('resize', () => network.fitAll(false));
+
+  /* ---- 键盘 ---- */
+  window.addEventListener('keydown', (e) => {
+    if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) { if (e.key === 'Escape') e.target.blur(); return; }
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === 'Escape') { tooltip.hide(); actions.clear(); }
+    else if (e.key === '/') { e.preventDefault(); $('search').focus(); }
+    else if (e.key === '+' || e.key === '=') network.zoomBy(1.25);
+    else if (e.key === '-') network.zoomBy(0.8);
+    else if (e.key === '0') network.fitAll(true);
+    else if (e.key === 'f') network.fitAll(true);
+  });
 }
 
 boot();

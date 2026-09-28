@@ -20,7 +20,8 @@ const state = {
   edge: null,           // 选中关系 id
   depth: 1,             // 聚焦深度 1 | 2
   gap: null,            // 选中空缺 id
-  path: null,           // 当前高亮路径 { nodes:[], edges:[] }
+  path: null,           // 当前高亮路径 { nodes:[], edges:[], steps:[] }
+  pathQuery: null,      // 找路径的起终点 { from, to, sourceFirst }
   hoverNode: null,
   hoverEdge: null,
   level: 2,             // 关系网语义缩放级别 1 | 2 | 3

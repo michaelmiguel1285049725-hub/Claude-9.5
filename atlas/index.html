@@ -27,7 +27,7 @@
       <button type="button" class="icon-btn" id="theme" title="切换浅色 / 深色" aria-label="切换主题">◐</button>
     </div>
   </header>
-  <div id="filters" aria-label="筛选栏"><span class="placeholder">筛选栏（阶段 2）</span></div>
+  <div id="filters" aria-label="筛选栏"></div>
   <details id="banner" hidden open></details>
   <div id="main">
     <div id="stage">
@@ -35,6 +35,7 @@
         <defs id="defs"></defs>
         <g id="world"></g>
       </svg>
+      <div id="summary" hidden></div>
       <div class="stage-tools">
         <span class="zoom-readout" data-zoom-readout>100%</span>
         <button type="button" class="icon-btn" id="fit" title="适配全部">适配全部</button>
@@ -44,10 +45,11 @@
         <summary>图例</summary>
         <div class="body" id="legendBody"></div>
       </details>
+      <div id="minimap" aria-label="小地图"></div>
       <div id="hint">拖动平移 · 滚轮缩放 · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> 切换视角 · <kbd>/</kbd> 搜索 · <kbd>Esc</kbd> 取消</div>
     </div>
     <aside id="panel" aria-live="polite">
-      <div id="panelBody"><p class="empty">点击节点或关系查看详情（阶段 2 实现）。</p></div>
+      <div id="panelBody"></div>
     </aside>
   </div>
 </div>
