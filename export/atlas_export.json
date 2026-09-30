@@ -1,0 +1,3573 @@
+{
+  "_about": {
+    "exported_at": "2026-09-30",
+    "source_files": {
+      "content_pack": "atlas/packs/ai-bias/pack.json（节点、关系、空缺、研究线、时间轴分段；全部原始数据）",
+      "encoding_definitions": "atlas/js/encoding.js（关系类型含义 / 箭头、状态含义 / 线型、来源与加工、节点类型形状、证据等级、拥挤度、空缺状态、未核验提示语）",
+      "enum_validation": "atlas/js/validate.js（各字段允许的取值与长度上限）"
+    },
+    "how_to_read": "每个节点 / 关系 / 空缺 / 研究线对象里，顶层字段是内容包里的原始字段，原样照抄；`_derived` 里是引擎在界面上补出来的信息（研究线名、类型含义、界面标签、相关关系与空缺编号等），方便写讲解时引用。",
+    "field_glossary": {
+      "node.id": "编号",
+      "node.name": "中文名",
+      "node.name_en": "英文名",
+      "node.kind": "节点类型（理论 / 现象 / 方法 / 发现 / 概念，决定形状）",
+      "node.cluster": "所属研究线编号（见 definitions.clusters）",
+      "node.year": "年份",
+      "node.evidence": "证据等级 A / B / C / N/A",
+      "node.crowding": "成熟度 / 拥挤度：饱和 / 活跃 / 稀疏",
+      "node.gist": "一句话说明（≤20 字）",
+      "node.gist_basis": "一句话的依据：来源 = 文献结论，加工 = Claude 的推断或连接",
+      "node.refs": "代表文献",
+      "node.ai_related": "true 时界面显示「AI 相关」标签，卡片粉色底",
+      "node.unverified": "true 时界面显示「? 据已有知识补充，本次未经检索核验」",
+      "node.note": "备注（只有部分节点有）",
+      "node.alerts": "重要警示（字符串数组，只有部分节点有；界面上红色 ! 标记）",
+      "edge.id": "关系编号",
+      "edge.from / edge.to": "起点 / 终点节点编号（方向：from → to）",
+      "edge.type": "关系类型（见 definitions.relation_types）",
+      "edge.status": "状态：确立 / 初步 / 未验证（见 definitions.edge_status）",
+      "edge.basis": "来源 / 加工",
+      "edge.reason": "一句话理由（≤24 字）",
+      "edge.ref": "文献或说明",
+      "edge.unverified": "是否未经检索核验",
+      "edge.gap": "这条关系属于哪个空缺（可选）",
+      "gap.id": "空缺编号",
+      "gap.title": "标题",
+      "gap.status": "几乎空白 / 有初步工作 / 已基本解决",
+      "gap.nodes": "关联节点编号",
+      "gap.summary": "一句话摘要",
+      "gap.key": "true = 加星（★ 重点问题）"
+    }
+  },
+  "domain": {
+    "pack_id": "ai-bias",
+    "title": "AI × 认知偏差 × 决策",
+    "subtitle": "研究前沿、人类基准与空缺地图",
+    "version": "0.1-draft",
+    "data_date": "2026-09-28",
+    "status_note": "草稿 v0：节点清单尚待用户确认；用于先把引擎跑起来",
+    "timeline_breaks": [
+      {
+        "from": 1950,
+        "to": 2000,
+        "share": 0.2
+      },
+      {
+        "from": 2000,
+        "to": 2020,
+        "share": 0.25
+      },
+      {
+        "from": 2020,
+        "to": 2027,
+        "share": 0.55
+      }
+    ]
+  },
+  "definitions": {
+    "clusters": [
+      {
+        "id": "H",
+        "name": "人类认知基准",
+        "desc": "人脑的约束、偏差与元认知",
+        "side": "human",
+        "main": true,
+        "anchor": [
+          0.22,
+          0.55
+        ],
+        "_derived": {
+          "color_token": "var(--cl-0)",
+          "node_count": 12,
+          "node_ids": [
+            "H-01",
+            "H-02",
+            "H-03",
+            "H-04",
+            "H-05",
+            "H-06",
+            "H-07",
+            "H-08",
+            "H-09",
+            "H-10",
+            "H-11",
+            "H-12"
+          ],
+          "gap_count_badge": 5
+        }
+      },
+      {
+        "id": "R",
+        "name": "理性标准",
+        "desc": "拿什么尺子判断“偏差”",
+        "side": "human",
+        "main": true,
+        "anchor": [
+          0.18,
+          0.18
+        ],
+        "_derived": {
+          "color_token": "var(--cl-1)",
+          "node_count": 8,
+          "node_ids": [
+            "R-01",
+            "R-02",
+            "R-03",
+            "R-04",
+            "R-05",
+            "R-06",
+            "R-07",
+            "R-08"
+          ],
+          "gap_count_badge": 1
+        }
+      },
+      {
+        "id": "A",
+        "name": "AI 自身的偏差",
+        "desc": "大模型身上的类人偏差与谄媚",
+        "side": "ai",
+        "main": false,
+        "anchor": [
+          0.82,
+          0.2
+        ],
+        "_derived": {
+          "color_token": "var(--cl-2)",
+          "node_count": 3,
+          "node_ids": [
+            "A-01",
+            "A-02",
+            "A-03"
+          ],
+          "gap_count_badge": 1
+        }
+      },
+      {
+        "id": "S",
+        "name": "AI 模拟人",
+        "desc": "用大模型预测人类行为",
+        "side": "ai",
+        "main": false,
+        "anchor": [
+          0.86,
+          0.52
+        ],
+        "_derived": {
+          "color_token": "var(--cl-3)",
+          "node_count": 3,
+          "node_ids": [
+            "S-01",
+            "S-02",
+            "S-03"
+          ],
+          "gap_count_badge": 0
+        }
+      },
+      {
+        "id": "C",
+        "name": "人与 AI 协作",
+        "desc": "组合效果、依赖失衡与补救设计",
+        "side": "both",
+        "main": true,
+        "anchor": [
+          0.55,
+          0.5
+        ],
+        "_derived": {
+          "color_token": "var(--cl-4)",
+          "node_count": 13,
+          "node_ids": [
+            "C-01",
+            "C-02",
+            "C-03",
+            "C-04",
+            "C-05",
+            "C-06",
+            "C-07",
+            "C-08",
+            "C-09",
+            "C-10",
+            "C-11",
+            "C-12",
+            "C-13"
+          ],
+          "gap_count_badge": 4
+        }
+      },
+      {
+        "id": "O",
+        "name": "干预与组织",
+        "desc": "噪声、助推与助力、系统框架",
+        "side": "human",
+        "main": false,
+        "anchor": [
+          0.5,
+          0.86
+        ],
+        "_derived": {
+          "color_token": "var(--cl-5)",
+          "node_count": 5,
+          "node_ids": [
+            "O-01",
+            "O-02",
+            "O-03",
+            "O-04",
+            "O-05"
+          ],
+          "gap_count_badge": 3
+        }
+      }
+    ],
+    "cluster_side": {
+      "human": "人类侧",
+      "ai": "AI 侧",
+      "both": "两侧都涉及"
+    },
+    "node_kinds": {
+      "理论": "直角偏小的圆角矩形",
+      "现象": "圆角矩形",
+      "方法": "胶囊形",
+      "发现": "圆角矩形，左侧粗色条",
+      "概念": "圆角矩形，虚线边框"
+    },
+    "evidence_levels": {
+      "A": "元分析或多实验室重复",
+      "B": "单项预注册研究或设计较严的单项研究",
+      "C": "单项非预注册、预印本或理论综述",
+      "N/A": "规范理论或框架，不适用证据等级"
+    },
+    "crowding_levels": {
+      "饱和": "再做同类研究几乎没有新意",
+      "活跃": "仍在快速发表",
+      "稀疏": "没几个人做"
+    },
+    "relation_types": [
+      {
+        "zh": "继承",
+        "key": "inherit",
+        "meaning": "A 在 B 的基础上发展出来",
+        "arrow": "tri",
+        "arrow_hint": "线较细",
+        "line_width": 1.2,
+        "bidirectional": false
+      },
+      {
+        "zh": "解释",
+        "key": "explain",
+        "meaning": "A 的机制说明了 B 为什么会发生",
+        "arrow": "tri",
+        "arrow_hint": "",
+        "line_width": 1.6,
+        "bidirectional": false
+      },
+      {
+        "zh": "支持",
+        "key": "support",
+        "meaning": "A 的证据让 B 更可信",
+        "arrow": "tri",
+        "arrow_hint": "",
+        "line_width": 1.6,
+        "bidirectional": false
+      },
+      {
+        "zh": "挑战",
+        "key": "challenge",
+        "meaning": "A 的证据和 B 方向相反",
+        "arrow": "solid",
+        "arrow_hint": "实心大三角",
+        "line_width": 1.6,
+        "bidirectional": false
+      },
+      {
+        "zh": "修正",
+        "key": "revise",
+        "meaning": "B 仍然成立，但 A 把它的适用范围收窄了",
+        "arrow": "hollow",
+        "arrow_hint": "空心三角",
+        "line_width": 1.6,
+        "bidirectional": false
+      },
+      {
+        "zh": "削弱",
+        "key": "reduce",
+        "meaning": "A 能减少 B",
+        "arrow": "bar",
+        "arrow_hint": "箭头端加短横 ⊣",
+        "line_width": 1.6,
+        "bidirectional": false
+      },
+      {
+        "zh": "加剧",
+        "key": "worsen",
+        "meaning": "A 会让 B 更严重",
+        "arrow": "double",
+        "arrow_hint": "双线箭头",
+        "line_width": 1.6,
+        "bidirectional": false
+      },
+      {
+        "zh": "对应",
+        "key": "mirror",
+        "meaning": "A 是 B 在另一侧（人类侧 / AI 侧）的对应物",
+        "arrow": "dot",
+        "arrow_hint": "两端小圆点，无箭头",
+        "line_width": 1.6,
+        "bidirectional": true
+      }
+    ],
+    "edge_status": {
+      "确立": {
+        "line_style": "实线",
+        "rule": "A 档证据，或多个独立团队得到同样结果，或是公认的学术史事实"
+      },
+      "初步": {
+        "line_style": "长虚线",
+        "rule": "只有单项研究或单个团队的工作"
+      },
+      "未验证": {
+        "line_style": "点线",
+        "rule": "没有直接实证，是理论推测"
+      }
+    },
+    "basis": {
+      "来源": "文献结论",
+      "加工": "Claude 的推断或连接"
+    },
+    "gap_status": [
+      "几乎空白",
+      "有初步工作",
+      "已基本解决"
+    ],
+    "unverified_text": "据已有知识补充，本次未经检索核验",
+    "limits": {
+      "gist_max_chars": 20,
+      "reason_max_chars": 24,
+      "year_range": [
+        1900,
+        2100
+      ]
+    }
+  },
+  "nodes": [
+    {
+      "id": "H-01",
+      "name": "信息带宽约束",
+      "name_en": "~10 bits/s bottleneck",
+      "kind": "发现",
+      "cluster": "H",
+      "year": 2024,
+      "evidence": "C",
+      "crowding": "稀疏",
+      "gist": "有意识的行为产出约每秒 10 比特",
+      "gist_basis": "来源",
+      "refs": [
+        "Zheng & Meister 2024, Neuron 113:192–204, “The unbearable slowness of being: Why do we live at 10 bits/s?”"
+      ],
+      "ai_related": false,
+      "unverified": false,
+      "note": "文献推导而非实验；具体数字受质疑",
+      "_derived": {
+        "cluster_name": "人类认知基准",
+        "kind_shape": "圆角矩形，左侧粗色条",
+        "evidence_meaning": "单项非预注册、预印本或理论综述",
+        "crowding_meaning": "没几个人做",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "发现",
+          "人类认知基准",
+          "2024",
+          "C",
+          "稀疏"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [
+          "E-15"
+        ],
+        "edges_in": [],
+        "gaps": [
+          "G-09"
+        ]
+      }
+    },
+    {
+      "id": "H-02",
+      "name": "两种决策方式",
+      "name_en": "Model-based vs model-free",
+      "kind": "理论",
+      "cluster": "H",
+      "year": 2011,
+      "evidence": "B",
+      "crowding": "活跃",
+      "gist": "“查地图”与“走老路”两种算法并存",
+      "gist_basis": "来源",
+      "refs": [
+        "Daw 等 2011, Neuron, “Model-based influences on humans' choices and striatal prediction errors”"
+      ],
+      "ai_related": false,
+      "unverified": false,
+      "_derived": {
+        "cluster_name": "人类认知基准",
+        "kind_shape": "直角偏小的圆角矩形",
+        "evidence_meaning": "单项预注册研究或设计较严的单项研究",
+        "crowding_meaning": "仍在快速发表",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "理论",
+          "人类认知基准",
+          "2011",
+          "B",
+          "活跃"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [
+          "E-17"
+        ],
+        "edges_in": [],
+        "gaps": [
+          "G-09"
+        ]
+      }
+    },
+    {
+      "id": "H-03",
+      "name": "双系统理论",
+      "name_en": "Dual-process theory (System 1/2)",
+      "kind": "理论",
+      "cluster": "H",
+      "year": 2000,
+      "evidence": "C",
+      "crowding": "活跃",
+      "gist": "把思维分成快的系统1和慢的系统2",
+      "gist_basis": "来源",
+      "refs": [
+        "Stanovich & West 2000, BBS（系统1/2 命名）",
+        "Kahneman 2011《思考，快与慢》"
+      ],
+      "ai_related": false,
+      "unverified": true,
+      "note": "广泛使用，但结构本身有争议",
+      "_derived": {
+        "cluster_name": "人类认知基准",
+        "kind_shape": "直角偏小的圆角矩形",
+        "evidence_meaning": "单项非预注册、预印本或理论综述",
+        "crowding_meaning": "仍在快速发表",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "理论",
+          "人类认知基准",
+          "2000",
+          "C",
+          "活跃"
+        ],
+        "unverified_text_shown": "据已有知识补充，本次未经检索核验",
+        "edges_out": [],
+        "edges_in": [
+          "E-16",
+          "E-17"
+        ],
+        "gaps": []
+      }
+    },
+    {
+      "id": "H-04",
+      "name": "对双系统的批评",
+      "name_en": "Critique of dual-process",
+      "kind": "理论",
+      "cluster": "H",
+      "year": 2018,
+      "evidence": "C",
+      "crowding": "稀疏",
+      "gist": "“快、无意识、不可控”等特征并不捆绑",
+      "gist_basis": "来源",
+      "refs": [
+        "Melnikoff & Bargh 2018, Trends in Cognitive Sciences, “The mythical number two”"
+      ],
+      "ai_related": false,
+      "unverified": true,
+      "_derived": {
+        "cluster_name": "人类认知基准",
+        "kind_shape": "直角偏小的圆角矩形",
+        "evidence_meaning": "单项非预注册、预印本或理论综述",
+        "crowding_meaning": "没几个人做",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "理论",
+          "人类认知基准",
+          "2018",
+          "C",
+          "稀疏"
+        ],
+        "unverified_text_shown": "据已有知识补充，本次未经检索核验",
+        "edges_out": [
+          "E-16"
+        ],
+        "edges_in": [],
+        "gaps": []
+      }
+    },
+    {
+      "id": "H-05",
+      "name": "参照点依赖",
+      "name_en": "Reference dependence",
+      "kind": "现象",
+      "cluster": "H",
+      "year": 1979,
+      "evidence": "A",
+      "crowding": "饱和",
+      "gist": "以现状为参照判断得失",
+      "gist_basis": "来源",
+      "refs": [
+        "Kahneman & Tversky 1979, Econometrica（前景理论）"
+      ],
+      "ai_related": false,
+      "unverified": true,
+      "_derived": {
+        "cluster_name": "人类认知基准",
+        "kind_shape": "圆角矩形",
+        "evidence_meaning": "元分析或多实验室重复",
+        "crowding_meaning": "再做同类研究几乎没有新意",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "现象",
+          "人类认知基准",
+          "1979",
+          "A",
+          "饱和"
+        ],
+        "unverified_text_shown": "据已有知识补充，本次未经检索核验",
+        "edges_out": [
+          "E-10"
+        ],
+        "edges_in": [
+          "E-09"
+        ],
+        "gaps": []
+      }
+    },
+    {
+      "id": "H-06",
+      "name": "框架效应",
+      "name_en": "Framing effect",
+      "kind": "现象",
+      "cluster": "H",
+      "year": 1981,
+      "evidence": "A",
+      "crowding": "饱和",
+      "gist": "同一结果说成得或失，选择就变",
+      "gist_basis": "来源",
+      "refs": [
+        "Tversky & Kahneman 1981, Science",
+        "De Martino 等 2006, Science 313:684–687（神经相关，小样本）",
+        "Many Labs 1（Klein 等 2014）行为复现，据已有知识"
+      ],
+      "ai_related": false,
+      "unverified": false,
+      "_derived": {
+        "cluster_name": "人类认知基准",
+        "kind_shape": "圆角矩形",
+        "evidence_meaning": "元分析或多实验室重复",
+        "crowding_meaning": "再做同类研究几乎没有新意",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "现象",
+          "人类认知基准",
+          "1981",
+          "A",
+          "饱和"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [],
+        "edges_in": [
+          "E-10",
+          "E-18",
+          "E-23"
+        ],
+        "gaps": [
+          "G-09"
+        ]
+      }
+    },
+    {
+      "id": "H-07",
+      "name": "锚定效应",
+      "name_en": "Anchoring",
+      "kind": "现象",
+      "cluster": "H",
+      "year": 1974,
+      "evidence": "A",
+      "crowding": "饱和",
+      "gist": "先看到的数字拉住后面的估计",
+      "gist_basis": "来源",
+      "refs": [
+        "Tversky & Kahneman 1974, Science"
+      ],
+      "ai_related": false,
+      "unverified": false,
+      "_derived": {
+        "cluster_name": "人类认知基准",
+        "kind_shape": "圆角矩形",
+        "evidence_meaning": "元分析或多实验室重复",
+        "crowding_meaning": "再做同类研究几乎没有新意",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "现象",
+          "人类认知基准",
+          "1974",
+          "A",
+          "饱和"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [
+          "E-35"
+        ],
+        "edges_in": [
+          "E-07"
+        ],
+        "gaps": []
+      }
+    },
+    {
+      "id": "H-08",
+      "name": "可得性与高估极端事件",
+      "name_en": "Availability / overweighting extremes",
+      "kind": "现象",
+      "cluster": "H",
+      "year": 1973,
+      "evidence": "A",
+      "crowding": "饱和",
+      "gist": "越容易想起的事，越被认为常见",
+      "gist_basis": "来源",
+      "refs": [
+        "Tversky & Kahneman 1973, Cognitive Psychology"
+      ],
+      "ai_related": false,
+      "unverified": true,
+      "_derived": {
+        "cluster_name": "人类认知基准",
+        "kind_shape": "圆角矩形",
+        "evidence_meaning": "元分析或多实验室重复",
+        "crowding_meaning": "再做同类研究几乎没有新意",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "现象",
+          "人类认知基准",
+          "1973",
+          "A",
+          "饱和"
+        ],
+        "unverified_text_shown": "据已有知识补充，本次未经检索核验",
+        "edges_out": [],
+        "edges_in": [
+          "E-08"
+        ],
+        "gaps": []
+      }
+    },
+    {
+      "id": "H-09",
+      "name": "确认偏误",
+      "name_en": "Confirmation bias",
+      "kind": "现象",
+      "cluster": "H",
+      "year": 1960,
+      "evidence": "A",
+      "crowding": "饱和",
+      "gist": "只找支持自己观点的证据",
+      "gist_basis": "来源",
+      "refs": [
+        "Wason 1960",
+        "Nickerson 1998, Review of General Psychology"
+      ],
+      "ai_related": false,
+      "unverified": false,
+      "_derived": {
+        "cluster_name": "人类认知基准",
+        "kind_shape": "圆角矩形",
+        "evidence_meaning": "元分析或多实验室重复",
+        "crowding_meaning": "再做同类研究几乎没有新意",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "现象",
+          "人类认知基准",
+          "1960",
+          "A",
+          "饱和"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [
+          "E-13"
+        ],
+        "edges_in": [
+          "E-19",
+          "E-24",
+          "E-42"
+        ],
+        "gaps": [
+          "G-04",
+          "G-06"
+        ]
+      }
+    },
+    {
+      "id": "H-10",
+      "name": "状态影响判断",
+      "name_en": "Sleep / fatigue effects",
+      "kind": "发现",
+      "cluster": "H",
+      "year": 2010,
+      "evidence": "C",
+      "crowding": "活跃",
+      "gist": "睡不够、累了，判断质量会下滑",
+      "gist_basis": "来源",
+      "refs": [
+        "Killgore 2010, Progress in Brain Research, “Effects of sleep deprivation on cognition”"
+      ],
+      "ai_related": false,
+      "unverified": true,
+      "_derived": {
+        "cluster_name": "人类认知基准",
+        "kind_shape": "圆角矩形，左侧粗色条",
+        "evidence_meaning": "单项非预注册、预印本或理论综述",
+        "crowding_meaning": "仍在快速发表",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "发现",
+          "人类认知基准",
+          "2010",
+          "C",
+          "活跃"
+        ],
+        "unverified_text_shown": "据已有知识补充，本次未经检索核验",
+        "edges_out": [
+          "E-20"
+        ],
+        "edges_in": [
+          "E-21"
+        ],
+        "gaps": [
+          "G-02",
+          "G-09"
+        ]
+      }
+    },
+    {
+      "id": "H-11",
+      "name": "元认知",
+      "name_en": "Metacognition (calibration & sensitivity)",
+      "kind": "概念",
+      "cluster": "H",
+      "year": 2014,
+      "evidence": "C",
+      "crowding": "活跃",
+      "gist": "知道自己这次判断对不对的能力",
+      "gist_basis": "来源",
+      "refs": [
+        "Fleming & Lau 2014（meta-d′ 方法）",
+        "Fleming 2024, Annual Review of Psychology 75:241–268",
+        "Rahnev & Fleming 2019, Neuroscience of Consciousness"
+      ],
+      "ai_related": false,
+      "unverified": false,
+      "note": "综述为主；行为+神经汇聚；可部分训练，迁移有限",
+      "_derived": {
+        "cluster_name": "人类认知基准",
+        "kind_shape": "圆角矩形，虚线边框",
+        "evidence_meaning": "单项非预注册、预印本或理论综述",
+        "crowding_meaning": "仍在快速发表",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "概念",
+          "人类认知基准",
+          "2014",
+          "C",
+          "活跃"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [
+          "E-19",
+          "E-41"
+        ],
+        "edges_in": [
+          "E-40"
+        ],
+        "gaps": [
+          "G-09",
+          "G-10"
+        ]
+      }
+    },
+    {
+      "id": "H-12",
+      "name": "神经研究统计功效不足",
+      "name_en": "Power failure in neuroscience",
+      "kind": "发现",
+      "cluster": "H",
+      "year": 2013,
+      "evidence": "A",
+      "crowding": "活跃",
+      "gist": "典型研究功效中位数约 21%",
+      "gist_basis": "来源",
+      "refs": [
+        "Button 等 2013, Nature Reviews Neuroscience, “Power failure”"
+      ],
+      "ai_related": false,
+      "unverified": false,
+      "_derived": {
+        "cluster_name": "人类认知基准",
+        "kind_shape": "圆角矩形，左侧粗色条",
+        "evidence_meaning": "元分析或多实验室重复",
+        "crowding_meaning": "仍在快速发表",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "发现",
+          "人类认知基准",
+          "2013",
+          "A",
+          "活跃"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [
+          "E-18"
+        ],
+        "edges_in": [],
+        "gaps": []
+      }
+    },
+    {
+      "id": "R-01",
+      "name": "有限理性",
+      "name_en": "Bounded rationality",
+      "kind": "理论",
+      "cluster": "R",
+      "year": 1955,
+      "evidence": "N/A",
+      "crowding": "饱和",
+      "gist": "人在有限信息和算力下做“够好”的决定",
+      "gist_basis": "来源",
+      "refs": [
+        "Simon 1955, Quarterly Journal of Economics"
+      ],
+      "ai_related": false,
+      "unverified": true,
+      "_derived": {
+        "cluster_name": "理性标准",
+        "kind_shape": "直角偏小的圆角矩形",
+        "evidence_meaning": "规范理论或框架，不适用证据等级",
+        "crowding_meaning": "再做同类研究几乎没有新意",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "理论",
+          "理性标准",
+          "1955",
+          "N/A",
+          "饱和"
+        ],
+        "unverified_text_shown": "据已有知识补充，本次未经检索核验",
+        "edges_out": [
+          "E-01",
+          "E-02"
+        ],
+        "edges_in": [],
+        "gaps": []
+      }
+    },
+    {
+      "id": "R-02",
+      "name": "启发式与偏差纲领",
+      "name_en": "Heuristics & biases program",
+      "kind": "理论",
+      "cluster": "R",
+      "year": 1974,
+      "evidence": "N/A",
+      "crowding": "饱和",
+      "gist": "以概率论为尺子，偏离即偏差",
+      "gist_basis": "来源",
+      "refs": [
+        "Tversky & Kahneman 1974, Science"
+      ],
+      "ai_related": false,
+      "unverified": false,
+      "_derived": {
+        "cluster_name": "理性标准",
+        "kind_shape": "直角偏小的圆角矩形",
+        "evidence_meaning": "规范理论或框架，不适用证据等级",
+        "crowding_meaning": "再做同类研究几乎没有新意",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "理论",
+          "理性标准",
+          "1974",
+          "N/A",
+          "饱和"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [],
+        "edges_in": [
+          "E-05",
+          "E-06",
+          "E-14"
+        ],
+        "gaps": []
+      }
+    },
+    {
+      "id": "R-03",
+      "name": "生态理性",
+      "name_en": "Ecological rationality",
+      "kind": "理论",
+      "cluster": "R",
+      "year": 1996,
+      "evidence": "N/A",
+      "crowding": "活跃",
+      "gist": "策略好不好，看和环境是否匹配",
+      "gist_basis": "来源",
+      "refs": [
+        "Gigerenzer & Goldstein 1996, Psychological Review"
+      ],
+      "ai_related": false,
+      "unverified": true,
+      "_derived": {
+        "cluster_name": "理性标准",
+        "kind_shape": "直角偏小的圆角矩形",
+        "evidence_meaning": "规范理论或框架，不适用证据等级",
+        "crowding_meaning": "仍在快速发表",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "理论",
+          "理性标准",
+          "1996",
+          "N/A",
+          "活跃"
+        ],
+        "unverified_text_shown": "据已有知识补充，本次未经检索核验",
+        "edges_out": [
+          "E-05"
+        ],
+        "edges_in": [
+          "E-01"
+        ],
+        "gaps": []
+      }
+    },
+    {
+      "id": "R-04",
+      "name": "计算理性",
+      "name_en": "Computational rationality",
+      "kind": "理论",
+      "cluster": "R",
+      "year": 2015,
+      "evidence": "N/A",
+      "crowding": "活跃",
+      "gist": "在计算成本约束下追求最高期望收益",
+      "gist_basis": "来源",
+      "refs": [
+        "Gershman, Horvitz & Tenenbaum 2015, Science 349:273–278"
+      ],
+      "ai_related": false,
+      "unverified": false,
+      "_derived": {
+        "cluster_name": "理性标准",
+        "kind_shape": "直角偏小的圆角矩形",
+        "evidence_meaning": "规范理论或框架，不适用证据等级",
+        "crowding_meaning": "仍在快速发表",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "理论",
+          "理性标准",
+          "2015",
+          "N/A",
+          "活跃"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [
+          "E-03",
+          "E-04"
+        ],
+        "edges_in": [
+          "E-02"
+        ],
+        "gaps": []
+      }
+    },
+    {
+      "id": "R-05",
+      "name": "资源理性分析",
+      "name_en": "Resource-rational analysis",
+      "kind": "理论",
+      "cluster": "R",
+      "year": 2020,
+      "evidence": "C",
+      "crowding": "活跃",
+      "gist": "在有限脑力下尽力做到最好",
+      "gist_basis": "来源",
+      "refs": [
+        "Lieder & Griffiths 2020, BBS 43:e1"
+      ],
+      "ai_related": false,
+      "unverified": false,
+      "note": "作为建模方法广泛接受；作为规范标准受质疑",
+      "_derived": {
+        "cluster_name": "理性标准",
+        "kind_shape": "直角偏小的圆角矩形",
+        "evidence_meaning": "单项非预注册、预印本或理论综述",
+        "crowding_meaning": "仍在快速发表",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "理论",
+          "理性标准",
+          "2020",
+          "C",
+          "活跃"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [
+          "E-06",
+          "E-07",
+          "E-08",
+          "E-34"
+        ],
+        "edges_in": [
+          "E-03",
+          "E-11",
+          "E-12",
+          "E-15"
+        ],
+        "gaps": [
+          "G-08"
+        ]
+      }
+    },
+    {
+      "id": "R-06",
+      "name": "信息论资源理性",
+      "name_en": "Information-theoretic resource rationality",
+      "kind": "理论",
+      "cluster": "R",
+      "year": 2021,
+      "evidence": "C",
+      "crowding": "活跃",
+      "gist": "用高效编码解释参照点、随机选择、固着",
+      "gist_basis": "来源",
+      "refs": [
+        "Bhui, Lai & Gershman 2021, Current Opinion in Behavioral Sciences 41:15–21"
+      ],
+      "ai_related": false,
+      "unverified": false,
+      "note": "不处理锚定、可得性、基率忽视",
+      "_derived": {
+        "cluster_name": "理性标准",
+        "kind_shape": "直角偏小的圆角矩形",
+        "evidence_meaning": "单项非预注册、预印本或理论综述",
+        "crowding_meaning": "仍在快速发表",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "理论",
+          "理性标准",
+          "2021",
+          "C",
+          "活跃"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [
+          "E-09"
+        ],
+        "edges_in": [
+          "E-04"
+        ],
+        "gaps": []
+      }
+    },
+    {
+      "id": "R-07",
+      "name": "反贝叶斯更新",
+      "name_en": "Anti-Bayesian updating",
+      "kind": "现象",
+      "cluster": "R",
+      "year": 2020,
+      "evidence": "C",
+      "crowding": "稀疏",
+      "gist": "信念朝理性更新的反方向变化",
+      "gist_basis": "来源",
+      "refs": [
+        "Mandelbaum, Won, Gross & Firestone 2020, BBS 43:e16"
+      ],
+      "ai_related": false,
+      "unverified": false,
+      "_derived": {
+        "cluster_name": "理性标准",
+        "kind_shape": "圆角矩形",
+        "evidence_meaning": "单项非预注册、预印本或理论综述",
+        "crowding_meaning": "没几个人做",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "现象",
+          "理性标准",
+          "2020",
+          "C",
+          "稀疏"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [
+          "E-11"
+        ],
+        "edges_in": [
+          "E-13"
+        ],
+        "gaps": [
+          "G-08"
+        ]
+      }
+    },
+    {
+      "id": "R-08",
+      "name": "对资源理性规范地位的质疑",
+      "name_en": "Critiques of normative status",
+      "kind": "理论",
+      "cluster": "R",
+      "year": 2020,
+      "evidence": "C",
+      "crowding": "稀疏",
+      "gist": "方法好用，不等于它是应遵守的标准",
+      "gist_basis": "来源",
+      "refs": [
+        "Colombo 2020, BBS 43:e5",
+        "Bates, Sims & Jacobs 2020, BBS 43:e3"
+      ],
+      "ai_related": false,
+      "unverified": false,
+      "_derived": {
+        "cluster_name": "理性标准",
+        "kind_shape": "直角偏小的圆角矩形",
+        "evidence_meaning": "单项非预注册、预印本或理论综述",
+        "crowding_meaning": "没几个人做",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "理论",
+          "理性标准",
+          "2020",
+          "C",
+          "稀疏"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [
+          "E-12"
+        ],
+        "edges_in": [],
+        "gaps": [
+          "G-08"
+        ]
+      }
+    },
+    {
+      "id": "A-01",
+      "name": "大模型类人偏差",
+      "name_en": "Human-like biases in LLMs",
+      "kind": "发现",
+      "cluster": "A",
+      "year": 2023,
+      "evidence": "C",
+      "crowding": "饱和",
+      "gist": "经典心理学题目里大模型也会有偏差",
+      "gist_basis": "来源",
+      "refs": [
+        "Binz & Schulz 2023, PNAS 120(6):e2218523120",
+        "Hagendorff 等 2023, arXiv:2303.13988（机器心理学）"
+      ],
+      "ai_related": true,
+      "unverified": false,
+      "_derived": {
+        "cluster_name": "AI 自身的偏差",
+        "kind_shape": "圆角矩形，左侧粗色条",
+        "evidence_meaning": "单项非预注册、预印本或理论综述",
+        "crowding_meaning": "再做同类研究几乎没有新意",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "发现",
+          "AI 自身的偏差",
+          "2023",
+          "C",
+          "饱和",
+          "AI 相关"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [
+          "E-23"
+        ],
+        "edges_in": [],
+        "gaps": []
+      }
+    },
+    {
+      "id": "A-02",
+      "name": "人类偏好训练",
+      "name_en": "RLHF",
+      "kind": "方法",
+      "cluster": "A",
+      "year": 2022,
+      "evidence": "N/A",
+      "crowding": "活跃",
+      "gist": "用人类对回答的打分来训练模型",
+      "gist_basis": "来源",
+      "refs": [
+        "Ouyang 等 2022（InstructGPT）"
+      ],
+      "ai_related": true,
+      "unverified": true,
+      "_derived": {
+        "cluster_name": "AI 自身的偏差",
+        "kind_shape": "胶囊形",
+        "evidence_meaning": "规范理论或框架，不适用证据等级",
+        "crowding_meaning": "仍在快速发表",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "方法",
+          "AI 自身的偏差",
+          "2022",
+          "N/A",
+          "活跃",
+          "AI 相关"
+        ],
+        "unverified_text_shown": "据已有知识补充，本次未经检索核验",
+        "edges_out": [
+          "E-22"
+        ],
+        "edges_in": [],
+        "gaps": []
+      }
+    },
+    {
+      "id": "A-03",
+      "name": "AI 谄媚",
+      "name_en": "Sycophancy",
+      "kind": "现象",
+      "cluster": "A",
+      "year": 2023,
+      "evidence": "B",
+      "crowding": "活跃",
+      "gist": "AI 顺着用户观点说话",
+      "gist_basis": "来源",
+      "refs": [
+        "Sharma 等 2023, arXiv:2310.13548 / ICLR 2024"
+      ],
+      "ai_related": true,
+      "unverified": false,
+      "_derived": {
+        "cluster_name": "AI 自身的偏差",
+        "kind_shape": "圆角矩形",
+        "evidence_meaning": "单项预注册研究或设计较严的单项研究",
+        "crowding_meaning": "仍在快速发表",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "现象",
+          "AI 自身的偏差",
+          "2023",
+          "B",
+          "活跃",
+          "AI 相关"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [
+          "E-24",
+          "E-25",
+          "E-26"
+        ],
+        "edges_in": [
+          "E-22"
+        ],
+        "gaps": [
+          "G-06"
+        ]
+      }
+    },
+    {
+      "id": "S-01",
+      "name": "硅样本",
+      "name_en": "Silicon samples",
+      "kind": "方法",
+      "cluster": "S",
+      "year": 2023,
+      "evidence": "C",
+      "crowding": "活跃",
+      "gist": "给大模型人设，替某类人答问卷",
+      "gist_basis": "来源",
+      "refs": [
+        "Argyle 等 2023, Political Analysis 31(3):337–351"
+      ],
+      "ai_related": true,
+      "unverified": false,
+      "_derived": {
+        "cluster_name": "AI 模拟人",
+        "kind_shape": "胶囊形",
+        "evidence_meaning": "单项非预注册、预印本或理论综述",
+        "crowding_meaning": "仍在快速发表",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "方法",
+          "AI 模拟人",
+          "2023",
+          "C",
+          "活跃",
+          "AI 相关"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [
+          "E-28"
+        ],
+        "edges_in": [],
+        "gaps": []
+      }
+    },
+    {
+      "id": "S-02",
+      "name": "图灵实验",
+      "name_en": "Turing experiments",
+      "kind": "方法",
+      "cluster": "S",
+      "year": 2023,
+      "evidence": "C",
+      "crowding": "活跃",
+      "gist": "让大模型扮演受试者复现经典实验",
+      "gist_basis": "来源",
+      "refs": [
+        "Aher 等 2023, ICML"
+      ],
+      "ai_related": true,
+      "unverified": false,
+      "_derived": {
+        "cluster_name": "AI 模拟人",
+        "kind_shape": "胶囊形",
+        "evidence_meaning": "单项非预注册、预印本或理论综述",
+        "crowding_meaning": "仍在快速发表",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "方法",
+          "AI 模拟人",
+          "2023",
+          "C",
+          "活跃",
+          "AI 相关"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [
+          "E-27"
+        ],
+        "edges_in": [],
+        "gaps": []
+      }
+    },
+    {
+      "id": "S-03",
+      "name": "Centaur",
+      "name_en": "Centaur / Psych-101",
+      "kind": "发现",
+      "cluster": "S",
+      "year": 2025,
+      "evidence": "B",
+      "crowding": "活跃",
+      "gist": "预测人类选择，胜过传统认知模型",
+      "gist_basis": "来源",
+      "refs": [
+        "Binz 等 2025, Nature 644:1002–1009"
+      ],
+      "ai_related": true,
+      "unverified": false,
+      "note": "预测≠机制解释",
+      "_derived": {
+        "cluster_name": "AI 模拟人",
+        "kind_shape": "圆角矩形，左侧粗色条",
+        "evidence_meaning": "单项预注册研究或设计较严的单项研究",
+        "crowding_meaning": "仍在快速发表",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "发现",
+          "AI 模拟人",
+          "2025",
+          "B",
+          "活跃",
+          "AI 相关"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [],
+        "edges_in": [
+          "E-27",
+          "E-28"
+        ],
+        "gaps": []
+      }
+    },
+    {
+      "id": "C-01",
+      "name": "人+AI 组合效果",
+      "name_en": "Human–AI synergy meta-analysis",
+      "kind": "发现",
+      "cluster": "C",
+      "year": 2024,
+      "evidence": "A",
+      "crowding": "活跃",
+      "gist": "平均不如较强一方，但优于人单独",
+      "gist_basis": "来源",
+      "refs": [
+        "Vaccaro, Almaatouq & Malone 2024, Nature Human Behaviour 8:2293–2303"
+      ],
+      "ai_related": true,
+      "unverified": false,
+      "note": "g = −0.23 对比较强一方；异质性极高；多为 2023 年前的简单 AI",
+      "_derived": {
+        "cluster_name": "人与 AI 协作",
+        "kind_shape": "圆角矩形，左侧粗色条",
+        "evidence_meaning": "元分析或多实验室重复",
+        "crowding_meaning": "仍在快速发表",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "发现",
+          "人与 AI 协作",
+          "2024",
+          "A",
+          "活跃",
+          "AI 相关"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [],
+        "edges_in": [
+          "E-29",
+          "E-30",
+          "E-31"
+        ],
+        "gaps": []
+      }
+    },
+    {
+      "id": "C-02",
+      "name": "算法厌恶",
+      "name_en": "Algorithm aversion",
+      "kind": "现象",
+      "cluster": "C",
+      "year": 2015,
+      "evidence": "B",
+      "crowding": "饱和",
+      "gist": "看到算法出错一次就不愿再用",
+      "gist_basis": "来源",
+      "refs": [
+        "Dietvorst, Simmons & Massey 2015, JEP: General"
+      ],
+      "ai_related": true,
+      "unverified": false,
+      "_derived": {
+        "cluster_name": "人与 AI 协作",
+        "kind_shape": "圆角矩形",
+        "evidence_meaning": "单项预注册研究或设计较严的单项研究",
+        "crowding_meaning": "再做同类研究几乎没有新意",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "现象",
+          "人与 AI 协作",
+          "2015",
+          "B",
+          "饱和",
+          "AI 相关"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [
+          "E-32"
+        ],
+        "edges_in": [],
+        "gaps": []
+      }
+    },
+    {
+      "id": "C-03",
+      "name": "算法欣赏",
+      "name_en": "Algorithm appreciation",
+      "kind": "现象",
+      "cluster": "C",
+      "year": 2019,
+      "evidence": "B",
+      "crowding": "饱和",
+      "gist": "没见过出错时更信算法",
+      "gist_basis": "来源",
+      "refs": [
+        "Logg, Minson & Moore 2019, OBHDP"
+      ],
+      "ai_related": true,
+      "unverified": false,
+      "_derived": {
+        "cluster_name": "人与 AI 协作",
+        "kind_shape": "圆角矩形",
+        "evidence_meaning": "单项预注册研究或设计较严的单项研究",
+        "crowding_meaning": "再做同类研究几乎没有新意",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "现象",
+          "人与 AI 协作",
+          "2019",
+          "B",
+          "饱和",
+          "AI 相关"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [
+          "E-33"
+        ],
+        "edges_in": [
+          "E-32"
+        ],
+        "gaps": []
+      }
+    },
+    {
+      "id": "C-04",
+      "name": "过度依赖",
+      "name_en": "Overreliance on AI",
+      "kind": "现象",
+      "cluster": "C",
+      "year": 2021,
+      "evidence": "B",
+      "crowding": "活跃",
+      "gist": "AI 错了也照单全收",
+      "gist_basis": "来源",
+      "refs": [
+        "Buçinca 等 2021, Proc. ACM HCI 5(CSCW1):188",
+        "Vasconcelos 等 2023, Proc. ACM HCI 7(CSCW1):129"
+      ],
+      "ai_related": true,
+      "unverified": false,
+      "note": "相关概念更早就有（自动化偏差），本图从 2021 年的人机协作研究算起",
+      "_derived": {
+        "cluster_name": "人与 AI 协作",
+        "kind_shape": "圆角矩形",
+        "evidence_meaning": "单项预注册研究或设计较严的单项研究",
+        "crowding_meaning": "仍在快速发表",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "现象",
+          "人与 AI 协作",
+          "2021",
+          "B",
+          "活跃",
+          "AI 相关"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [
+          "E-29",
+          "E-43"
+        ],
+        "edges_in": [
+          "E-20",
+          "E-25",
+          "E-33",
+          "E-34",
+          "E-35",
+          "E-36",
+          "E-37",
+          "E-38",
+          "E-39",
+          "E-41"
+        ],
+        "gaps": [
+          "G-01",
+          "G-03"
+        ]
+      }
+    },
+    {
+      "id": "C-05",
+      "name": "AI 给出解释",
+      "name_en": "Explanations (XAI)",
+      "kind": "方法",
+      "cluster": "C",
+      "year": 2023,
+      "evidence": "B",
+      "crowding": "活跃",
+      "gist": "解释只在核查容易时才减少盲从",
+      "gist_basis": "来源",
+      "refs": [
+        "Vasconcelos 等 2023, Proc. ACM HCI 7(CSCW1):129"
+      ],
+      "ai_related": true,
+      "unverified": false,
+      "_derived": {
+        "cluster_name": "人与 AI 协作",
+        "kind_shape": "胶囊形",
+        "evidence_meaning": "单项预注册研究或设计较严的单项研究",
+        "crowding_meaning": "仍在快速发表",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "方法",
+          "人与 AI 协作",
+          "2023",
+          "B",
+          "活跃",
+          "AI 相关"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [
+          "E-36"
+        ],
+        "edges_in": [],
+        "gaps": [
+          "G-03"
+        ]
+      }
+    },
+    {
+      "id": "C-06",
+      "name": "认知强制",
+      "name_en": "Cognitive forcing functions",
+      "kind": "方法",
+      "cluster": "C",
+      "year": 2021,
+      "evidence": "B",
+      "crowding": "活跃",
+      "gist": "先自己答，再看 AI",
+      "gist_basis": "来源",
+      "refs": [
+        "Buçinca, Malaya & Gajos 2021, Proc. ACM HCI 5(CSCW1):188",
+        "arXiv:2606.23491（2026 预印本，摩擦类设计未提升恰当依赖）"
+      ],
+      "ai_related": true,
+      "unverified": false,
+      "_derived": {
+        "cluster_name": "人与 AI 协作",
+        "kind_shape": "胶囊形",
+        "evidence_meaning": "单项预注册研究或设计较严的单项研究",
+        "crowding_meaning": "仍在快速发表",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "方法",
+          "人与 AI 协作",
+          "2021",
+          "B",
+          "活跃",
+          "AI 相关"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [
+          "E-37"
+        ],
+        "edges_in": [],
+        "gaps": [
+          "G-03"
+        ]
+      }
+    },
+    {
+      "id": "C-07",
+      "name": "AI 置信表达",
+      "name_en": "AI uncertainty communication",
+      "kind": "方法",
+      "cluster": "C",
+      "year": 2026,
+      "evidence": "C",
+      "crowding": "稀疏",
+      "gist": "AI 对时有把握、错时说没把握",
+      "gist_basis": "来源",
+      "refs": [
+        "Steyvers & Peters 2026, Current Directions in Psychological Science / arXiv:2504.14045"
+      ],
+      "ai_related": true,
+      "unverified": false,
+      "_derived": {
+        "cluster_name": "人与 AI 协作",
+        "kind_shape": "胶囊形",
+        "evidence_meaning": "单项非预注册、预印本或理论综述",
+        "crowding_meaning": "没几个人做",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "方法",
+          "人与 AI 协作",
+          "2026",
+          "C",
+          "稀疏",
+          "AI 相关"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [
+          "E-38",
+          "E-40"
+        ],
+        "edges_in": [],
+        "gaps": [
+          "G-03"
+        ]
+      }
+    },
+    {
+      "id": "C-08",
+      "name": "唱反调 AI",
+      "name_en": "LLM devil's advocate",
+      "kind": "方法",
+      "cluster": "C",
+      "year": 2024,
+      "evidence": "B",
+      "crowding": "稀疏",
+      "gist": "专门反对 AI 建议的对话者",
+      "gist_basis": "来源",
+      "refs": [
+        "Chiang 等 2024, IUI '24"
+      ],
+      "ai_related": true,
+      "unverified": false,
+      "note": "小组场景；个人场景未检验",
+      "_derived": {
+        "cluster_name": "人与 AI 协作",
+        "kind_shape": "胶囊形",
+        "evidence_meaning": "单项预注册研究或设计较严的单项研究",
+        "crowding_meaning": "没几个人做",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "方法",
+          "人与 AI 协作",
+          "2024",
+          "B",
+          "稀疏",
+          "AI 相关"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [
+          "E-39",
+          "E-42"
+        ],
+        "edges_in": [],
+        "gaps": [
+          "G-03",
+          "G-04"
+        ]
+      }
+    },
+    {
+      "id": "C-09",
+      "name": "AI 对话降低阴谋论信念",
+      "name_en": "AI dialogues reduce conspiracy beliefs",
+      "kind": "发现",
+      "cluster": "C",
+      "year": 2024,
+      "evidence": "B",
+      "crowding": "活跃",
+      "gist": "个性化对话让信念下降约 20%",
+      "gist_basis": "来源",
+      "refs": [
+        "Costello, Pennycook & Rand 2024, Science 385:eadq1814",
+        "Boissin, Costello 等 2025, PNAS Nexus（被当成人时仍有效）"
+      ],
+      "ai_related": true,
+      "unverified": false,
+      "alerts": [
+        "2026-06 Science 发布关注声明（据研究报告）：未撤稿，作者称修正后结论不变，最终处理未定"
+      ],
+      "_derived": {
+        "cluster_name": "人与 AI 协作",
+        "kind_shape": "圆角矩形，左侧粗色条",
+        "evidence_meaning": "单项预注册研究或设计较严的单项研究",
+        "crowding_meaning": "仍在快速发表",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "发现",
+          "人与 AI 协作",
+          "2024",
+          "B",
+          "活跃",
+          "AI 相关"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [],
+        "edges_in": [
+          "E-26",
+          "E-45"
+        ],
+        "gaps": []
+      }
+    },
+    {
+      "id": "C-10",
+      "name": "AI 个性化说服",
+      "name_en": "Personalized AI persuasion",
+      "kind": "发现",
+      "cluster": "C",
+      "year": 2025,
+      "evidence": "B",
+      "crowding": "活跃",
+      "gist": "知道对方信息的 GPT-4 更能说服人",
+      "gist_basis": "来源",
+      "refs": [
+        "Salvi, Horta Ribeiro, Gallotti & West 2025, Nature Human Behaviour 9:1645–1653"
+      ],
+      "ai_related": true,
+      "unverified": false,
+      "_derived": {
+        "cluster_name": "人与 AI 协作",
+        "kind_shape": "圆角矩形，左侧粗色条",
+        "evidence_meaning": "单项预注册研究或设计较严的单项研究",
+        "crowding_meaning": "仍在快速发表",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "发现",
+          "人与 AI 协作",
+          "2025",
+          "B",
+          "活跃",
+          "AI 相关"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [
+          "E-45"
+        ],
+        "edges_in": [],
+        "gaps": []
+      }
+    },
+    {
+      "id": "C-11",
+      "name": "AI 辅助预测",
+      "name_en": "LLM-assisted forecasting",
+      "kind": "发现",
+      "cluster": "C",
+      "year": 2024,
+      "evidence": "B",
+      "crowding": "活跃",
+      "gist": "有助手在旁，人的预测更准",
+      "gist_basis": "来源",
+      "refs": [
+        "Schoenegger 等 2024, ACM TiiS 15(1)"
+      ],
+      "ai_related": true,
+      "unverified": false,
+      "note": "效果受极端值影响",
+      "_derived": {
+        "cluster_name": "人与 AI 协作",
+        "kind_shape": "圆角矩形，左侧粗色条",
+        "evidence_meaning": "单项预注册研究或设计较严的单项研究",
+        "crowding_meaning": "仍在快速发表",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "发现",
+          "人与 AI 协作",
+          "2024",
+          "B",
+          "活跃",
+          "AI 相关"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [
+          "E-31"
+        ],
+        "edges_in": [],
+        "gaps": []
+      }
+    },
+    {
+      "id": "C-12",
+      "name": "AI 与技能侵蚀",
+      "name_en": "AI and deskilling",
+      "kind": "发现",
+      "cluster": "C",
+      "year": 2025,
+      "evidence": "B",
+      "crowding": "活跃",
+      "gist": "接触 AI 后独立表现可能下滑",
+      "gist_basis": "来源",
+      "refs": [
+        "Budzyń 等 2025, Lancet Gastroenterology & Hepatology 10(10):896–903（19 名医生，非随机）",
+        "Gerlich 2025, Societies 15(1):6（横断面）"
+      ],
+      "ai_related": true,
+      "unverified": false,
+      "note": "方向一致的初步信号，不是定论",
+      "_derived": {
+        "cluster_name": "人与 AI 协作",
+        "kind_shape": "圆角矩形，左侧粗色条",
+        "evidence_meaning": "单项预注册研究或设计较严的单项研究",
+        "crowding_meaning": "仍在快速发表",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "发现",
+          "人与 AI 协作",
+          "2025",
+          "B",
+          "活跃",
+          "AI 相关"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [],
+        "edges_in": [
+          "E-43",
+          "E-44"
+        ],
+        "gaps": [
+          "G-01",
+          "G-07"
+        ]
+      }
+    },
+    {
+      "id": "C-13",
+      "name": "人的学习与结果反馈",
+      "name_en": "Human learning & outcome feedback",
+      "kind": "发现",
+      "cluster": "C",
+      "year": 2025,
+      "evidence": "C",
+      "crowding": "稀疏",
+      "gist": "缺少结果反馈，人学不会用 AI",
+      "gist_basis": "来源",
+      "refs": [
+        "arXiv:2512.13253（预印本）"
+      ],
+      "ai_related": true,
+      "unverified": false,
+      "_derived": {
+        "cluster_name": "人与 AI 协作",
+        "kind_shape": "圆角矩形，左侧粗色条",
+        "evidence_meaning": "单项非预注册、预印本或理论综述",
+        "crowding_meaning": "没几个人做",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "发现",
+          "人与 AI 协作",
+          "2025",
+          "C",
+          "稀疏",
+          "AI 相关"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [
+          "E-30"
+        ],
+        "edges_in": [],
+        "gaps": []
+      }
+    },
+    {
+      "id": "O-01",
+      "name": "噪声与决策卫生",
+      "name_en": "Noise & decision hygiene",
+      "kind": "理论",
+      "cluster": "O",
+      "year": 2021,
+      "evidence": "C",
+      "crowding": "活跃",
+      "gist": "误差＝偏差＋噪声",
+      "gist_basis": "来源",
+      "refs": [
+        "Kahneman, Sibony & Sunstein 2021《噪声》"
+      ],
+      "ai_related": false,
+      "unverified": false,
+      "_derived": {
+        "cluster_name": "干预与组织",
+        "kind_shape": "直角偏小的圆角矩形",
+        "evidence_meaning": "单项非预注册、预印本或理论综述",
+        "crowding_meaning": "仍在快速发表",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "理论",
+          "干预与组织",
+          "2021",
+          "C",
+          "活跃"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [
+          "E-14"
+        ],
+        "edges_in": [],
+        "gaps": [
+          "G-05"
+        ]
+      }
+    },
+    {
+      "id": "O-02",
+      "name": "助推",
+      "name_en": "Nudge",
+      "kind": "方法",
+      "cluster": "O",
+      "year": 2008,
+      "evidence": "A",
+      "crowding": "饱和",
+      "gist": "改选择环境，引导行为",
+      "gist_basis": "来源",
+      "refs": [
+        "Thaler & Sunstein 2008《助推》",
+        "DellaVigna & Linos 2022, Econometrica（规模化后效果变小）"
+      ],
+      "ai_related": false,
+      "unverified": true,
+      "_derived": {
+        "cluster_name": "干预与组织",
+        "kind_shape": "胶囊形",
+        "evidence_meaning": "元分析或多实验室重复",
+        "crowding_meaning": "再做同类研究几乎没有新意",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "方法",
+          "干预与组织",
+          "2008",
+          "A",
+          "饱和"
+        ],
+        "unverified_text_shown": "据已有知识补充，本次未经检索核验",
+        "edges_out": [],
+        "edges_in": [
+          "E-46",
+          "E-47"
+        ],
+        "gaps": []
+      }
+    },
+    {
+      "id": "O-03",
+      "name": "助力",
+      "name_en": "Boost",
+      "kind": "方法",
+      "cluster": "O",
+      "year": 2017,
+      "evidence": "C",
+      "crowding": "活跃",
+      "gist": "教能力，目标是撤掉后仍保留",
+      "gist_basis": "来源",
+      "refs": [
+        "Hertwig & Grüne-Yanoff 2017, Perspectives on Psychological Science 12(6):973–986"
+      ],
+      "ai_related": false,
+      "unverified": false,
+      "_derived": {
+        "cluster_name": "干预与组织",
+        "kind_shape": "胶囊形",
+        "evidence_meaning": "单项非预注册、预印本或理论综述",
+        "crowding_meaning": "仍在快速发表",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "方法",
+          "干预与组织",
+          "2017",
+          "C",
+          "活跃"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [
+          "E-44",
+          "E-46"
+        ],
+        "edges_in": [],
+        "gaps": [
+          "G-07"
+        ]
+      }
+    },
+    {
+      "id": "O-04",
+      "name": "个体框架与系统框架",
+      "name_en": "i-frame vs s-frame",
+      "kind": "理论",
+      "cluster": "O",
+      "year": 2023,
+      "evidence": "C",
+      "crowding": "活跃",
+      "gist": "只修人，可能放过系统问题",
+      "gist_basis": "来源",
+      "refs": [
+        "Chater & Loewenstein 2023, BBS"
+      ],
+      "ai_related": false,
+      "unverified": false,
+      "_derived": {
+        "cluster_name": "干预与组织",
+        "kind_shape": "直角偏小的圆角矩形",
+        "evidence_meaning": "单项非预注册、预印本或理论综述",
+        "crowding_meaning": "仍在快速发表",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "理论",
+          "干预与组织",
+          "2023",
+          "C",
+          "活跃"
+        ],
+        "unverified_text_shown": null,
+        "edges_out": [
+          "E-47"
+        ],
+        "edges_in": [],
+        "gaps": []
+      }
+    },
+    {
+      "id": "O-05",
+      "name": "即时自适应干预",
+      "name_en": "JITAI",
+      "kind": "方法",
+      "cluster": "O",
+      "year": 2018,
+      "evidence": "B",
+      "crowding": "活跃",
+      "gist": "按当下状态决定是否干预",
+      "gist_basis": "来源",
+      "refs": [
+        "Nahum-Shani 等 2018, Annals of Behavioral Medicine",
+        "2025–2026 健康领域系统综述（据研究报告）"
+      ],
+      "ai_related": false,
+      "unverified": true,
+      "note": "成熟于健康行为；用于认知偏差几乎空白",
+      "_derived": {
+        "cluster_name": "干预与组织",
+        "kind_shape": "胶囊形",
+        "evidence_meaning": "单项预注册研究或设计较严的单项研究",
+        "crowding_meaning": "仍在快速发表",
+        "gist_basis_meaning": "文献结论",
+        "ui_tags": [
+          "方法",
+          "干预与组织",
+          "2018",
+          "B",
+          "活跃"
+        ],
+        "unverified_text_shown": "据已有知识补充，本次未经检索核验",
+        "edges_out": [
+          "E-21"
+        ],
+        "edges_in": [],
+        "gaps": [
+          "G-02"
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "E-01",
+      "from": "R-01",
+      "to": "R-03",
+      "type": "继承",
+      "status": "确立",
+      "basis": "来源",
+      "reason": "把有限理性发展为“策略与环境匹配”",
+      "ref": "Gigerenzer & Goldstein 1996",
+      "unverified": true,
+      "_derived": {
+        "from_name": "有限理性",
+        "to_name": "生态理性",
+        "type_meaning": "A 在 B 的基础上发展出来",
+        "type_meaning_filled": "有限理性 在 生态理性 的基础上发展出来",
+        "status_rule": "A 档证据，或多个独立团队得到同样结果，或是公认的学术史事实",
+        "status_line_style": "实线",
+        "basis_meaning": "文献结论",
+        "unverified_text_shown": "据已有知识补充，本次未经检索核验",
+        "gap_title": null,
+        "readable": "R-01 有限理性 —继承→ R-03 生态理性"
+      }
+    },
+    {
+      "id": "E-02",
+      "from": "R-01",
+      "to": "R-04",
+      "type": "继承",
+      "status": "确立",
+      "basis": "来源",
+      "reason": "把“资源有限”形式化为计算成本",
+      "ref": "Gershman, Horvitz & Tenenbaum 2015",
+      "unverified": false,
+      "_derived": {
+        "from_name": "有限理性",
+        "to_name": "计算理性",
+        "type_meaning": "A 在 B 的基础上发展出来",
+        "type_meaning_filled": "有限理性 在 计算理性 的基础上发展出来",
+        "status_rule": "A 档证据，或多个独立团队得到同样结果，或是公认的学术史事实",
+        "status_line_style": "实线",
+        "basis_meaning": "文献结论",
+        "unverified_text_shown": null,
+        "gap_title": null,
+        "readable": "R-01 有限理性 —继承→ R-04 计算理性"
+      }
+    },
+    {
+      "id": "E-03",
+      "from": "R-04",
+      "to": "R-05",
+      "type": "继承",
+      "status": "确立",
+      "basis": "来源",
+      "reason": "在计算理性上发展成一套研究方法",
+      "ref": "Lieder & Griffiths 2020",
+      "unverified": false,
+      "_derived": {
+        "from_name": "计算理性",
+        "to_name": "资源理性分析",
+        "type_meaning": "A 在 B 的基础上发展出来",
+        "type_meaning_filled": "计算理性 在 资源理性分析 的基础上发展出来",
+        "status_rule": "A 档证据，或多个独立团队得到同样结果，或是公认的学术史事实",
+        "status_line_style": "实线",
+        "basis_meaning": "文献结论",
+        "unverified_text_shown": null,
+        "gap_title": null,
+        "readable": "R-04 计算理性 —继承→ R-05 资源理性分析"
+      }
+    },
+    {
+      "id": "E-04",
+      "from": "R-04",
+      "to": "R-06",
+      "type": "继承",
+      "status": "确立",
+      "basis": "来源",
+      "reason": "用信息论刻画认知资源的成本",
+      "ref": "Bhui, Lai & Gershman 2021",
+      "unverified": false,
+      "_derived": {
+        "from_name": "计算理性",
+        "to_name": "信息论资源理性",
+        "type_meaning": "A 在 B 的基础上发展出来",
+        "type_meaning_filled": "计算理性 在 信息论资源理性 的基础上发展出来",
+        "status_rule": "A 档证据，或多个独立团队得到同样结果，或是公认的学术史事实",
+        "status_line_style": "实线",
+        "basis_meaning": "文献结论",
+        "unverified_text_shown": null,
+        "gap_title": null,
+        "readable": "R-04 计算理性 —继承→ R-06 信息论资源理性"
+      }
+    },
+    {
+      "id": "E-05",
+      "from": "R-03",
+      "to": "R-02",
+      "type": "挑战",
+      "status": "初步",
+      "basis": "来源",
+      "reason": "拿无限算力当标准不公平",
+      "ref": "Gigerenzer 系列",
+      "unverified": true,
+      "_derived": {
+        "from_name": "生态理性",
+        "to_name": "启发式与偏差纲领",
+        "type_meaning": "A 的证据和 B 方向相反",
+        "type_meaning_filled": "生态理性 的证据和 启发式与偏差纲领 方向相反",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "文献结论",
+        "unverified_text_shown": "据已有知识补充，本次未经检索核验",
+        "gap_title": null,
+        "readable": "R-03 生态理性 —挑战→ R-02 启发式与偏差纲领"
+      }
+    },
+    {
+      "id": "E-06",
+      "from": "R-05",
+      "to": "R-02",
+      "type": "修正",
+      "status": "初步",
+      "basis": "来源",
+      "reason": "保留偏差，把尺子改成“给定资源下的最优”",
+      "ref": "Lieder & Griffiths 2020",
+      "unverified": false,
+      "_derived": {
+        "from_name": "资源理性分析",
+        "to_name": "启发式与偏差纲领",
+        "type_meaning": "B 仍然成立，但 A 把它的适用范围收窄了",
+        "type_meaning_filled": "启发式与偏差纲领 仍然成立，但 资源理性分析 把它的适用范围收窄了",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "文献结论",
+        "unverified_text_shown": null,
+        "gap_title": null,
+        "readable": "R-05 资源理性分析 —修正→ R-02 启发式与偏差纲领"
+      }
+    },
+    {
+      "id": "E-07",
+      "from": "R-05",
+      "to": "H-07",
+      "type": "解释",
+      "status": "初步",
+      "basis": "来源",
+      "reason": "锚定＝受资源限制的逐步调整",
+      "ref": "Lieder 等 2018, Psychonomic Bulletin & Review",
+      "unverified": false,
+      "_derived": {
+        "from_name": "资源理性分析",
+        "to_name": "锚定效应",
+        "type_meaning": "A 的机制说明了 B 为什么会发生",
+        "type_meaning_filled": "资源理性分析 的机制说明了 锚定效应 为什么会发生",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "文献结论",
+        "unverified_text_shown": null,
+        "gap_title": null,
+        "readable": "R-05 资源理性分析 —解释→ H-07 锚定效应"
+      }
+    },
+    {
+      "id": "E-08",
+      "from": "R-05",
+      "to": "H-08",
+      "type": "解释",
+      "status": "初步",
+      "basis": "来源",
+      "reason": "只能想少数结果时，优先想后果大的",
+      "ref": "Lieder, Griffiths & Hsu 2018, Psychological Review",
+      "unverified": false,
+      "_derived": {
+        "from_name": "资源理性分析",
+        "to_name": "可得性与高估极端事件",
+        "type_meaning": "A 的机制说明了 B 为什么会发生",
+        "type_meaning_filled": "资源理性分析 的机制说明了 可得性与高估极端事件 为什么会发生",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "文献结论",
+        "unverified_text_shown": null,
+        "gap_title": null,
+        "readable": "R-05 资源理性分析 —解释→ H-08 可得性与高估极端事件"
+      }
+    },
+    {
+      "id": "E-09",
+      "from": "R-06",
+      "to": "H-05",
+      "type": "解释",
+      "status": "初步",
+      "basis": "来源",
+      "reason": "高效编码自然产生以现状为参照",
+      "ref": "Bhui, Lai & Gershman 2021",
+      "unverified": false,
+      "_derived": {
+        "from_name": "信息论资源理性",
+        "to_name": "参照点依赖",
+        "type_meaning": "A 的机制说明了 B 为什么会发生",
+        "type_meaning_filled": "信息论资源理性 的机制说明了 参照点依赖 为什么会发生",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "文献结论",
+        "unverified_text_shown": null,
+        "gap_title": null,
+        "readable": "R-06 信息论资源理性 —解释→ H-05 参照点依赖"
+      }
+    },
+    {
+      "id": "E-10",
+      "from": "H-05",
+      "to": "H-06",
+      "type": "解释",
+      "status": "确立",
+      "basis": "来源",
+      "reason": "参照点一变，得失就变，选择跟着变",
+      "ref": "Tversky & Kahneman 1981",
+      "unverified": true,
+      "_derived": {
+        "from_name": "参照点依赖",
+        "to_name": "框架效应",
+        "type_meaning": "A 的机制说明了 B 为什么会发生",
+        "type_meaning_filled": "参照点依赖 的机制说明了 框架效应 为什么会发生",
+        "status_rule": "A 档证据，或多个独立团队得到同样结果，或是公认的学术史事实",
+        "status_line_style": "实线",
+        "basis_meaning": "文献结论",
+        "unverified_text_shown": "据已有知识补充，本次未经检索核验",
+        "gap_title": null,
+        "readable": "H-05 参照点依赖 —解释→ H-06 框架效应"
+      }
+    },
+    {
+      "id": "E-11",
+      "from": "R-07",
+      "to": "R-05",
+      "type": "挑战",
+      "status": "初步",
+      "basis": "来源",
+      "reason": "走反了的更新，资源限制解释不了",
+      "ref": "Mandelbaum 等 2020, BBS 评论",
+      "unverified": false,
+      "gap": "G-08",
+      "_derived": {
+        "from_name": "反贝叶斯更新",
+        "to_name": "资源理性分析",
+        "type_meaning": "A 的证据和 B 方向相反",
+        "type_meaning_filled": "反贝叶斯更新 的证据和 资源理性分析 方向相反",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "文献结论",
+        "unverified_text_shown": null,
+        "gap_title": "资源理性能否当理性标准",
+        "readable": "R-07 反贝叶斯更新 —挑战→ R-05 资源理性分析"
+      }
+    },
+    {
+      "id": "E-12",
+      "from": "R-08",
+      "to": "R-05",
+      "type": "修正",
+      "status": "初步",
+      "basis": "来源",
+      "reason": "作为方法可以，作为规范标准不行",
+      "ref": "Colombo 2020；Bates, Sims & Jacobs 2020",
+      "unverified": false,
+      "gap": "G-08",
+      "_derived": {
+        "from_name": "对资源理性规范地位的质疑",
+        "to_name": "资源理性分析",
+        "type_meaning": "B 仍然成立，但 A 把它的适用范围收窄了",
+        "type_meaning_filled": "资源理性分析 仍然成立，但 对资源理性规范地位的质疑 把它的适用范围收窄了",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "文献结论",
+        "unverified_text_shown": null,
+        "gap_title": "资源理性能否当理性标准",
+        "readable": "R-08 对资源理性规范地位的质疑 —修正→ R-05 资源理性分析"
+      }
+    },
+    {
+      "id": "E-13",
+      "from": "H-09",
+      "to": "R-07",
+      "type": "解释",
+      "status": "初步",
+      "basis": "来源",
+      "reason": "偏向性吸收证据导致立场极化",
+      "ref": "Lord, Ross & Lepper 1979（后续复现不一）",
+      "unverified": true,
+      "_derived": {
+        "from_name": "确认偏误",
+        "to_name": "反贝叶斯更新",
+        "type_meaning": "A 的机制说明了 B 为什么会发生",
+        "type_meaning_filled": "确认偏误 的机制说明了 反贝叶斯更新 为什么会发生",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "文献结论",
+        "unverified_text_shown": "据已有知识补充，本次未经检索核验",
+        "gap_title": null,
+        "readable": "H-09 确认偏误 —解释→ R-07 反贝叶斯更新"
+      }
+    },
+    {
+      "id": "E-14",
+      "from": "O-01",
+      "to": "R-02",
+      "type": "修正",
+      "status": "初步",
+      "basis": "来源",
+      "reason": "误差不只来自偏差，还有噪声",
+      "ref": "Kahneman, Sibony & Sunstein 2021",
+      "unverified": false,
+      "_derived": {
+        "from_name": "噪声与决策卫生",
+        "to_name": "启发式与偏差纲领",
+        "type_meaning": "B 仍然成立，但 A 把它的适用范围收窄了",
+        "type_meaning_filled": "启发式与偏差纲领 仍然成立，但 噪声与决策卫生 把它的适用范围收窄了",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "文献结论",
+        "unverified_text_shown": null,
+        "gap_title": null,
+        "readable": "O-01 噪声与决策卫生 —修正→ R-02 启发式与偏差纲领"
+      }
+    },
+    {
+      "id": "E-15",
+      "from": "H-01",
+      "to": "R-05",
+      "type": "支持",
+      "status": "初步",
+      "basis": "加工",
+      "reason": "“脑力极有限”是资源理性的前提",
+      "ref": "Claude 连接；Zheng & Meister 2024 未讨论资源理性",
+      "unverified": false,
+      "gap": "G-09",
+      "_derived": {
+        "from_name": "信息带宽约束",
+        "to_name": "资源理性分析",
+        "type_meaning": "A 的证据让 B 更可信",
+        "type_meaning_filled": "信息带宽约束 的证据让 资源理性分析 更可信",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "Claude 的推断或连接",
+        "unverified_text_shown": null,
+        "gap_title": "哪些是硬约束，哪些可塑",
+        "readable": "H-01 信息带宽约束 —支持→ R-05 资源理性分析"
+      }
+    },
+    {
+      "id": "E-16",
+      "from": "H-04",
+      "to": "H-03",
+      "type": "挑战",
+      "status": "初步",
+      "basis": "来源",
+      "reason": "快、无意识等特征并不总捆在一起",
+      "ref": "Melnikoff & Bargh 2018",
+      "unverified": true,
+      "_derived": {
+        "from_name": "对双系统的批评",
+        "to_name": "双系统理论",
+        "type_meaning": "A 的证据和 B 方向相反",
+        "type_meaning_filled": "对双系统的批评 的证据和 双系统理论 方向相反",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "文献结论",
+        "unverified_text_shown": "据已有知识补充，本次未经检索核验",
+        "gap_title": null,
+        "readable": "H-04 对双系统的批评 —挑战→ H-03 双系统理论"
+      }
+    },
+    {
+      "id": "E-17",
+      "from": "H-02",
+      "to": "H-03",
+      "type": "修正",
+      "status": "初步",
+      "basis": "加工",
+      "reason": "有两类计算，不等于有两个系统",
+      "ref": "Claude 对 Daw 2011 与双系统理论关系的概括",
+      "unverified": false,
+      "_derived": {
+        "from_name": "两种决策方式",
+        "to_name": "双系统理论",
+        "type_meaning": "B 仍然成立，但 A 把它的适用范围收窄了",
+        "type_meaning_filled": "双系统理论 仍然成立，但 两种决策方式 把它的适用范围收窄了",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "Claude 的推断或连接",
+        "unverified_text_shown": null,
+        "gap_title": null,
+        "readable": "H-02 两种决策方式 —修正→ H-03 双系统理论"
+      }
+    },
+    {
+      "id": "E-18",
+      "from": "H-12",
+      "to": "H-06",
+      "type": "修正",
+      "status": "初步",
+      "basis": "加工",
+      "reason": "框架效应的脑区结论样本小，要打折",
+      "ref": "Button 2013 为一般性警告；套用到 De Martino 2006 是 Claude 的连接",
+      "unverified": false,
+      "_derived": {
+        "from_name": "神经研究统计功效不足",
+        "to_name": "框架效应",
+        "type_meaning": "B 仍然成立，但 A 把它的适用范围收窄了",
+        "type_meaning_filled": "框架效应 仍然成立，但 神经研究统计功效不足 把它的适用范围收窄了",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "Claude 的推断或连接",
+        "unverified_text_shown": null,
+        "gap_title": null,
+        "readable": "H-12 神经研究统计功效不足 —修正→ H-06 框架效应"
+      }
+    },
+    {
+      "id": "E-19",
+      "from": "H-11",
+      "to": "H-09",
+      "type": "加剧",
+      "status": "初步",
+      "basis": "来源",
+      "reason": "信心越高，反面证据加工越弱",
+      "ref": "Rollwage 等 2020, Nature Communications",
+      "unverified": false,
+      "_derived": {
+        "from_name": "元认知",
+        "to_name": "确认偏误",
+        "type_meaning": "A 会让 B 更严重",
+        "type_meaning_filled": "元认知 会让 确认偏误 更严重",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "文献结论",
+        "unverified_text_shown": null,
+        "gap_title": null,
+        "readable": "H-11 元认知 —加剧→ H-09 确认偏误"
+      }
+    },
+    {
+      "id": "E-20",
+      "from": "H-10",
+      "to": "C-04",
+      "type": "加剧",
+      "status": "未验证",
+      "basis": "加工",
+      "reason": "疲劳时更可能照单全收",
+      "ref": "Claude 推断",
+      "unverified": false,
+      "gap": "G-02",
+      "_derived": {
+        "from_name": "状态影响判断",
+        "to_name": "过度依赖",
+        "type_meaning": "A 会让 B 更严重",
+        "type_meaning_filled": "状态影响判断 会让 过度依赖 更严重",
+        "status_rule": "没有直接实证，是理论推测",
+        "status_line_style": "点线",
+        "basis_meaning": "Claude 的推断或连接",
+        "unverified_text_shown": null,
+        "gap_title": "按身体/情境状态即时触发去偏",
+        "readable": "H-10 状态影响判断 —加剧→ C-04 过度依赖"
+      }
+    },
+    {
+      "id": "E-21",
+      "from": "O-05",
+      "to": "H-10",
+      "type": "削弱",
+      "status": "未验证",
+      "basis": "加工",
+      "reason": "在状态差时触发提醒，抵消状态影响",
+      "ref": "空缺 2：JITAI 未见用于认知偏差",
+      "unverified": false,
+      "gap": "G-02",
+      "_derived": {
+        "from_name": "即时自适应干预",
+        "to_name": "状态影响判断",
+        "type_meaning": "A 能减少 B",
+        "type_meaning_filled": "即时自适应干预 能减少 状态影响判断",
+        "status_rule": "没有直接实证，是理论推测",
+        "status_line_style": "点线",
+        "basis_meaning": "Claude 的推断或连接",
+        "unverified_text_shown": null,
+        "gap_title": "按身体/情境状态即时触发去偏",
+        "readable": "O-05 即时自适应干预 —削弱→ H-10 状态影响判断"
+      }
+    },
+    {
+      "id": "E-22",
+      "from": "A-02",
+      "to": "A-03",
+      "type": "解释",
+      "status": "初步",
+      "basis": "来源",
+      "reason": "评分者偏爱附和，训练放大了附和",
+      "ref": "Sharma 等 2023",
+      "unverified": false,
+      "_derived": {
+        "from_name": "人类偏好训练",
+        "to_name": "AI 谄媚",
+        "type_meaning": "A 的机制说明了 B 为什么会发生",
+        "type_meaning_filled": "人类偏好训练 的机制说明了 AI 谄媚 为什么会发生",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "文献结论",
+        "unverified_text_shown": null,
+        "gap_title": null,
+        "readable": "A-02 人类偏好训练 —解释→ A-03 AI 谄媚"
+      }
+    },
+    {
+      "id": "E-23",
+      "from": "A-01",
+      "to": "H-06",
+      "type": "对应",
+      "status": "初步",
+      "basis": "来源",
+      "reason": "大模型在经典题里出现类人的框架效应",
+      "ref": "Binz & Schulz 2023",
+      "unverified": false,
+      "_derived": {
+        "from_name": "大模型类人偏差",
+        "to_name": "框架效应",
+        "type_meaning": "A 是 B 在另一侧（人类侧 / AI 侧）的对应物",
+        "type_meaning_filled": "大模型类人偏差 是 框架效应 在另一侧（人类侧 / 大模型类人偏差I 侧）的对应物",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "文献结论",
+        "unverified_text_shown": null,
+        "gap_title": null,
+        "readable": "A-01 大模型类人偏差 —对应→ H-06 框架效应"
+      }
+    },
+    {
+      "id": "E-24",
+      "from": "A-03",
+      "to": "H-09",
+      "type": "加剧",
+      "status": "未验证",
+      "basis": "加工",
+      "reason": "附和的 AI 可能放大“只找支持证据”",
+      "ref": "空缺 6：检索未找到直接实证",
+      "unverified": false,
+      "gap": "G-06",
+      "_derived": {
+        "from_name": "AI 谄媚",
+        "to_name": "确认偏误",
+        "type_meaning": "A 会让 B 更严重",
+        "type_meaning_filled": "AI 谄媚 会让 确认偏误 更严重",
+        "status_rule": "没有直接实证，是理论推测",
+        "status_line_style": "点线",
+        "basis_meaning": "Claude 的推断或连接",
+        "unverified_text_shown": null,
+        "gap_title": "AI 偏差 × 人类偏差的交互",
+        "readable": "A-03 AI 谄媚 —加剧→ H-09 确认偏误"
+      }
+    },
+    {
+      "id": "E-25",
+      "from": "A-03",
+      "to": "C-04",
+      "type": "加剧",
+      "status": "未验证",
+      "basis": "加工",
+      "reason": "附和让错误答案更容易被接受",
+      "ref": "空缺 6",
+      "unverified": false,
+      "gap": "G-06",
+      "_derived": {
+        "from_name": "AI 谄媚",
+        "to_name": "过度依赖",
+        "type_meaning": "A 会让 B 更严重",
+        "type_meaning_filled": "AI 谄媚 会让 过度依赖 更严重",
+        "status_rule": "没有直接实证，是理论推测",
+        "status_line_style": "点线",
+        "basis_meaning": "Claude 的推断或连接",
+        "unverified_text_shown": null,
+        "gap_title": "AI 偏差 × 人类偏差的交互",
+        "readable": "A-03 AI 谄媚 —加剧→ C-04 过度依赖"
+      }
+    },
+    {
+      "id": "E-26",
+      "from": "A-03",
+      "to": "C-09",
+      "type": "削弱",
+      "status": "未验证",
+      "basis": "加工",
+      "reason": "纠偏靠据理力争，附和的 AI 做不到",
+      "ref": "空缺 6",
+      "unverified": false,
+      "gap": "G-06",
+      "_derived": {
+        "from_name": "AI 谄媚",
+        "to_name": "AI 对话降低阴谋论信念",
+        "type_meaning": "A 能减少 B",
+        "type_meaning_filled": "AI 谄媚 能减少 AI 对话降低阴谋论信念",
+        "status_rule": "没有直接实证，是理论推测",
+        "status_line_style": "点线",
+        "basis_meaning": "Claude 的推断或连接",
+        "unverified_text_shown": null,
+        "gap_title": "AI 偏差 × 人类偏差的交互",
+        "readable": "A-03 AI 谄媚 —削弱→ C-09 AI 对话降低阴谋论信念"
+      }
+    },
+    {
+      "id": "E-27",
+      "from": "S-02",
+      "to": "S-03",
+      "type": "继承",
+      "status": "初步",
+      "basis": "加工",
+      "reason": "从“扮演受试者”到“专门训练预测模型”",
+      "ref": "Claude 概括",
+      "unverified": false,
+      "_derived": {
+        "from_name": "图灵实验",
+        "to_name": "Centaur",
+        "type_meaning": "A 在 B 的基础上发展出来",
+        "type_meaning_filled": "图灵实验 在 Centaur 的基础上发展出来",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "Claude 的推断或连接",
+        "unverified_text_shown": null,
+        "gap_title": null,
+        "readable": "S-02 图灵实验 —继承→ S-03 Centaur"
+      }
+    },
+    {
+      "id": "E-28",
+      "from": "S-01",
+      "to": "S-03",
+      "type": "继承",
+      "status": "初步",
+      "basis": "加工",
+      "reason": "从“按人设作答”到“预测任意实验中的选择”",
+      "ref": "Claude 概括",
+      "unverified": false,
+      "_derived": {
+        "from_name": "硅样本",
+        "to_name": "Centaur",
+        "type_meaning": "A 在 B 的基础上发展出来",
+        "type_meaning_filled": "硅样本 在 Centaur 的基础上发展出来",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "Claude 的推断或连接",
+        "unverified_text_shown": null,
+        "gap_title": null,
+        "readable": "S-01 硅样本 —继承→ S-03 Centaur"
+      }
+    },
+    {
+      "id": "E-29",
+      "from": "C-04",
+      "to": "C-01",
+      "type": "解释",
+      "status": "初步",
+      "basis": "加工",
+      "reason": "组合损失的一部分来自依赖失衡",
+      "ref": "Claude 连接 Vaccaro 2024 与过度依赖研究",
+      "unverified": false,
+      "_derived": {
+        "from_name": "过度依赖",
+        "to_name": "人+AI 组合效果",
+        "type_meaning": "A 的机制说明了 B 为什么会发生",
+        "type_meaning_filled": "过度依赖 的机制说明了 人+AI 组合效果 为什么会发生",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "Claude 的推断或连接",
+        "unverified_text_shown": null,
+        "gap_title": null,
+        "readable": "C-04 过度依赖 —解释→ C-01 人+AI 组合效果"
+      }
+    },
+    {
+      "id": "E-30",
+      "from": "C-13",
+      "to": "C-01",
+      "type": "修正",
+      "status": "初步",
+      "basis": "来源",
+      "reason": "账本多是“第一次合作”的成绩",
+      "ref": "arXiv:2512.13253（预印本）",
+      "unverified": false,
+      "_derived": {
+        "from_name": "人的学习与结果反馈",
+        "to_name": "人+AI 组合效果",
+        "type_meaning": "B 仍然成立，但 A 把它的适用范围收窄了",
+        "type_meaning_filled": "人+AI 组合效果 仍然成立，但 人的学习与结果反馈 把它的适用范围收窄了",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "文献结论",
+        "unverified_text_shown": null,
+        "gap_title": null,
+        "readable": "C-13 人的学习与结果反馈 —修正→ C-01 人+AI 组合效果"
+      }
+    },
+    {
+      "id": "E-31",
+      "from": "C-11",
+      "to": "C-01",
+      "type": "修正",
+      "status": "初步",
+      "basis": "加工",
+      "reason": "预测类任务中 LLM 助手带来增益",
+      "ref": "Schoenegger 2024；与 Vaccaro 并置是 Claude 的连接",
+      "unverified": false,
+      "_derived": {
+        "from_name": "AI 辅助预测",
+        "to_name": "人+AI 组合效果",
+        "type_meaning": "B 仍然成立，但 A 把它的适用范围收窄了",
+        "type_meaning_filled": "人+AI 组合效果 仍然成立，但 AI 辅助预测 把它的适用范围收窄了",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "Claude 的推断或连接",
+        "unverified_text_shown": null,
+        "gap_title": null,
+        "readable": "C-11 AI 辅助预测 —修正→ C-01 人+AI 组合效果"
+      }
+    },
+    {
+      "id": "E-32",
+      "from": "C-02",
+      "to": "C-03",
+      "type": "修正",
+      "status": "初步",
+      "basis": "来源",
+      "reason": "看到算法出错后，欣赏翻转为厌恶",
+      "ref": "Dietvorst 2015；Logg 2019",
+      "unverified": false,
+      "_derived": {
+        "from_name": "算法厌恶",
+        "to_name": "算法欣赏",
+        "type_meaning": "B 仍然成立，但 A 把它的适用范围收窄了",
+        "type_meaning_filled": "算法欣赏 仍然成立，但 算法厌恶 把它的适用范围收窄了",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "文献结论",
+        "unverified_text_shown": null,
+        "gap_title": null,
+        "readable": "C-02 算法厌恶 —修正→ C-03 算法欣赏"
+      }
+    },
+    {
+      "id": "E-33",
+      "from": "C-03",
+      "to": "C-04",
+      "type": "加剧",
+      "status": "未验证",
+      "basis": "加工",
+      "reason": "默认更信算法，容易照单全收",
+      "ref": "Claude 推断",
+      "unverified": false,
+      "_derived": {
+        "from_name": "算法欣赏",
+        "to_name": "过度依赖",
+        "type_meaning": "A 会让 B 更严重",
+        "type_meaning_filled": "算法欣赏 会让 过度依赖 更严重",
+        "status_rule": "没有直接实证，是理论推测",
+        "status_line_style": "点线",
+        "basis_meaning": "Claude 的推断或连接",
+        "unverified_text_shown": null,
+        "gap_title": null,
+        "readable": "C-03 算法欣赏 —加剧→ C-04 过度依赖"
+      }
+    },
+    {
+      "id": "E-34",
+      "from": "R-05",
+      "to": "C-04",
+      "type": "解释",
+      "status": "初步",
+      "basis": "加工",
+      "reason": "核查太贵时，照单全收是划算的",
+      "ref": "Vasconcelos 2023 为成本收益框架；归到资源理性是 Claude 的连接",
+      "unverified": false,
+      "_derived": {
+        "from_name": "资源理性分析",
+        "to_name": "过度依赖",
+        "type_meaning": "A 的机制说明了 B 为什么会发生",
+        "type_meaning_filled": "资源理性分析 的机制说明了 过度依赖 为什么会发生",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "Claude 的推断或连接",
+        "unverified_text_shown": null,
+        "gap_title": null,
+        "readable": "R-05 资源理性分析 —解释→ C-04 过度依赖"
+      }
+    },
+    {
+      "id": "E-35",
+      "from": "H-07",
+      "to": "C-04",
+      "type": "解释",
+      "status": "未验证",
+      "basis": "加工",
+      "reason": "先看到的 AI 答案可能成为锚点",
+      "ref": "Claude 推断",
+      "unverified": false,
+      "_derived": {
+        "from_name": "锚定效应",
+        "to_name": "过度依赖",
+        "type_meaning": "A 的机制说明了 B 为什么会发生",
+        "type_meaning_filled": "锚定效应 的机制说明了 过度依赖 为什么会发生",
+        "status_rule": "没有直接实证，是理论推测",
+        "status_line_style": "点线",
+        "basis_meaning": "Claude 的推断或连接",
+        "unverified_text_shown": null,
+        "gap_title": null,
+        "readable": "H-07 锚定效应 —解释→ C-04 过度依赖"
+      }
+    },
+    {
+      "id": "E-36",
+      "from": "C-05",
+      "to": "C-04",
+      "type": "削弱",
+      "status": "初步",
+      "basis": "来源",
+      "reason": "只在核查容易、出错代价高时有效",
+      "ref": "Vasconcelos 等 2023",
+      "unverified": false,
+      "gap": "G-03",
+      "_derived": {
+        "from_name": "AI 给出解释",
+        "to_name": "过度依赖",
+        "type_meaning": "A 能减少 B",
+        "type_meaning_filled": "AI 给出解释 能减少 过度依赖",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "文献结论",
+        "unverified_text_shown": null,
+        "gap_title": "“恰当依赖”的最佳设计",
+        "readable": "C-05 AI 给出解释 —削弱→ C-04 过度依赖"
+      }
+    },
+    {
+      "id": "E-37",
+      "from": "C-06",
+      "to": "C-04",
+      "type": "削弱",
+      "status": "初步",
+      "basis": "来源",
+      "reason": "盲从减少，但没证明能提升分辨力",
+      "ref": "Buçinca 等 2021",
+      "unverified": false,
+      "gap": "G-03",
+      "_derived": {
+        "from_name": "认知强制",
+        "to_name": "过度依赖",
+        "type_meaning": "A 能减少 B",
+        "type_meaning_filled": "认知强制 能减少 过度依赖",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "文献结论",
+        "unverified_text_shown": null,
+        "gap_title": "“恰当依赖”的最佳设计",
+        "readable": "C-06 认知强制 —削弱→ C-04 过度依赖"
+      }
+    },
+    {
+      "id": "E-38",
+      "from": "C-07",
+      "to": "C-04",
+      "type": "削弱",
+      "status": "初步",
+      "basis": "来源",
+      "reason": "敏感的置信信号帮人识别 AI 何时对",
+      "ref": "Steyvers & Peters 2026",
+      "unverified": false,
+      "gap": "G-03",
+      "_derived": {
+        "from_name": "AI 置信表达",
+        "to_name": "过度依赖",
+        "type_meaning": "A 能减少 B",
+        "type_meaning_filled": "AI 置信表达 能减少 过度依赖",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "文献结论",
+        "unverified_text_shown": null,
+        "gap_title": "“恰当依赖”的最佳设计",
+        "readable": "C-07 AI 置信表达 —削弱→ C-04 过度依赖"
+      }
+    },
+    {
+      "id": "E-39",
+      "from": "C-08",
+      "to": "C-04",
+      "type": "削弱",
+      "status": "初步",
+      "basis": "来源",
+      "reason": "反对 AI 建议的对话者改善恰当依赖",
+      "ref": "Chiang 等 2024（小组场景）",
+      "unverified": false,
+      "gap": "G-03",
+      "_derived": {
+        "from_name": "唱反调 AI",
+        "to_name": "过度依赖",
+        "type_meaning": "A 能减少 B",
+        "type_meaning_filled": "唱反调 AI 能减少 过度依赖",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "文献结论",
+        "unverified_text_shown": null,
+        "gap_title": "“恰当依赖”的最佳设计",
+        "readable": "C-08 唱反调 AI —削弱→ C-04 过度依赖"
+      }
+    },
+    {
+      "id": "E-40",
+      "from": "C-07",
+      "to": "H-11",
+      "type": "对应",
+      "status": "初步",
+      "basis": "来源",
+      "reason": "把人的元认知概念用到 AI 身上",
+      "ref": "Steyvers & Peters 2026",
+      "unverified": false,
+      "_derived": {
+        "from_name": "AI 置信表达",
+        "to_name": "元认知",
+        "type_meaning": "A 是 B 在另一侧（人类侧 / AI 侧）的对应物",
+        "type_meaning_filled": "AI 置信表达 是 元认知 在另一侧（人类侧 / AI 置信表达I 侧）的对应物",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "文献结论",
+        "unverified_text_shown": null,
+        "gap_title": null,
+        "readable": "C-07 AI 置信表达 —对应→ H-11 元认知"
+      }
+    },
+    {
+      "id": "E-41",
+      "from": "H-11",
+      "to": "C-04",
+      "type": "削弱",
+      "status": "未验证",
+      "basis": "加工",
+      "reason": "分得清自己对错，才知道何时不该信 AI",
+      "ref": "Claude 推断（空缺 10 是它的前提）",
+      "unverified": false,
+      "gap": "G-10",
+      "_derived": {
+        "from_name": "元认知",
+        "to_name": "过度依赖",
+        "type_meaning": "A 能减少 B",
+        "type_meaning_filled": "元认知 能减少 过度依赖",
+        "status_rule": "没有直接实证，是理论推测",
+        "status_line_style": "点线",
+        "basis_meaning": "Claude 的推断或连接",
+        "unverified_text_shown": null,
+        "gap_title": "元认知能否训练",
+        "readable": "H-11 元认知 —削弱→ C-04 过度依赖"
+      }
+    },
+    {
+      "id": "E-42",
+      "from": "C-08",
+      "to": "H-09",
+      "type": "削弱",
+      "status": "未验证",
+      "basis": "加工",
+      "reason": "唱反调能否减少个人的确认偏误",
+      "ref": "空缺 4：个人层面未见严格实验",
+      "unverified": false,
+      "gap": "G-04",
+      "_derived": {
+        "from_name": "唱反调 AI",
+        "to_name": "确认偏误",
+        "type_meaning": "A 能减少 B",
+        "type_meaning_filled": "唱反调 AI 能减少 确认偏误",
+        "status_rule": "没有直接实证，是理论推测",
+        "status_line_style": "点线",
+        "basis_meaning": "Claude 的推断或连接",
+        "unverified_text_shown": null,
+        "gap_title": "AI 当个人的唱反调者",
+        "readable": "C-08 唱反调 AI —削弱→ H-09 确认偏误"
+      }
+    },
+    {
+      "id": "E-43",
+      "from": "C-04",
+      "to": "C-12",
+      "type": "加剧",
+      "status": "未验证",
+      "basis": "加工",
+      "reason": "长期照单全收可能让独立判断退化",
+      "ref": "Claude 推断；Budzyń 2025 测的是接触 AI，不是过度依赖",
+      "unverified": false,
+      "gap": "G-01",
+      "_derived": {
+        "from_name": "过度依赖",
+        "to_name": "AI 与技能侵蚀",
+        "type_meaning": "A 会让 B 更严重",
+        "type_meaning_filled": "过度依赖 会让 AI 与技能侵蚀 更严重",
+        "status_rule": "没有直接实证，是理论推测",
+        "status_line_style": "点线",
+        "basis_meaning": "Claude 的推断或连接",
+        "unverified_text_shown": null,
+        "gap_title": "长期用 AI 后判断力怎么变",
+        "readable": "C-04 过度依赖 —加剧→ C-12 AI 与技能侵蚀"
+      }
+    },
+    {
+      "id": "E-44",
+      "from": "O-03",
+      "to": "C-12",
+      "type": "削弱",
+      "status": "未验证",
+      "basis": "加工",
+      "reason": "AI 用来教能力而非代劳，技能可能增强",
+      "ref": "空缺 7",
+      "unverified": false,
+      "gap": "G-07",
+      "_derived": {
+        "from_name": "助力",
+        "to_name": "AI 与技能侵蚀",
+        "type_meaning": "A 能减少 B",
+        "type_meaning_filled": "助力 能减少 AI 与技能侵蚀",
+        "status_rule": "没有直接实证，是理论推测",
+        "status_line_style": "点线",
+        "basis_meaning": "Claude 的推断或连接",
+        "unverified_text_shown": null,
+        "gap_title": "AI 做助力（教能力）",
+        "readable": "O-03 助力 —削弱→ C-12 AI 与技能侵蚀"
+      }
+    },
+    {
+      "id": "E-45",
+      "from": "C-10",
+      "to": "C-09",
+      "type": "支持",
+      "status": "初步",
+      "basis": "加工",
+      "reason": "两项独立研究都显示对话能改变观点",
+      "ref": "Salvi 2025 与 Costello 2024 并置是 Claude 的连接",
+      "unverified": false,
+      "_derived": {
+        "from_name": "AI 个性化说服",
+        "to_name": "AI 对话降低阴谋论信念",
+        "type_meaning": "A 的证据让 B 更可信",
+        "type_meaning_filled": "AI 个性化说服 的证据让 AI 对话降低阴谋论信念 更可信",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "Claude 的推断或连接",
+        "unverified_text_shown": null,
+        "gap_title": null,
+        "readable": "C-10 AI 个性化说服 —支持→ C-09 AI 对话降低阴谋论信念"
+      }
+    },
+    {
+      "id": "E-46",
+      "from": "O-03",
+      "to": "O-02",
+      "type": "修正",
+      "status": "初步",
+      "basis": "来源",
+      "reason": "改善决策不只有改环境一条路",
+      "ref": "Hertwig & Grüne-Yanoff 2017",
+      "unverified": false,
+      "_derived": {
+        "from_name": "助力",
+        "to_name": "助推",
+        "type_meaning": "B 仍然成立，但 A 把它的适用范围收窄了",
+        "type_meaning_filled": "助推 仍然成立，但 助力 把它的适用范围收窄了",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "文献结论",
+        "unverified_text_shown": null,
+        "gap_title": null,
+        "readable": "O-03 助力 —修正→ O-02 助推"
+      }
+    },
+    {
+      "id": "E-47",
+      "from": "O-04",
+      "to": "O-02",
+      "type": "挑战",
+      "status": "初步",
+      "basis": "来源",
+      "reason": "聚焦个体干预可能掩盖系统原因",
+      "ref": "Chater & Loewenstein 2023",
+      "unverified": false,
+      "_derived": {
+        "from_name": "个体框架与系统框架",
+        "to_name": "助推",
+        "type_meaning": "A 的证据和 B 方向相反",
+        "type_meaning_filled": "个体框架与系统框架 的证据和 助推 方向相反",
+        "status_rule": "只有单项研究或单个团队的工作",
+        "status_line_style": "长虚线",
+        "basis_meaning": "文献结论",
+        "unverified_text_shown": null,
+        "gap_title": null,
+        "readable": "O-04 个体框架与系统框架 —挑战→ O-02 助推"
+      }
+    }
+  ],
+  "gaps": [
+    {
+      "id": "G-01",
+      "title": "长期用 AI 后判断力怎么变",
+      "status": "有初步工作",
+      "nodes": [
+        "C-12",
+        "C-04"
+      ],
+      "summary": "方向一致的早期信号；最硬的一项是 19 人非随机前后比较",
+      "key": true,
+      "_derived": {
+        "starred": true,
+        "node_names": [
+          "C-12 AI 与技能侵蚀",
+          "C-04 过度依赖"
+        ],
+        "edges": [
+          "E-43"
+        ],
+        "edges_readable": [
+          "C-04 —加剧→ C-12"
+        ]
+      }
+    },
+    {
+      "id": "G-02",
+      "title": "按身体/情境状态即时触发去偏",
+      "status": "几乎空白",
+      "nodes": [
+        "O-05",
+        "H-10"
+      ],
+      "summary": "JITAI 成熟于健康领域，几乎没用于认知偏差",
+      "key": false,
+      "_derived": {
+        "starred": false,
+        "node_names": [
+          "O-05 即时自适应干预",
+          "H-10 状态影响判断"
+        ],
+        "edges": [
+          "E-20",
+          "E-21"
+        ],
+        "edges_readable": [
+          "H-10 —加剧→ C-04",
+          "O-05 —削弱→ H-10"
+        ]
+      }
+    },
+    {
+      "id": "G-03",
+      "title": "“恰当依赖”的最佳设计",
+      "status": "有初步工作",
+      "nodes": [
+        "C-04",
+        "C-05",
+        "C-06",
+        "C-07",
+        "C-08"
+      ],
+      "summary": "能减少盲从，还做不到提升分辨力",
+      "key": false,
+      "_derived": {
+        "starred": false,
+        "node_names": [
+          "C-04 过度依赖",
+          "C-05 AI 给出解释",
+          "C-06 认知强制",
+          "C-07 AI 置信表达",
+          "C-08 唱反调 AI"
+        ],
+        "edges": [
+          "E-36",
+          "E-37",
+          "E-38",
+          "E-39"
+        ],
+        "edges_readable": [
+          "C-05 —削弱→ C-04",
+          "C-06 —削弱→ C-04",
+          "C-07 —削弱→ C-04",
+          "C-08 —削弱→ C-04"
+        ]
+      }
+    },
+    {
+      "id": "G-04",
+      "title": "AI 当个人的唱反调者",
+      "status": "有初步工作",
+      "nodes": [
+        "C-08",
+        "H-09"
+      ],
+      "summary": "小组有严格证据；个人层面未找到",
+      "key": true,
+      "_derived": {
+        "starred": true,
+        "node_names": [
+          "C-08 唱反调 AI",
+          "H-09 确认偏误"
+        ],
+        "edges": [
+          "E-42"
+        ],
+        "edges_readable": [
+          "C-08 —削弱→ H-09"
+        ]
+      }
+    },
+    {
+      "id": "G-05",
+      "title": "个人决策过程质量怎么测",
+      "status": "有初步工作",
+      "nodes": [
+        "O-01"
+      ],
+      "summary": "有能力量表（A-DMC, Bruine de Bruin 等 2007）；单次过程质量无共识",
+      "key": true,
+      "_derived": {
+        "starred": true,
+        "node_names": [
+          "O-01 噪声与决策卫生"
+        ],
+        "edges": [],
+        "edges_readable": []
+      }
+    },
+    {
+      "id": "G-06",
+      "title": "AI 偏差 × 人类偏差的交互",
+      "status": "几乎空白",
+      "nodes": [
+        "A-03",
+        "H-09"
+      ],
+      "summary": "两边证据各自很多，交互实证未找到",
+      "key": false,
+      "_derived": {
+        "starred": false,
+        "node_names": [
+          "A-03 AI 谄媚",
+          "H-09 确认偏误"
+        ],
+        "edges": [
+          "E-24",
+          "E-25",
+          "E-26"
+        ],
+        "edges_readable": [
+          "A-03 —加剧→ H-09",
+          "A-03 —加剧→ C-04",
+          "A-03 —削弱→ C-09"
+        ]
+      }
+    },
+    {
+      "id": "G-07",
+      "title": "AI 做助力（教能力）",
+      "status": "有初步工作",
+      "nodes": [
+        "O-03",
+        "C-12"
+      ],
+      "summary": "几乎没人测“撤掉 AI 后还剩多少能力”",
+      "key": false,
+      "_derived": {
+        "starred": false,
+        "node_names": [
+          "O-03 助力",
+          "C-12 AI 与技能侵蚀"
+        ],
+        "edges": [
+          "E-44"
+        ],
+        "edges_readable": [
+          "O-03 —削弱→ C-12"
+        ]
+      }
+    },
+    {
+      "id": "G-08",
+      "title": "资源理性能否当理性标准",
+      "status": "有初步工作",
+      "nodes": [
+        "R-05",
+        "R-07",
+        "R-08"
+      ],
+      "summary": "描述上有希望，规范上仍在争论",
+      "key": true,
+      "_derived": {
+        "starred": true,
+        "node_names": [
+          "R-05 资源理性分析",
+          "R-07 反贝叶斯更新",
+          "R-08 对资源理性规范地位的质疑"
+        ],
+        "edges": [
+          "E-11",
+          "E-12"
+        ],
+        "edges_readable": [
+          "R-07 —挑战→ R-05",
+          "R-08 —修正→ R-05"
+        ]
+      }
+    },
+    {
+      "id": "G-09",
+      "title": "哪些是硬约束，哪些可塑",
+      "status": "有初步工作",
+      "nodes": [
+        "H-01",
+        "H-02",
+        "H-06",
+        "H-10",
+        "H-11"
+      ],
+      "summary": "有候选硬约束，跨文化检验几乎没有",
+      "key": true,
+      "_derived": {
+        "starred": true,
+        "node_names": [
+          "H-01 信息带宽约束",
+          "H-02 两种决策方式",
+          "H-06 框架效应",
+          "H-10 状态影响判断",
+          "H-11 元认知"
+        ],
+        "edges": [
+          "E-15"
+        ],
+        "edges_readable": [
+          "H-01 —支持→ R-05"
+        ]
+      }
+    },
+    {
+      "id": "G-10",
+      "title": "元认知能否训练",
+      "status": "有初步工作",
+      "nodes": [
+        "H-11"
+      ],
+      "summary": "可测、部分可练，但难迁移",
+      "key": true,
+      "_derived": {
+        "starred": true,
+        "node_names": [
+          "H-11 元认知"
+        ],
+        "edges": [
+          "E-41"
+        ],
+        "edges_readable": [
+          "H-11 —削弱→ C-04"
+        ]
+      }
+    }
+  ],
+  "counts": {
+    "nodes": 44,
+    "edges": 47,
+    "gaps": 10,
+    "clusters": 6,
+    "ui_check": {
+      "progress_ring_topbar": "0/44（顶栏进度环分母 = 节点数）",
+      "cluster_badges_network_overview": {
+        "人类认知基准": "12 节点 · 5 空缺",
+        "理性标准": "8 节点 · 1 空缺",
+        "AI 自身的偏差": "3 节点 · 1 空缺",
+        "AI 模拟人": "3 节点 · 0 空缺",
+        "人与 AI 协作": "13 节点 · 4 空缺",
+        "干预与组织": "5 节点 · 3 空缺"
+      },
+      "gaps_panel": "10 条"
+    },
+    "nodes_by_cluster": {
+      "人类认知基准": 12,
+      "理性标准": 8,
+      "AI 自身的偏差": 3,
+      "AI 模拟人": 3,
+      "人与 AI 协作": 13,
+      "干预与组织": 5
+    },
+    "nodes_by_kind": {
+      "理论": 12,
+      "发现": 11,
+      "现象": 10,
+      "方法": 10,
+      "概念": 1
+    },
+    "nodes_by_evidence": {
+      "C": 17,
+      "B": 14,
+      "A": 8,
+      "N/A": 5
+    },
+    "nodes_by_crowding": {
+      "活跃": 26,
+      "饱和": 11,
+      "稀疏": 7
+    },
+    "nodes_ai_related": 19,
+    "nodes_unverified": 10,
+    "nodes_with_note": 12,
+    "nodes_with_alerts": 1,
+    "edges_by_type": {
+      "修正": 9,
+      "解释": 9,
+      "削弱": 9,
+      "继承": 6,
+      "加剧": 6,
+      "挑战": 4,
+      "支持": 2,
+      "对应": 2
+    },
+    "edges_by_status": {
+      "初步": 31,
+      "未验证": 11,
+      "确立": 5
+    },
+    "edges_by_basis": {
+      "来源": 27,
+      "加工": 20
+    },
+    "edges_unverified": 5,
+    "edges_with_gap": 16,
+    "gaps_by_status": {
+      "有初步工作": 8,
+      "几乎空白": 2
+    },
+    "gaps_starred": 6
+  }
+}
