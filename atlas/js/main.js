@@ -16,6 +16,7 @@ import * as tooltip from './tooltip.js';
 import * as progress from './progress.js';
 import { initRouter } from './router.js';
 import { buildPrompt } from './prompt.js';
+import { initNotes } from './notes.js';
 import { defaultFilters } from './state.js';
 import { extraInset } from './zoomable.js';
 import { initTrail } from './trail.js';
@@ -47,16 +48,21 @@ function renderHeader(model) {
   if (d.status_note) { const s = $('draft'); s.textContent = /草稿|draft/i.test(d.status_note) ? '草稿' : '说明'; s.title = d.status_note; s.hidden = false; }
 }
 
+const runtimeProblems = []; /* 页面运行中发现的问题（例如讲解文件标题编号不一致），和内容包错误一起显示在顶部校验条 */
 function renderBanner(model) {
   const { errors, warnings } = model.validation;
   const dropped = model.dropped.length;
   const b = $('banner');
-  if (!errors.length && !dropped) { b.hidden = true; return; }
+  if (!errors.length && !dropped && !runtimeProblems.length) { b.hidden = true; return; }
   const li = (x) => `<li><code>${esc(x.where)}${x.field ? ' · ' + esc(x.field) : ''}</code>${esc(x.msg)}</li>`;
-  b.innerHTML = `<summary>内容包有 ${errors.length} 处问题${dropped ? `，${dropped} 条关系无法绘制` : ''}（其余部分照常渲染）</summary><ul>${errors.map(li).join('')}</ul>`;
+  const parts = [];
+  if (errors.length || dropped) parts.push(`内容包有 ${errors.length} 处问题${dropped ? `，${dropped} 条关系无法绘制` : ''}`);
+  if (runtimeProblems.length) parts.push(`讲解文件有 ${runtimeProblems.length} 处问题`);
+  b.innerHTML = `<summary>${parts.join('；')}（其余部分照常渲染）</summary><ul>${errors.map(li).join('')}${runtimeProblems.map(li).join('')}</ul>`;
   b.hidden = false;
-  if (warnings.length) console.info('内容包提示：', warnings);
+  if (warnings.length && !runtimeProblems.length) console.info('内容包提示：', warnings);
 }
+function reportProblem(model, p) { runtimeProblems.push(p); renderBanner(model); }
 
 function setupTheme() {
   const btn = $('theme');
@@ -247,7 +253,7 @@ async function boot() {
   $('gapsBtn').addEventListener('click', () => actions.openGaps());
 
   /* ---- 面板（覆盖式） / 搜索 ---- */
-  initPanel({ el: $('panelBody'), model, actions });
+  initPanel({ el: $('panelBody'), model, actions, notes: initNotes({ packId: model.domain.pack_id || packId, model, onProblem: (p) => reportProblem(model, p) }) });
   initSearch($('search'), model, (id) => actions.openLens(id));
   function syncPanel() {
     const s = get();

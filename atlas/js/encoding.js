@@ -38,11 +38,13 @@ export const KINDS = {
 export const KIND_ORDER = Object.keys(KINDS);
 
 export const EVIDENCE = {
-  A:     { desc: '元分析或多实验室重复', color: 'var(--ev-a)' },
-  B:     { desc: '单项预注册研究或设计较严的单项研究', color: 'var(--ev-b)' },
-  C:     { desc: '单项非预注册、预印本或理论综述', color: 'var(--ev-c)' },
-  'N/A': { desc: '规范理论或框架，不适用证据等级', color: 'var(--ev-na)', hollow: true },
+  A:     { desc: '元分析或多实验室重复', color: 'var(--ev-a)', cls: 'a',  cred: { icon: '🟢', text: 'A · 坚实（Robust）' } },
+  B:     { desc: '单项预注册研究或设计较严的单项研究', color: 'var(--ev-b)', cls: 'b', cred: { icon: '🔵', text: 'B · 较可靠（Solid）' } },
+  C:     { desc: '单项非预注册、预印本或理论综述', color: 'var(--ev-c)', cls: 'c', cred: { icon: '🟡', text: 'C · 初步（Tentative）' } },
+  'N/A': { desc: '规范理论或框架，不适用证据等级', color: 'var(--ev-na)', hollow: true, cls: 'na', cred: { icon: '⚪', text: '理论框架（Theory）' } },
 };
+/* 面板顶部的可信度标记：按 node.evidence 取，所有节点都显示 */
+export function credibility(evidence) { const e = EVIDENCE[evidence]; return e ? { cls: e.cls, ...e.cred } : { cls: 'na', icon: '⚪', text: '未知等级' }; }
 export const EVIDENCE_ORDER = ['N/A', 'C', 'B', 'A'];
 
 export const CROWDING = {

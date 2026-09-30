@@ -7,7 +7,7 @@ import { computeVisibility } from './filters.js';
 import * as progress from './progress.js';
 import * as storage from './storage.js';
 
-export function initPanel({ el, model, actions }) {
+export function initPanel({ el, model, actions, notes = null }) {
   const nodeLabel = (id) => { const n = model.byId.get(id); return n ? `${n.id} ${n.name}` : id; };
   const basisTag = (b) => `<span class="bm-tag ${b === '加工' ? 'proc' : 'src'}">${b === '加工' ? '加工' : '来源'}</span>`;
   const evBadge = (g) => `<span class="ev-badge ev-${g === 'N/A' ? 'na' : g.toLowerCase()}" title="${esc(enc.EVIDENCE[g]?.desc || '')}">${esc(g)}</span>`;
@@ -46,6 +46,7 @@ export function initPanel({ el, model, actions }) {
     el.innerHTML = header('节点') + `
       <div class="p-head">
         <div class="p-idrow"><span class="p-id">${esc(n.id)}</span><button type="button" class="icon-btn tiny" data-act="copy-id" title="复制编号">复制编号</button></div>
+        ${credBadge(n.evidence)}
         <h2>${esc(n.name)}</h2>
         <p class="p-en">${esc(n.name_en)}</p>
       </div>
@@ -72,6 +73,7 @@ export function initPanel({ el, model, actions }) {
         <button type="button" class="icon-btn small" data-act="path-from">从这里出发找路径</button>
       </div>
       ${notionBlock(n.id)}
+      ${notesBlock(n.id)}
       <section class="p-sec"><h3>代表文献</h3>${n.refs?.length ? `<ul class="p-refs">${n.refs.map((r) => `<li>${esc(r)}</li>`).join('')}</ul>` : '<p class="empty">无</p>'}</section>
       <section class="p-sec"><h3>关系 <span class="p-count">${out.length + inc.length}</span></h3>
         ${groups.length ? groups.map((g) => `<div class="rel-group" style="--c:${enc.relColor(g.t)}"><div class="rel-title">${relSw(g.t)}${esc(g.t)}<span class="rel-desc">${esc(enc.relByZh[g.t].desc)}</span></div>
@@ -83,6 +85,27 @@ export function initPanel({ el, model, actions }) {
       <section class="p-sec"><h3>相关空缺 <span class="p-count">${gaps.length}</span></h3>
         ${gaps.length ? `<ul class="gap-list compact">${gaps.map((g) => gapItem(g, s)).join('')}</ul>` : '<p class="empty">无</p>'}
       </section>`;
+    fillNotes(n.id);
+  }
+
+  /* 可信度标记（按证据等级，所有节点都有） */
+  function credBadge(ev) { const c = enc.credibility(ev); return `<div class="p-cred cred-${c.cls}" title="${esc(enc.EVIDENCE[ev]?.desc || '')}"><span class="p-cred-icon" aria-hidden="true">${c.icon}</span>${esc(c.text)}</div>`; }
+  /* 讲解区块：已缓存的直接渲染；否则先放占位，读到后再填；没有讲解文件就移除占位 */
+  function notesBlock(id) {
+    if (!notes) return '';
+    const cached = notes.peek(id);
+    if (cached === null) return '';
+    if (cached) return `<section class="p-sec p-notes"><h3>讲解</h3><div class="p-md">${cached.html}</div></section>`;
+    return `<section class="p-sec p-notes" data-note-for="${esc(id)}" hidden></section>`;
+  }
+  function fillNotes(id) {
+    if (!notes || notes.peek(id) !== undefined) return;
+    notes.get(id).then((r) => {
+      const sec = el.querySelector(`.p-notes[data-note-for="${CSS.escape(id)}"]`);
+      if (!sec) return;
+      if (!r) { sec.remove(); return; }
+      sec.innerHTML = `<h3>讲解</h3><div class="p-md">${r.html}</div>`; sec.hidden = false;
+    }).catch(() => {});
   }
 
   /* ---------- 关系 ---------- */
