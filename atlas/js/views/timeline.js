@@ -6,7 +6,7 @@ import * as tooltip from '../tooltip.js';
 import { computeVisibility } from '../filters.js';
 import { appendNodeGlyph, appendEdgeGlyph, setEdgePath, nodeTip, edgeTip, borderPoint } from '../glyph.js';
 import { computeHighlight, applyClasses } from '../highlight.js';
-import { prefersReduced, extraInset } from '../zoomable.js';
+import { prefersReduced, extraInset, panClearOfPanel } from '../zoomable.js';
 const esc = tooltip.esc;
 
 const AXIS_W = 1500, LABEL_W = 140, AXIS_H = 44, LANE_PAD = 22, ROW_GAP = 10, NODE_GAP_X = 12, MAX_STACK = 4;
@@ -163,7 +163,8 @@ export function createTimeline({ svgEl, stageEl, model, actions, toolsEl }) {
     ent.on('mouseenter', (ev, d) => { set({ hoverNode: d.id }); tooltip.show(nodeTip(model, d.ref), ev.clientX, ev.clientY); })
       .on('mousemove', (ev) => tooltip.move(ev.clientX, ev.clientY))
       .on('mouseleave', () => { set({ hoverNode: null }); tooltip.hide(); })
-      .on('click', (ev, d) => { ev.stopPropagation(); tooltip.hide(); actions.nodeClick(d.id); })
+      .on('click', (ev, d) => { ev.stopPropagation(); tooltip.hide(); actions.nodeClick(d.id, { detail: ev.detail }); })
+      .on('dblclick', (ev, d) => { ev.stopPropagation(); ev.preventDefault(); tooltip.hide(); actions.nodeDblClick(d.id); })
       .on('keydown', (ev, d) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); actions.nodeClick(d.id); } });
     ent.merge(sel).attr('transform', (d) => `translate(${d.x},${d.y})`).classed('shifted', (d) => !!d._shifted);
   }
@@ -272,6 +273,7 @@ export function createTimeline({ svgEl, stageEl, model, actions, toolsEl }) {
     const list = ids.map((id) => snById.get(id)).filter((d) => d && visible.nodeVis.has(d.id)); if (!list.length) return;
     centerOn(d3.mean(list, (d) => d.x), d3.mean(list, (d) => d.y), scrollMode ? kFit : Math.max(kFit, Math.min(kFit * 2.2, transform.k)), animate);
   }
+  function ensureVisible(id) { const d = snById.get(id); if (d) panClearOfPanel({ svg, zoom, transform, stageEl, node: d }); }
   function zoomToNode(id) { const d = snById.get(id); if (d) centerOn(d.x, d.y, scrollMode ? kFit : Math.max(kFit * 1.6, transform.k)); }
   function zoomBy(f) { if (scrollMode) return; (prefersReduced() ? svg : svg.transition().duration(200)).call(zoom.scaleBy, f); }
 
@@ -315,7 +317,7 @@ export function createTimeline({ svgEl, stageEl, model, actions, toolsEl }) {
   return {
     show() { active = true; svgEl.removeAttribute('hidden'); visible = computeVisibility(model, get().filters); relayout(); applyState(); fitAll(false); renderTools(); },
     hide() { active = false; svgEl.setAttribute('hidden', ''); },
-    fitAll, fitNodes, zoomToNode, zoomBy, applyState,
+    fitAll, fitNodes, zoomToNode, zoomBy, applyState, ensureVisible,
     isScrollMode: () => scrollMode,
     backToSelection() { const s = get(); if (s.path) fitNodes(s.path.nodes); else if (s.gap) fitNodes(gapNodeIds(s.gap)); else if (s.edge) { const e = model.edgeById.get(s.edge); if (e) fitNodes([e.from, e.to]); } else if (s.node) zoomToNode(s.node); },
     story,

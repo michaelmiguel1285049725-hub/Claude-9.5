@@ -33,3 +33,20 @@ export function boundsOf(list, pad = 24) {
   const y0 = d3.min(list, (d) => d.y - d.h / 2) - pad, y1 = d3.max(list, (d) => d.y + d.h / 2) + pad;
   return { x0, y0, x1, y1, w: x1 - x0, h: y1 - y0 };
 }
+
+/* 右侧面板（浮层）打开后，如果选中的节点被它盖住，就把画布向左平移到能看见为止；不改缩放 */
+export function panClearOfPanel({ svg, zoom, transform, stageEl, node, margin = 16 }) {
+  const panel = document.getElementById('panel');
+  if (!panel || !node) return false;
+  const pr = panel.getBoundingClientRect(), sr = stageEl.getBoundingClientRect();
+  if (!pr.width) return false;
+  const panelLeft = pr.left - sr.left;
+  const right = transform.x + (node.x + node.w / 2) * transform.k;
+  const left = transform.x + (node.x - node.w / 2) * transform.k;
+  const limit = panelLeft - margin;
+  if (right <= limit) return false;
+  const dx = Math.min(right - limit, Math.max(0, left - margin)); /* 至少让左缘不出画布 */
+  if (dx <= 0) return false;
+  (prefersReduced() ? svg : svg.transition().duration(250)).call(zoom.translateBy, -dx / transform.k, 0);
+  return true;
+}

@@ -107,7 +107,7 @@ async function boot() {
   let network = null;
   let lensOrigin = { mode: 'overview', cluster: null }; /* 进入透镜前所在的层级，Esc 返回用 */
   const actions = {
-    nodeClick(id) {
+    nodeClick(id, { detail = 1 } = {}) {
       const s = get();
       if (s.panel === 'path') {
         const q = s.pathQuery || { from: null, to: null, sourceFirst: false };
@@ -115,9 +115,14 @@ async function boot() {
         else if (id !== q.from) set({ pathQuery: { ...q, to: id }, path: null });
         return;
       }
-      if (s.view === 'network') { actions.enterLens(id); return; }
-      if (s.node === id && !s.edge && !s.path && !s.gap) set({ node: null, edge: null, panel: 'closed' });
-      else set({ node: id, edge: null, path: null, gap: null, panel: 'node' });
+      /* 单击：右侧面板看说明（再点一次收起；双击的第二下不收起）。双击才进关系透镜 */
+      if (s.node === id && !s.edge && !s.path && !s.gap && detail < 2) set({ node: null, edge: null, panel: 'closed' });
+      else { set({ node: id, edge: null, path: null, gap: null, panel: 'node' }); const v = current(); if (v.ensureVisible) v.ensureVisible(id); }
+    },
+    nodeDblClick(id) {
+      const s = get();
+      if (s.panel === 'path') return;
+      actions.openLens(id);
     },
     /* 关系网层级 */
     enterLens(id, { gap = null, panel = 'closed' } = {}) {
@@ -197,9 +202,9 @@ async function boot() {
   const views = { network, maturity, timeline };
   window.__atlas.views = views;
   const HINTS = {
-    network: '拖动平移 · 滚轮缩放 · 悬停看关系 · 点节点看详情 · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> 切换视角 · <kbd>/</kbd> 搜索 · <kbd>Esc</kbd> 返回',
-    maturity: '横轴证据等级 · 纵轴拥挤度 · 点节点看跨格关系 · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> 切换视角 · <kbd>Esc</kbd> 返回',
-    timeline: '横轴年份（分段压缩） · 每条研究线一条泳道 · 悬停年份看当年节点 · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> 切换视角',
+    network: '拖动平移 · 滚轮缩放 · 悬停看关系 · 单击节点看说明 · 双击进关系透镜 · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> 切换视角 · <kbd>/</kbd> 搜索 · <kbd>Esc</kbd> 返回',
+    maturity: '横轴证据等级 · 纵轴拥挤度 · 单击节点看跨格关系 · 双击进关系透镜 · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> 切换视角 · <kbd>Esc</kbd> 返回',
+    timeline: '横轴年份（分段压缩） · 每条研究线一条泳道 · 单击节点看说明 · 双击进关系透镜 · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> 切换视角',
   };
   const svgOf = { network: $('canvas'), maturity: $('maturity'), timeline: $('timeline') };
   function current() { return views[get().view] || network; }

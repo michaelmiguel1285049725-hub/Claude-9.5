@@ -6,7 +6,7 @@ import * as progress from '../progress.js';
 import { computeVisibility } from '../filters.js';
 import { appendNodeGlyph, appendEdgeGlyph, setEdgePath, nodeTip as glyphNodeTip, edgeTip as glyphEdgeTip, borderPoint } from '../glyph.js';
 import { computeHighlight } from '../highlight.js';
-import { extraInset, prefersReduced } from '../zoomable.js';
+import { extraInset, prefersReduced, panClearOfPanel } from '../zoomable.js';
 import { createLens } from './lens.js';
 
 /* 全览网格布局：每个研究线一个区域，区域内按年份排列；列数按节点数：≤3 → 1 列，4–8 → 2 列，≥9 → 3 列 */
@@ -187,7 +187,8 @@ export function createNetwork({ svgEl, stageEl, model, actions }) {
     ent.on('mouseenter', (ev, d) => { set({ hoverNode: d.id }); tooltip.show(glyphNodeTip(model, d.ref), ev.clientX, ev.clientY); })
       .on('mousemove', (ev) => tooltip.move(ev.clientX, ev.clientY))
       .on('mouseleave', () => { set({ hoverNode: null }); tooltip.hide(); })
-      .on('click', (ev, d) => { ev.stopPropagation(); tooltip.hide(); actions.nodeClick(d.id); })
+      .on('click', (ev, d) => { ev.stopPropagation(); tooltip.hide(); actions.nodeClick(d.id, { detail: ev.detail }); })
+      .on('dblclick', (ev, d) => { ev.stopPropagation(); ev.preventDefault(); tooltip.hide(); actions.nodeDblClick(d.id); })
       .on('keydown', (ev, d) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); actions.nodeClick(d.id); } });
     gNodes.selectAll('g.node').attr('transform', (d) => `translate(${d.x},${d.y})`);
   }
@@ -303,7 +304,9 @@ export function createNetwork({ svgEl, stageEl, model, actions }) {
     if (simple && mode === 'overview') { drawBubbles(); gStubs.selectAll('*').remove(); return; }
     const hl = computeHighlight(model, { ...s, node: null }, visible); /* 全览 / 聚焦不用节点聚焦高亮 */
     const focus = mode === 'cluster' ? s.focusCluster : null;
-    const hover = s.hoverNode && model.byId.has(s.hoverNode) ? s.hoverNode : null;
+    /* 悬停节点优先；没有悬停时，单击选中的节点（面板打开）当作固定的悬停来高亮它的关系 */
+    const picked = s.node && model.byId.has(s.node) && s.panel === 'node' ? s.node : null;
+    const hover = (s.hoverNode && model.byId.has(s.hoverNode) ? s.hoverNode : null) || picked;
     const hoverEdges = hover ? new Set((model.edgesOf.get(hover) || []).map((e) => e.id)) : null;
     const hoverNbrs = hover ? new Set([hover, ...(model.edgesOf.get(hover) || []).map((e) => (e.from === hover ? e.to : e.from))]) : null;
     const selection = hl.mode === 'path' || hl.mode === 'gap' || hl.mode === 'edge';
@@ -317,7 +320,7 @@ export function createNetwork({ svgEl, stageEl, model, actions }) {
       else if (hover) dim = hoverNbrs.has(id) ? '' : 'dim35';
       el.classList.toggle('dim25', dim === 'dim25'); el.classList.toggle('dim35', dim === 'dim35'); el.classList.toggle('faint', dim === 'faint');
       el.classList.toggle('hi', !!hover && hoverNbrs.has(id) && id !== hover);
-      el.classList.toggle('active', !!hover && id === hover);
+      el.classList.toggle('active', (!!hover && id === hover) || id === picked);
       el.classList.toggle('digested', progress.has(id));
     }
     /* 关系线：全览默认不画，只画悬停节点的；聚焦画研究线内部的；抽屉开关可画全部 */
@@ -379,6 +382,7 @@ export function createNetwork({ svgEl, stageEl, model, actions }) {
     fitBounds({ x0, y0, x1, y1, w: x1 - x0, h: y1 - y0 }, animate, kFit * maxRel);
   }
   function zoomBy(f) { if (get().mode === 'lens') return; (prefersReduced() ? svg : svg.transition().duration(200)).call(zoom.scaleBy, f); }
+  function ensureVisible(id) { const d = snById.get(id); if (!d || get().mode === 'lens') return; panClearOfPanel({ svg, zoom, transform, stageEl, node: d }); }
   function zoomToNode(id, relK = 1.8) {
     const d = snById.get(id); if (!d) return;
     const r = stageEl.getBoundingClientRect();
@@ -418,7 +422,7 @@ export function createNetwork({ svgEl, stageEl, model, actions }) {
   });
 
   return {
-    fitAll, fitNodes, zoomBy, zoomToNode, zoomToCluster, backToSelection, refreshVisibility, applyState, gapNodeIds,
+    fitAll, fitNodes, zoomBy, zoomToNode, zoomToCluster, backToSelection, refreshVisibility, applyState, gapNodeIds, ensureVisible,
     setSimple(v) { simple = !!v; applyState(); if (get().mode === 'overview') fitAll(true); },
     isSimple: () => simple,
     nodes: sn, edges: se, regions: () => regions,
